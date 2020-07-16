@@ -1,0 +1,318 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+__author__ = 'eugene'
+'''
+
+    This file is part of 'KoJen'.
+
+    'KoJen' is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    'KoJen' is distributed in the hope that it will be useful
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with 'KoJen'.  If not, see <http://www.gnu.org/licenses/>.
+    For any requests please contact : koh.jaen@yahoo.de.
+
+'''
+from interface_base import *
+from string import Template
+import time
+import datetime
+import sys
+
+
+class Language:
+
+
+    # Apparently these vars are static.
+    Lang = None
+
+    # The last created language is the currently generated one...
+    def __init__(self):
+        Language.Lang = self
+
+    # ------------------------------ Begin : Language Specifics
+    # File extension
+    def DotHFile(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DotCPPFile(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Braces
+    def OpenBrace(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def CloseBrace(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # White space
+    def WhiteSpace(self, indentationlevels):
+        return (indentationlevels+1)*'\t'
+
+    # Connection type
+    def ConnectionType(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def ConnectionTypePtr(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Member access / dereference
+    def Accessor(self, is_ptr):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Bytestream access / dereference
+    def BytestreamAccessor(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Byte Stream
+    def ByteStreamType(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def ByteStreamTypeSharedPtr(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def ByteStreamTypeRawPtr(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Convenience
+    def MessageDescriptor(self, interface, struct):
+        return "" if interface.GetMessageTypeIDStr(struct) == "" else " [ MsgTypeID = " + interface.GetMessageTypeIDStr(struct) + " ]"
+
+    def SharedPtrToType(self, typename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def PtrToTypeName(self, typename):
+        return ""
+
+    def GetFactoryCreateParams(self, struct, interface):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def RawPtrToType(self, typename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def TypedefSharedPtrToType(self, typename, newtypename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def TypedefRawPtrToType(self, typename, newtypename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Packedness
+    def AddAttributePackedToDecl(self, declaration):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def InstantiatePtrToType(self, typepointername, instancename, typename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def InstantiateArray(self, instancename, typename, noelements):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DeleteArray(self, instancename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DeletePtrToType(self, instancename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    ''' Instantiate/declare a basic type, with optional initializer. Only declarations can use 'attribute packed' directives.
+        use typename = '' to make it a known variable initialization
+    '''
+    def InstantiateType(self, typename, instancename, initialevalue='', is_attr_packed=False, is_static=False, is_const=False):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # parameters need to be a list of (type, name).
+    def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DeclareClass(self, classname, declspec=''):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def ForwareDeclareClass(self, classname):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DeclareStruct(self, structname, declspec=''):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DeclareEnum(self, enum):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DeclareHashDefine(self, name, val):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DeclareNamespace(self, namespacename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def UsingNamespace(self, namespacename):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def FormatComment(self, commenttext):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def FormatLongComment(self, commenttext):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # The includes that each generated file needs to have from the provided mini framework
+    def LanguageSpecificFrameWorkIncludes(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def AddInclude(self, filename):  # for python we can simply replace .h with''
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def PrintError(self, message):  # python should split the strings by '<<', as there are more arguments passed this way
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def PrintMessage(self, message):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def BooleanTrue(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def BooleanFalse(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def NullPtr(self):  # should be NULL for C, and None for pooota
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def PublicAccessSpecifier(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def ProtectedAccessSpecifier(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def PrivateAccessSpecifier(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def If(self, statement):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def ElseIf(self, statement):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def Else(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def This(self):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def ParameterString(self, parameters):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # 1 means ++
+    def For_Range(self, start, stop, incr=1):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def LicenseAgreement(self):
+        product_name = "'KoJen'"
+        result = []
+        result.append("--------------------------------------------------------------------------------")
+        result.append("")
+        result.append('\t' + "This file is part of " + product_name + ".")
+        result.append("")
+        result.append('\t' + product_name + " is free software: you can redistribute it and/or modify")
+        result.append('\t' + "it under the terms of the GNU General Public License as published by")
+        result.append('\t' + "the Free Software Foundation, either version 3 of the License, or")
+        result.append('\t' + "(at your option) any later version.")
+        result.append("")
+        result.append('\t' + product_name + " is distributed in the hope that it will be useful,")
+        result.append('\t' + "but WITHOUT ANY WARRANTY; without even the implied warranty of")
+        result.append('\t' + "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
+        result.append('\t' + "GNU General Public License for more details.")
+        result.append("")
+        result.append('\t' + "You should have received a copy of the GNU General Public License")
+        result.append('\t' + "along with " + product_name + ".  If not, see <http://www.gnu.org/licenses/>.")
+        result.append('\t' + "For any queries please contact : koh.jaen@yahoo.de.")
+        result.append("\n")
+        result.append(
+                '\t\t' + "This file was generated on    : " + datetime.datetime.fromtimestamp(time.time()).strftime(
+                    '%Y-%m-%d %H:%M:%S') + ".")
+        result.append('\t\t' + "This file was generated using : " + sys.platform + ".")
+        result.append('\t\t' + "This file was generated by a machine. Do not modify it by hand.")
+        result.append("")
+        result.append("--------------------------------------------------------------------------------")
+        return result
+
+    ''' Additions that were added for class diagram
+    '''
+    def GetFormatNestedNamespaceBegin(self, classObj):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def GetFormatNestedNamespaceEnd(self, classObj):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def GetFormatClassInheritence(self, classObj, dictOfInheritance):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Typically what goes into a H file, when the items can NOT be forward declared in H file.
+    def GetNotForwardDeclarableHeaderIncludes(self, classObj, namespace_to_folders = False, filter_out_type_not_in_model = False, include_vector_if_needed = False):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Typically what goes into a CPP file, when the items can be forward declared in H file.
+    def GetForwardDeclarableHeaderIncludes(self, classObj, classDiagram):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Typically what goes into a H file, when the items can be forward declared in H file.
+    def GetForwardDeclarations(self, classObj, classDiagram):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Typically what goes into a H file...to determine the language types to be used for multiplicity
+    def GetTypeAndNameFromMultiplicityAndModifier(self, TYPE, TYPE_MODIFIER, MULTIPLICITY, NAME):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Typically what goes into a H file...Get the declaration string for all attributes of the desired visibility
+    def GetAttributeDeclarationsPerVisibility(self, classObj, visibility="all"):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Typically what goes into a H file...Get the declaration string for all associations of the desired visibility
+    def GetAssociationDeclarationsPerVisibility(self, classObj, visibility="all"):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Will get the declaration string for all attributes of the following visibility
+    # - public
+    # - protected
+    # - private
+    # - all (public and protected and private)
+    def GetAttributeDeclarationsPerVisibility(self, classObj, visibility="all"):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Will get the declaration string for all attributes of the following visibility
+    # - public
+    # - protected
+    # - private
+    # - all (public and protected and private)
+    def GetAssociationDeclarationsPerVisibility(self, classObj, visibility="all"):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Typically what goes into a CPP file...static declared attributes need to be defined somewhere else.
+    def GetStaticAttributeDefinitions(self, classObj):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    # Typically what goes into a CPP file...static declared associations need to be defined somewhere else.
+    def GetStaticAssociationDefinitions(self, classObj):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def GetOperationPerVisibility(self, classObj, is_impl, visibility="all"):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def GetAttributeAssociationGetterSetter(self, classObj, is_impl=False):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def GetEnumLiterals(self, classObj):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def GetStructMembers(self, classObj):
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def GetConstructor(self, classobj, is_impl=False):
+        raise RuntimeError("Language Feature Not Implemented")
+    # ------------------------------ End
