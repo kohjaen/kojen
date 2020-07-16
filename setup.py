@@ -1,0 +1,25 @@
+import setuptools
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="kojen",
+    version="0.0.13",
+    author="kohjaen",
+    author_email="koh.jaen@yahoo.de",
+    description="Code generation tools.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/kohjaen/kojen",
+    packages=setuptools.find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.7',
+	package_data={'': ['classdiagram_templates/C#/*.*','classdiagram_templates/CPP/*.*', 'protocol_templates/*.*','statemachine_templates_embedded_arm/*.*','statemachine_templates_pc_boost/*.*', 'docs/images/*.*', 'docs/*.*']},
+	include_package_data=True,
+    install_requires=['cogapp',],
+)

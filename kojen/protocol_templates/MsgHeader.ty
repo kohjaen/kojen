@@ -1,0 +1,86 @@
+
+'''
+[[[cog
+import cog
+from <<<PYIFGENNAME>>> import *
+from LanguagePython import *
+interface = CreateInterface()
+language  = LanguagePython()
+
+for g in language.LicenseAgreement():
+	cog.outl(g)
+
+]]]
+
+[[[end]]]
+'''
+
+from struct import *
+
+''' See https://docs.python.org/2/library/struct.html.
+	Not accounted for are types :
+	- char[]
+	- void*
+'''
+def FormatCharFromCPPType(type):
+	if 'char' == type:
+		return 'c'
+	if 'bool' == type:
+		return '?'
+	# Types (and their native typedef types) used by this infrastructure
+	if 'int8' == type or 'signed char' == type:
+		return 'b'
+	if 'uint8' == type or 'unsigned char' == type:
+		return 'B'
+	if 'int16' == type or 'signed short' == type or 'short' == type:
+		return 'h'
+	if 'uint16' == type or 'unsigned short' == type:
+		return 'H'
+	if 'int32' == type or 'signed int' == type or 'int' == type:
+		return 'i'
+	if 'uint32' == type or 'unsigned int' == type:
+		return 'I'
+	if 'int64' == type or 'signed __int64' == type  or 'signed long long' == type or 'long long' == type:
+		return 'q'
+	if 'uint64' == type or 'unsigned __int64' == type or 'unsigned long long' == type:
+		return 'Q'
+	# Other native types
+	if 'signed long' == type or type == 'long':
+		return 'l'
+	if 'unsigned long' == type:
+		return 'L'
+	if 'float' == type:
+		return 'f'
+	if 'double' == type:
+		return 'd'
+
+	raise RuntimeError("Type %s not supported in 'FormatCharFromCPPType'." % type)
+
+
+'''
+Message Header/Structures used to describe the protocol.
+'''
+
+'''[[[cog
+is_impl = True
+classname = ""
+structs = interface.ProtocolStructs()
+for s in structs:
+	structguts = language.DeclareStructMembers(s,interface, language.WhiteSpace(0))
+	cog.outl("class %s:" % s.Name)
+	for gut in structguts:
+		cog.outl(gut)
+	cog.outl("")
+
+	functionguts = language.DeclareDataFormatFunction(s,interface,language.WhiteSpace(0),'FormatCharFromCPPType')
+	for gut in functionguts:
+		cog.outl(gut)
+
+	functionguts = language.DeclareDataSizeFunction(s,interface,language.WhiteSpace(0))
+	for gut in functionguts:
+		cog.outl(gut)
+
+]]]'''
+
+'''[[[end]]]'''
+
