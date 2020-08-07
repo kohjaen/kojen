@@ -23,7 +23,7 @@
     /// {{{USER_LOCALS}}}
 
     <<<CLASS_DOCUMENTATION>>>
-    interface <<<CLASSNAME>>><<<CLASS_INHERITENCE_HIERARCHY>>>
+    public interface <<<CLASSNAME>>><<<CLASS_INHERITENCE_HIERARCHY>>>
     {
         <<<PUBLIC_OPERATIONS_DECLARE>>>
         /// {{{USER_PUBLIC}}}

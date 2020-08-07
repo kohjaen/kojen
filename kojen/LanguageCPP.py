@@ -1249,7 +1249,7 @@ class LanguageCPP:
                 # 'multiplicity'
                 params = []
                 for param in operation.PARAMETERS:
-                    tuples = self.GetTypeAndNameFromMultiplicityAndModifier(classObj, param["type"].strip().replace(classObj.NAMESPACE + "::", ""), param["modifier"].strip(), param["multiplicity"].strip(), param["name"].strip())
+                    tuples = self.GetTypeAndNameFromMultiplicityAndModifier(classObj, param["type"].strip(), param["modifier"].strip(), param["multiplicity"].strip(), param["name"].strip())
                     tuple0 = param["const"].strip() + " " + tuples[0]
                     tuple0 = tuple0.lstrip()
                     tuple1 = tuples[1]
@@ -1386,6 +1386,9 @@ class LanguageCPP:
                 result = result + "#elif defined(__GNUC__) || defined(__clang__)\n"
                 result = result + "#endif\n"
         return result
+
+    def GetProjectIncludes(self, setOfProjectDependencies):
+        pass # not yet implemented.
 
 def _filterOutTypesNotInModel(namespace_to_classes, classDiagram):
     """

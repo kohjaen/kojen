@@ -1,4 +1,8 @@
-from . import protogen, smgen, umlgen, vppfs, LanguageCPP, LanguageCsharp
+try:
+	from . import protogen, smgen, umlgen, vppfs, LanguageCPP, LanguageCsharp
+except:
+	import protogen, smgen, umlgen, vppfs, LanguageCPP, LanguageCsharp
+
 import os
 
 ''' Generate Entry function for Protocols. 

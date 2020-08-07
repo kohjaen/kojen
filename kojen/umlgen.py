@@ -235,6 +235,27 @@ class CUMLGenerator(CBASEGenerator):
 					tmp_res = CBASEGenerator.__loadtemplates_firstfiltering__(self, dict_to_replace_lines, dict_to_replace_filenames, "Struct")
 					tmp_res = self.__update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
 					result.filenames_to_lines.update(tmp_res.filenames_to_lines)
+
+			### PROJECT FILES
+			namespaces_in_project = {}
+			if self.NAMESPACE_TO_GO_TO_OWN_FOLDER:
+				namespaces_in_project = classdiagram.GetNamespaceDependencies()
+			else:
+				namespaces_in_project["Project"] = set()
+			for namespace, dependency_set in namespaces_in_project.items():
+				if len(dependency_set) > 0:
+					print(" <!!!!!!!>", namespace, " depends on ", dependency_set)
+				try:
+					dict_to_replace_lines = {}
+					dict_to_replace_filenames = {}
+					dict_to_replace_lines["<<<PROJECT_REFERENCE_INCLUDES>>>"] = self.language.GetProjectIncludes(dependency_set)
+					dict_to_replace_filenames["Project"] = namespace
+					tmp_res = CBASEGenerator.__loadtemplates_firstfiltering__(self, dict_to_replace_lines, dict_to_replace_filenames, "Project")
+					tmp_res = self.__update_filename_path_from_namespace(namespace, tmp_res)
+					result.filenames_to_lines.update(tmp_res.filenames_to_lines)
+				except:
+					pass
+			### PROJECT FILES end
 			return result
 		else:
 			raise Exception( str(classdiagram) + " is not of type ClassDiagram")

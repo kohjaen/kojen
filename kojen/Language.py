@@ -315,4 +315,7 @@ class Language:
 
     def GetConstructor(self, classobj, is_impl=False):
         raise RuntimeError("Language Feature Not Implemented")
+
+    def GetProjectIncludes(self, setOfProjectDependencies):
+        raise RuntimeError("Language Feature Not Implemented")
     # ------------------------------ End

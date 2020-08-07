@@ -21,7 +21,7 @@
     /// {{{USER_LOCALS}}}
 
     <<<CLASS_DOCUMENTATION>>>
-    enum <<<CLASSNAME>>>
+    public enum <<<CLASSNAME>>>
     {
         <<<ENUM_EXPAND>>>
     };

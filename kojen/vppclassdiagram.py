@@ -934,6 +934,26 @@ class ClassDiagram:
 		for id, inh in self.inheritence.items():
 			inh.PostProjectParseFix(self)
 
+	''' Returns a dictionary of 'namespace : set()' dependencies where the set is a set of namespaces the 'key' namespace depends on.
+	'''
+
+	def GetNamespaceDependencies(self):
+		result = {}
+		for class_uid, classobj in self.classes.items():
+			namespace = classobj.NAMESPACE
+			if not namespace in result:
+				result[namespace] = set()
+			# These are sets. Dont add a dependancy to oneself...
+			set1 = classobj.GetNotForwardDeclarableNonPrimitiveTypesLinkedToThis()
+			set2 = classobj.GetForwardDeclarableNonPrimitiveTypesLinkedToThis()
+			for s in set1:
+				if s.find(namespace) == -1:
+					result[namespace].add(s.rpartition("::")[0])
+			for s in set2:
+				if s.find(namespace) == -1:
+					result[namespace].add(s.rpartition("::")[0])
+		return result
+
 
 #########################################################
 # Unit Tests

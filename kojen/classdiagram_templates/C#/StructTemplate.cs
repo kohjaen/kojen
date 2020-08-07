@@ -22,7 +22,7 @@
 
     <<<CLASS_DOCUMENTATION>>>
     <<<PACK_BEGIN>>>
-    struct <<<CLASSNAME>>>
+    public struct <<<CLASSNAME>>>
     {
         <<<STRUCT_EXPAND>>>
     };
