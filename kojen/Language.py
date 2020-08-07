@@ -3,21 +3,27 @@
 __author__ = 'eugene'
 '''
 
-    This file is part of 'KoJen'.
+    MIT License
 
-    'KoJen' is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    Copyright (c) 2015 Eugene Grobbelaar (email : koh.jaen@yahoo.de)
 
-    'KoJen' is distributed in the hope that it will be useful
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
 
-    You should have received a copy of the GNU General Public License
-    along with 'KoJen'.  If not, see <http://www.gnu.org/licenses/>.
-    For any requests please contact : koh.jaen@yahoo.de.
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 
 '''
 from interface_base import *
@@ -213,26 +219,32 @@ class Language:
         raise RuntimeError("Language Feature Not Implemented")
 
     def LicenseAgreement(self):
-        product_name = "'KoJen'"
         result = []
         result.append("--------------------------------------------------------------------------------")
         result.append("")
-        result.append('\t' + "This file is part of " + product_name + ".")
+        result.append('\t' + "MIT License")
         result.append("")
-        result.append('\t' + product_name + " is free software: you can redistribute it and/or modify")
-        result.append('\t' + "it under the terms of the GNU General Public License as published by")
-        result.append('\t' + "the Free Software Foundation, either version 3 of the License, or")
-        result.append('\t' + "(at your option) any later version.")
+        result.append('\t' + "Copyright (c) 2015 Eugene Grobbelaar (email : koh.jaen@yahoo.de)")
         result.append("")
-        result.append('\t' + product_name + " is distributed in the hope that it will be useful,")
-        result.append('\t' + "but WITHOUT ANY WARRANTY; without even the implied warranty of")
-        result.append('\t' + "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
-        result.append('\t' + "GNU General Public License for more details.")
+        result.append('\t' + "Permission is hereby granted, free of charge, to any person obtaining a copy")
+        result.append('\t' + 'of this software and associated documentation files (the "Software"), to deal')
+        result.append('\t' + "in the Software without restriction, including without limitation the rights")
+        result.append('\t' + "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell")
+        result.append('\t' + "copies of the Software, and to permit persons to whom the Software is")
+        result.append('\t' + "furnished to do so, subject to the following conditions:")
         result.append("")
-        result.append('\t' + "You should have received a copy of the GNU General Public License")
-        result.append('\t' + "along with " + product_name + ".  If not, see <http://www.gnu.org/licenses/>.")
-        result.append('\t' + "For any queries please contact : koh.jaen@yahoo.de.")
-        result.append("\n")
+        result.append('\t' + "The above copyright notice and this permission notice shall be included in all")
+        result.append('\t' + "copies or substantial portions of the Software.")
+        result.append("")
+        result.append('\t' + 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR')
+        result.append('\t' + "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,")
+        result.append('\t' + "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE")
+        result.append('\t' + "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER")
+        result.append('\t' + "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,")
+        result.append('\t' + "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE")
+        result.append('\t' + "SOFTWARE.")
+        result.append("")
+        result.append("--------------------------------------------------------------------------------")
         result.append(
                 '\t\t' + "This file was generated on    : " + datetime.datetime.fromtimestamp(time.time()).strftime(
                     '%Y-%m-%d %H:%M:%S') + ".")
