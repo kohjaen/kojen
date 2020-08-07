@@ -23,13 +23,8 @@
     /// {{{USER_LOCALS}}}
 
     <<<CLASS_DOCUMENTATION>>>
-    class <<<DLL_EXPORT>>><<<CLASSNAME>>><<<CLASS_INHERITENCE_HIERARCHY>>>
+    public class <<<DLL_EXPORT>>><<<CLASSNAME>>><<<CLASS_INHERITENCE_HIERARCHY>>>
     {
-        ~<<<CLASSNAME>>>()
-        {
-            /// {{{USER_DESTRUCTOR_<<<CLASSNAME>>>}}}
-            /// {{{USER_DESTRUCTOR_<<<CLASSNAME>>>}}}
-        }
         <<<CONSTRUCTORS_DECLARE>>>
 
         <<<PUBLIC_ATTRIBUTES_DECLARE>>>

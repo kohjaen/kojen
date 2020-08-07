@@ -9,6 +9,7 @@
 #include "<<<STATEMACHINENAME>>>StateMachine.h"
 
 #include <boost/sml.hpp>
+#include <deque>
 
 /// {{{USER_HEADER_INCLUDES}}}
 /// {{{USER_HEADER_INCLUDES}}}
@@ -133,6 +134,8 @@ namespace <<<NAMESPACE>>>
 			return make_transition_table(
 				<<<TTT_LITE_SML_BEGIN>>>
 				<<<TTT_LITE_SML_END>>>
+				/// {{{USER_DEFERRED_EVENTS}}}
+	            /// {{{USER_DEFERRED_EVENTS}}}
 			);
 		}
 	};
@@ -151,7 +154,7 @@ namespace <<<NAMESPACE>>>
 		};
 		C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller)
 		{
-			m_sm = new msm::sm<C<<<STATEMACHINENAME>>>StateMachine>(&(*controller));
+			m_sm = new msm::sm<C<<<STATEMACHINENAME>>>StateMachine, msm::defer_queue<std::deque>>(&(*controller));
 		}
 
 		<<<PER_STATE_BEGIN>>>
@@ -163,12 +166,6 @@ namespace <<<NAMESPACE>>>
 
 		// Event triggering
 		<<<PER_EVENT_BEGIN>>>
-		//virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override
-		/*{
-			<<<EVENTNAME>>> data;
-			<<<EVENTMEMBERSLITEINSTANTIATE>>>
-			m_sm->process_event(data);
-		}*/
 		virtual void Trigger<<<EVENTNAME>>>(<<<EVENTNAME>>> *data) override
 		{
 			m_sm->process_event(*data);
@@ -178,7 +175,7 @@ namespace <<<NAMESPACE>>>
 		/// {{{USER_SMIMPL_PUBLIC_MEMBERS}}}
 		/// {{{USER_SMIMPL_PUBLIC_MEMBERS}}}
 	protected:
-		msm::sm<C<<<STATEMACHINENAME>>>StateMachine> * m_sm;
+		msm::sm<C<<<STATEMACHINENAME>>>StateMachine, msm::defer_queue<std::deque>> * m_sm;
 	};
 
 	////////////////////////////////////////////////////////////

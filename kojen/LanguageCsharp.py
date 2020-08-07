@@ -1004,8 +1004,11 @@ class LanguageCsharp:
 
     def GetFormatClassInheritence(self, classObj, dictOfInheritance):
         """
-        Returns the C++ format string for class inheritence based on objects
+        Returns the C# format string for class inheritence based on objects
         returned by parsing the class diagram in e.g. our favourite UML tool.
+
+        Note : For C#, Base classes must come before interfaces ... and only a single class is allowed to be inherited in C# (but multiple interfaces).
+        We leave that up to the software designer using this tool ... he should know that.
 
         @param classObj: class information from vppclassdiagram.Class
         @param dictOfInheritance: a dictionary of inheritence info : {'id': vppclassdiagram.Inheritance}
@@ -1013,16 +1016,24 @@ class LanguageCsharp:
         for "class Child : public Parent1, public Parent2"
         """
         result = ""
+        _classes_str = ""
+        _interfaces_str = ""
         if isinstance(classObj, Class) and isinstance(dictOfInheritance, dict):
             for id, inheritance in dictOfInheritance.items():
                 if isinstance(inheritance, Inheritance):
                     if inheritance.CLASS_TO_ID.find(classObj.ID) > -1:
-                        result = result + ' ' + inheritance.CLASS_FROM.replace(classObj.NAMESPACE + "::","") + ", "
+                        # classes before interfaces in inheritance hierarchy
+                        fixed_name = inheritance.CLASS_FROM.replace(classObj.NAMESPACE + "::","")
+                        if classObj.parent_classDiagram.classes[inheritance.CLASS_FROM_ID].PURE_VIRTUAL_INTERFACE:
+                            _interfaces_str = _interfaces_str + ' ' + fixed_name + ", "
+                        else:
+                            _classes_str = _classes_str + ' ' + fixed_name + ", "
                 else:
                     raise RuntimeError("dictOfInheritance contains item not of type 'Inheritance'")
         else:
             raise RuntimeError("classObj not of type 'Class' OR dictOfInheritance not of type 'dict'")
 
+        result = _classes_str + _interfaces_str
         if len(result) > 0:
             # remove last ','
             result = result.strip().rstrip(',')
@@ -1262,7 +1273,7 @@ class LanguageCsharp:
                 # 'direction'
                 params = []
                 for param in operation.PARAMETERS:
-                    tuples = self.GetTypeAndNameFromMultiplicityAndModifier(classObj, param["type"].strip().replace(classObj.NAMESPACE + "::", ""), param["modifier"].strip(), param["multiplicity"].strip(), param["name"].strip())
+                    tuples = self.GetTypeAndNameFromMultiplicityAndModifier(classObj, param["type"].strip(), param["modifier"].strip(), param["multiplicity"].strip(), param["name"].strip())
                     #tuple0 = param["const"].strip() + " " + tuples[0]
                     if param["direction"].strip().find("inout") > -1:
                         tuple0 = "ref " + tuples[0]
@@ -1326,7 +1337,7 @@ class LanguageCsharp:
                     attr_names.append(attr.NAME.strip())
         result = ""
         if params:
-            result = result + self.DeclareFunction("", classObj.NAME, classObj.NAME, is_impl, params, False, False, False).lstrip() + ("" if is_impl else ";")
+            result = "public " + self.DeclareFunction("", classObj.NAME, classObj.NAME, is_impl, params, False, False, False).lstrip() + ("" if is_impl else ";")
             if is_impl:
                 #result = result + "\n: "
                 #for i in range(len(params)):
@@ -1406,6 +1417,23 @@ class LanguageCsharp:
                 result = result + "[StructLayout(LayoutKind.Sequential, Pack=1)]\n"
             else:
                 pass
+        return result
+
+    def GetProjectIncludes(self, setOfProjectDependencies):
+        '''
+        Used in a .csharp project to include other dependant project files :
+
+        <ItemGroup>
+            <ProjectReference Include="..\XTestingClassTypes\XTestingClassTypes.csproj" />
+            <ProjectReference Include="..\XTestingInheritance\XTestingInheritance.csproj" />
+        </ItemGroup>
+        '''
+        result = ""
+        if len(setOfProjectDependencies) > 0:
+            result = "<ItemGroup>\n"
+            for s in setOfProjectDependencies:
+                result = result + '\t<ProjectReference Include="..\\' + s + '\\' + s + '.csproj" />\n'
+            result = result + "</ItemGroup>\n"
         return result
 
 def _filterOutTypesNotInModel(namespace_to_classes, classDiagram):
