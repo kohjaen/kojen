@@ -208,3 +208,30 @@ As the state-machine-implementation uses the controller base class, the followin
 ```
 
 All state queries and event triggering are done using the ```sm``` instance.
+
+### Deferred Events
+
+Deferred events are supported in SML and MSM state machines.
+
+In the example CD player statemachine this use-case could be pressing 'play' whilst the tray is closing : the close button will be pressed, and the tray will start closing, however the software trigger for *EventOpen* will only occur on the interrupt signalling that the tray actuator has completed either opening/closing the tray. 
+This can take up to several seconds. In that time, the 'play' button could be pressed. 
+
+The desired behaviour would be that once the tray is closed, the CD starts playing.
+
+This can be achieved by manually adding the correct deferred event in the *CDPlayerStateMachineImpl_SML.cpp* in the code preservation tags at the end of the transition table:
+
+```cplusplus
+/// {{{USER_DEFERRED_EVENTS}}}
+, StateOpen + event<EventPlay> / defer
+/// {{{USER_DEFERRED_EVENTS}}}
+```
+
+For *boost::msm* this can be achieved by manually adding the correct deferred event in code preservation tags in the state struct for *StateOpen* in *CDPlayerStateMachineImpl_SML.cpp* :
+
+```cplusplus
+/// {{{USER_StateOpen_DEFERRED_EVENTS}}}
+typedef boost::mpl::vector<EventPlay> deferred_events;
+/// {{{USER_StateOpen_DEFERRED_EVENTS}}} 
+```
+
+I believe this will also allow the sequence of 'play' then 'close' to work.

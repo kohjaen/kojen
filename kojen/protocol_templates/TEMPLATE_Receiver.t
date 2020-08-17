@@ -40,7 +40,7 @@ namespace <<<NAMESPACE>>>
 	class <<<DLL_EXPORT>>> C<<<CLASSNAME>>>NotHandledReceiver
 	{
 	public:
-		virtual void OnNotHandledMessageReceived( const uint8* data_buffer, const uint16& number_of_bytes ) = 0;
+		virtual void OnNotHandledMessageReceived( const uint8* data_buffer, const uint32& number_of_bytes ) = 0;
 	};
 
 #ifdef __arm__
@@ -57,7 +57,7 @@ namespace <<<NAMESPACE>>>
 		/**
 		IMsgReceiver overrides
 		*/
-		virtual void OnMessageReceived( const uint8* data_buffer, const uint16& number_of_bytes ) override;
+		virtual void OnMessageReceived( const uint8* data_buffer, const uint32& number_of_bytes ) override;
 		/**
 		Preamble, i.e. the message start marker in the byte stream
 		*/
@@ -66,7 +66,7 @@ namespace <<<NAMESPACE>>>
 		/**
 		See comments in base class.
 		*/
-		virtual uint16 LargestMessageSize() override;
+		virtual uint32 LargestMessageSize() override;
 #endif
 
 		/**[[[cog

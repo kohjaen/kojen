@@ -29,9 +29,9 @@ namespace <<<NAMESPACE>>>
 	Implementations for message reception.
 	*/
 #ifdef __arm__
-	uint16 C<<<CLASSNAME>>>Receiver::LargestMessageSize()
+	uint32 C<<<CLASSNAME>>>Receiver::LargestMessageSize()
 	{
-		uint16 result(0);
+		uint32 result(0);
 		/**[[[cog
 		for s in structs:
 			cog.outl("if(sizeof("+s.Name+") > result)")
@@ -53,7 +53,7 @@ namespace <<<NAMESPACE>>>
 		//[[[end]]]
 	}
 
-	void C<<<CLASSNAME>>>Receiver::OnMessageReceived( const uint8* data_buffer, const uint16& number_of_bytes )
+	void C<<<CLASSNAME>>>Receiver::OnMessageReceived( const uint8* data_buffer, const uint32& number_of_bytes )
 	{
 		/**[[[cog
 		msgHeader = interface[MessageHeader.Name]

@@ -98,13 +98,14 @@ import os
 
 class CUMLGenerator(CBASEGenerator):
 
-	def __init__(self, outputfiledir, language=None, author='Anonymous', namespace_to_folders = False, templatefiledir=""):
+	def __init__(self, outputfiledir, language=None, author='Anonymous', namespace_to_folders = False, templatefiledir="", vp_classdiagramname=""):
 		if not templatefiledir.strip():
 			if "LanguageCsharp" in str(type(language)):
 				templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "C#"))
 			elif "LanguageCPP" in str(type(language)):
 				templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "CPP"))
 		CBASEGenerator.__init__(self, templatefiledir, outputfiledir, language, author, namespace_to_folders)
+		self.classdiagramname = vp_classdiagramname
 
 	# Load Template and do 1st round of filtering.
 	# Returns {filename,[lines]}
@@ -247,7 +248,11 @@ class CUMLGenerator(CBASEGenerator):
 			if self.NAMESPACE_TO_GO_TO_OWN_FOLDER:
 				namespaces_in_project = classdiagram.GetNamespaceDependencies()
 			else:
-				namespaces_in_project["Project"] = set()
+				if self.classdiagramname: # not empty -> rename 'Project.xxxx' to 'classdiagramname.xxxx'
+					namespaces_in_project[self.classdiagramname] = set()
+				else:
+					namespaces_in_project["Project"] = set()
+
 			for namespace, dependency_set in namespaces_in_project.items():
 				if len(dependency_set) > 0:
 					print(" <!!!!!!!>", namespace, " depends on ", dependency_set)
@@ -303,7 +308,7 @@ def Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, 
 	print("*************************************")
 
 	class_diagram = ExtractClassDiagram(vp_classdiagramname, vp_project_path)
-	umlGen = CUMLGenerator(outputdir, language, author, namespace_to_folders,templatefiledir)
+	umlGen = CUMLGenerator(outputdir, language, author, namespace_to_folders,templatefiledir,vp_classdiagramname)
 	GenerateUML(umlGen,class_diagram,dclspc)
 
 def TestCPP():

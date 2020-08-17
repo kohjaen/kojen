@@ -160,7 +160,7 @@ class MessageHeader(OrderedDict, Query, DefaultVal):
 	It is enough information that, at a byte level 	we can parse the byte stream correctly, not lose any information
 	and do it generically in such a way that derived protocols do not have to be known by the endpoints.
 	This allows us to reuse a common snippet of code in all places, for handling bytestreams to message, without knowing
-	of the messages themselves (onlt MessageHeader needs to be known).
+	of the messages themselves (only MessageHeader needs to be known).
 
 	First  : 2 bytes  = Preamble. A marker separating all messages.
 	Second : 2 bytes  = Type ID. We can get the particular structure of the message.
