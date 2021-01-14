@@ -16,9 +16,9 @@ for g in language.LicenseAgreement():
 [[[end]]]
 */
 #pragma once
-#include <allplatforms/basetypes.h>
-#include <allplatforms/IConnection.h>
-#include <allplatforms/IMsgReceiver.h>
+#include "allplatforms/basetypes.h"
+#include "allplatforms/IConnection.h"
+#include "allplatforms/IMsgReceiver.h"
 #include "<<<CLASSNAME>>>.h"
 #if defined(_MSC_VER)
 	#define __attribute__(x)

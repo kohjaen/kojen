@@ -164,7 +164,7 @@ class UnitTestWriter:
             elif unittestfw == UnitTestFramework.BOOST:
                 result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE(serialized_size == sizeof('+message.Name+'), "ERROR : Serialized size of ' + message.Name + ' is not as expected.");')
             elif unittestfw == UnitTestFramework.CPPuTEST:
-                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(serialized_size,sizeof('+message.Name+'), "ERROR : Serialized size of ' + message.Name + ' is not as expected.")')
+                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(serialized_size,sizeof('+message.Name+'), "ERROR : Serialized size of ' + message.Name + ' is not as expected.");')
             else:
                 result.append(WHITESPACE + "// Incorrect option " + str(unittestfw) + " for TOBYTESTREAM, please see options in class UnitTestFramework")
 
@@ -207,7 +207,7 @@ class UnitTestWriter:
             elif unittestfw == UnitTestFramework.BOOST:
                 result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE('+indexer+' == serialized_size, "ERROR : Indexing count does not match the stream size.");')
             elif unittestfw == UnitTestFramework.CPPuTEST:
-                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT('+indexer+',serialized_size, "ERROR : Indexing count does not match the stream size.")')
+                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT('+indexer+',serialized_size, "ERROR : Indexing count does not match the stream size.");')
             else:
                 result.append(WHITESPACE + "// Incorrect option " + str(unittestfw) + " for FROMBYTESTREAMINDEX, please see options in class UnitTestFramework")
         else:
@@ -218,7 +218,7 @@ class UnitTestWriter:
             elif unittestfw == UnitTestFramework.BOOST:
                 result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE('+indexer+' == '+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.");')
             elif unittestfw == UnitTestFramework.CPPuTEST:
-                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT('+indexer+','+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.")')
+                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT('+indexer+','+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.");')
             else:
                 result.append(WHITESPACE + "// Incorrect option " + str(unittestfw) + " for FROMBYTESTREAMINDEX, please see options in class UnitTestFramework")
 
@@ -267,7 +267,7 @@ class UnitTestWriter:
         elif unittestfw == UnitTestFramework.BOOST:
             result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE(' + equality_check + ', "ERROR : Equality check for '+message.Name+' failed.");')
         elif unittestfw == UnitTestFramework.CPPuTEST:
-            result.append(WHITESPACE + 'CHECK_TEXT(' + equality_check + ', "ERROR : Equality check for '+message.Name+' failed.")')
+            result.append(WHITESPACE + 'CHECK_TEXT(' + equality_check + ', "ERROR : Equality check for '+message.Name+' failed.");')
         else:
             result.append(WHITESPACE + "// Incorrect option " + str(unittestfw) + " for "+message.Name+" EQUALITY CHECK, please see options in class UnitTestFramework")
 
@@ -308,7 +308,7 @@ class UnitTestWriter:
         elif unittestfw == UnitTestFramework.BOOST:
             result.append(WHITESPACE + language.WhiteSpace(0) + 'BOOST_REQUIRE_MESSAGE(' + size_struct_name + ' == ' + size_accum_struct_name + ', "ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts.");')
         elif unittestfw == UnitTestFramework.CPPuTEST:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'CHECK_EQUAL_TEXT(' + size_struct_name + ',' + size_accum_struct_name + ', "ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts.")')
+            result.append(WHITESPACE + language.WhiteSpace(0) + 'CHECK_EQUAL_TEXT(' + size_struct_name + ',' + size_accum_struct_name + ', "ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts.");')
         else:
             result.append(WHITESPACE + language.WhiteSpace(0) + "// Incorrect option " + str(unittestfw) + " for PACKEDNESS, please see options in class UnitTestFramework")
 
@@ -323,11 +323,11 @@ class UnitTestWriter:
         result.append("#ifdef __arm__")
         result.append(WHITESPACE + "// ARM doesnt use shared_ptr's, but a custom allocator...Don't leak memory")
         if unittestfw == UnitTestFramework.CPPuTEST:
-            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetBlocksInUse(),' + str(len(to_delete)) + ',"ERROR : Somebody is using ' + struct_name + 's without deleting them.")')
+            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetBlocksInUse(),' + str(len(to_delete)) + ',"ERROR : Somebody is using ' + struct_name + 's without deleting them.");')
             for delete in to_delete:
                 result.append(WHITESPACE + "delete " + delete + ";")
-            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetBlocksInUse(),0,"ERROR : Somebody is using ' + struct_name + 's without deleting them (2).")')
-            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetAllocations(),' + struct_name + '::GetDeallocations(),"ERROR : Somebody is using ' + struct_name + 's without deleting them (3).")')
+            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetBlocksInUse(),0,"ERROR : Somebody is using ' + struct_name + 's without deleting them (2).");')
+            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetAllocations(),' + struct_name + '::GetDeallocations(),"ERROR : Somebody is using ' + struct_name + 's without deleting them (3).");')
         else:
             result.append(WHITESPACE + "if(" + struct_name + "::GetBlocksInUse() != " + str(len(to_delete)) + ")")
             result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them.'))
@@ -415,7 +415,7 @@ class UnitTestWriter:
         elif unittestfw == UnitTestFramework.BOOST:
             result.append(WHITESPACE + language.WhiteSpace(0) + 'BOOST_REQUIRE_MESSAGE(' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ' == ' + size_accumulator + ', "ERROR : Size of ' + struct_name + ' payload size does not equal the sum of its separate parts (less pointers to data).");')
         elif unittestfw == UnitTestFramework.CPPuTEST:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'CHECK_EQUAL_TEXT(' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ',' + size_accumulator + ', "ERROR : Size of ' + struct_name + ' payload size does not equal the sum of its separate parts (less pointers to data).")')
+            result.append(WHITESPACE + language.WhiteSpace(0) + 'CHECK_EQUAL_TEXT(' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ',' + size_accumulator + ', "ERROR : Size of ' + struct_name + ' payload size does not equal the sum of its separate parts (less pointers to data).");')
         else:
             result.append(WHITESPACE + language.WhiteSpace(0) + "// Incorrect option " + str(unittestfw) + " for FACTORY PAYLOAD SIZE, please see options in class UnitTestFramework")
 

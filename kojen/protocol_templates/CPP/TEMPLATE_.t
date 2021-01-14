@@ -19,9 +19,9 @@ for g in language.LicenseAgreement():
 /// {{{USER_<<<CLASSNAME>>>_HEADER_INCLUDES}}}
 /// {{{USER_<<<CLASSNAME>>>_HEADER_INCLUDES}}}
 
-#include <allplatforms/MsgHeader.h>
+#include "allplatforms/MsgHeader.h"
 #ifdef __arm__
-#include <allplatforms/allocator.h>
+#include "allplatforms/allocator.h"
 #endif // __arm__
 #include "<<<CLASSNAME>>>Defines.h"
 #include "<<<CLASSNAME>>>Structs.h"

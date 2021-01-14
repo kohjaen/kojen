@@ -8,14 +8,12 @@
 #include "I<<<STATEMACHINENAME>>>Controller.h"
 #include "<<<STATEMACHINENAME>>>StateMachine.h"
 #ifdef __arm__
-#ifdef __FREERTOS__
-#include "allplatforms/threaded_dispatcher_FreeRTOS.h"
-#endif
 #else
 #include "allplatforms/threaded_dispatcher.h"
 #endif
 
 #include <boost/sml.hpp>
+#include <deque>
 
 /// {{{USER_HEADER_INCLUDES}}}
 /// {{{USER_HEADER_INCLUDES}}}
@@ -144,6 +142,8 @@ namespace <<<NAMESPACE>>>
 			return make_transition_table(
 				<<<TTT_LITE_SML_BEGIN>>>
 				<<<TTT_LITE_SML_END>>>
+				/// {{{USER_DEFERRED_EVENTS}}}
+	            /// {{{USER_DEFERRED_EVENTS}}}
 			);
 		}
 	};
@@ -156,10 +156,10 @@ namespace <<<NAMESPACE>>>
 		: public I<<<STATEMACHINENAME>>>StateMachine
 #ifdef NO_THREAD
 #else
-//#ifdef __arm__
-//#else
+#ifdef __arm__
+#else
 		  ,public XKoJen::threaded_dispatcher<Event>
-//#endif // __arm__
+#endif // __arm__
 #endif // NO_THREAD
 	{
 	public:
@@ -181,7 +181,7 @@ namespace <<<NAMESPACE>>>
 #endif // __arm__
 #endif // NO_THREAD
 		{
-			m_sm = new msm::sm<C<<<STATEMACHINENAME>>>StateMachine>(&(*controller));
+			m_sm = new msm::sm<C<<<STATEMACHINENAME>>>StateMachine, msm::defer_queue<std::deque>>(&(*controller));
 		}
 
 		<<<PER_STATE_BEGIN>>>
@@ -202,10 +202,24 @@ namespace <<<NAMESPACE>>>
 #endif
 		}
 
+		/*
+		<<<PER_EVENT_BEGIN>>>
+		virtual void Trigger<<<EVENTNAME>>>(<<<EVENTNAME>>> data) override
+		{
+#ifdef NO_THREAD
+			m_sm->process_event(data);
+#else
+			dispatch(std::move(data));
+#endif
+		}
+		virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override{}
+		<<<PER_EVENT_END>>>
+		*/
+
 		/// {{{USER_SMIMPL_PUBLIC_MEMBERS}}}
 		/// {{{USER_SMIMPL_PUBLIC_MEMBERS}}}
 	protected:
-		msm::sm<C<<<STATEMACHINENAME>>>StateMachine> * m_sm;
+		msm::sm<C<<<STATEMACHINENAME>>>StateMachine, msm::defer_queue<std::deque>> * m_sm;
 
 #ifdef NO_THREAD
 		void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type item)

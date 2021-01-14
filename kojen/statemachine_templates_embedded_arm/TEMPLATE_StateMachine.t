@@ -12,6 +12,7 @@
 ///
 #pragma once
 #include "I<<<STATEMACHINENAME>>>Controller.h"
+#include <memory>
 
 /// {{{USER_HEADER_INCLUDES}}}
 /// {{{USER_HEADER_INCLUDES}}}
@@ -38,10 +39,7 @@ namespace <<<NAMESPACE>>>
 		<<<PER_STATE_END>>>
 
 		// Event triggering
-		<<<PER_EVENT_BEGIN>>>
-		//virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) = 0;
-		virtual void Trigger<<<EVENTNAME>>>(<<<EVENTNAME>>>* data) = 0;
-		<<<PER_EVENT_END>>>
+		virtual void TriggerEvent(std::unique_ptr<Event> data) = 0;
 
 		/// {{{USER_PUBLIC_MEMBERS}}}
 		/// {{{USER_PUBLIC_MEMBERS}}}
