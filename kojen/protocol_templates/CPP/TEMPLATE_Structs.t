@@ -15,7 +15,7 @@ for g in language.LicenseAgreement():
 [[[end]]]
 */
 #pragma once
-#include <allplatforms/basetypes.h>
+#include "allplatforms/basetypes.h"
 #include "<<<CLASSNAME>>>Defines.h"
 // Memory allocator not used here (as this header forms part of the messages, where it is used)
 #if defined(_MSC_VER)

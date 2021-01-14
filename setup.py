@@ -19,7 +19,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.7',
-	package_data={'': ['classdiagram_templates/C#/*.*','classdiagram_templates/CPP/*.*', 'protocol_templates/*.*','statemachine_templates_embedded_arm/*.*','statemachine_templates_pc_boost/*.*', 'docs/images/*.*', 'docs/*.*']},
+	package_data={'': ['allplatforms/CPP/*.*', 'allplatforms/CPP/testsuite/*.*', 'classdiagram_templates/C#/*.*', 'classdiagram_templates/CPP/*.*', 'protocol_templates/CPP/*.*', 'protocol_templates/PY/*.*','statemachine_templates_embedded_arm/*.*','statemachine_templates_pc_boost/*.*', 'docs/images/*.*', 'docs/*.*']},
 	include_package_data=True,
     install_requires=['cogapp',],
 )

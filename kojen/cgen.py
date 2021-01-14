@@ -3,7 +3,7 @@
 __author__ = 'eugene'
 
 from collections import OrderedDict
-import os
+import os, shutil
 
 '''
 
@@ -165,3 +165,25 @@ class CBASEGenerator:
             with open(filename, 'w') as writer:
                 for line in filenames_to_lines[f]:
                     writer.write(line)
+
+'''------------------------------------------------------------------------------------------------------'''
+
+
+def FileCopyUtil(dir_from, dir_to, list_of_filenames):
+    """
+    Will copy each file from list_of_filenames in dir_from to dir_to.
+    Will create dir_to (even if its a tree) if it does not exist.
+
+    @param dir_from: The directory from, where the list of files reside.
+    @param dir_to: The directory the list of files should be copied to.
+    @param list_of_filenames: The list [] of filenames to be copied.
+    """
+    try:
+        os.makedirs(dir_to, exist_ok=True)
+        for filename in list_of_filenames:
+            try:
+                shutil.copy(os.path.join(dir_from, filename), os.path.join(dir_to, filename))
+            except OSError:
+                print("Copy of the file %s failed" % os.path.join(dir_from, filename))
+    except OSError:
+        print("Creation of the directory %s failed" % dir_to)

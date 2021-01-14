@@ -15,7 +15,7 @@
 #ifdef __arm__
 #include <allplatforms/allocator.h>
 #endif //__arm__
-
+#include <memory>
 /// {{{USER_HEADER_INCLUDES}}}
 /// {{{USER_HEADER_INCLUDES}}}
 
@@ -34,17 +34,36 @@ namespace <<<NAMESPACE>>>
 	/// @{ Events
 	struct Event
 	{
-	protected:
-	    virtual ~Event(){}
-	    Event(){};
+	public:
+		virtual ~Event(){}
+		Event(){};
+
+		/** Move-only
+		*/
+		Event(const Event& other) = delete;
+		Event& operator=(Event& other) = delete;
+		Event(Event&& other) = default;
+		Event& operator=(Event&& other) = default;
 	};
+	typedef std::unique_ptr<Event> Event_ptr;
+
 	<<<PER_EVENT_BEGIN>>>
 	struct <<<EVENTNAME>>> : public Event{
+		/** Move-only
+		*/
+		<<<EVENTNAME>>>(const <<<EVENTNAME>>>& other) = delete;
+		<<<EVENTNAME>>>& operator=(<<<EVENTNAME>>>& other) = delete;
+		<<<EVENTNAME>>>(<<<EVENTNAME>>>&& other) = default;
+		<<<EVENTNAME>>>& operator=(<<<EVENTNAME>>>&& other) = default;
+		<<<EVENTNAME>>>(){};
+
 	<<<EVENTMEMBERSDECLARE>>>
 #ifdef __arm__    
 	DECLARE_ALLOCATOR
 #endif //__arm__    
 	};
+	typedef std::unique_ptr<<<<EVENTNAME>>>> <<<EVENTNAME>>>_ptr;
+
 	<<<PER_EVENT_END>>>
 	/// @}
 
