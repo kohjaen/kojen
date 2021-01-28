@@ -677,12 +677,26 @@ class CStateMachineGenerator(CBASEGenerator):
 			files_to_copy.append("allocator.h")
 			files_to_copy.append("allocator.cpp")
 			files_to_copy.append("basetypes.h")
-			files_to_copy.append("threaded_dispatcher.h")
-			files_to_copy.append("threadsafe_queue.h")
-			files_to_copy.append("threaded_dispatcher_FreeRTOS.h")
-			files_to_copy.append("threadsafe_queue_FreeRTOS.h")
+			files_to_copy.append("CMakeLists.txt")
+			files_to_copy.append("Fault.h")
+			files_to_copy.append("Fault.cpp")
+			files_to_copy.append("stl_allocator.h")
 			files_to_copy.append("thread_FreeRTOS.h")
 			files_to_copy.append("thread_FreeRTOS.cpp")
+			files_to_copy.append("threaded_dispatcher.h")
+			files_to_copy.append("threaded_dispatcher_FreeRTOS.h")
+			files_to_copy.append("threadsafe_queue.h")
+			files_to_copy.append("threadsafe_queue_FreeRTOS.h")
+			files_to_copy.append("waitcondition.h")
+			files_to_copy.append("waitcondition.cpp")
+			files_to_copy.append("xallocator.h")
+			files_to_copy.append("xallocator.cpp")
+			files_to_copy.append("xlist.h")
+			files_to_copy.append("xmap.h")
+			files_to_copy.append("xqueue.h")
+			files_to_copy.append("xset.h")
+			files_to_copy.append("xstream.h")
+			files_to_copy.append("xstring.h")
 
 			allplatformsfrom = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("allplatforms", "CPP"))
 			allplatformsto = os.path.join(os.path.abspath(self.output_gen_file_dir), "allplatforms")
@@ -691,12 +705,25 @@ class CStateMachineGenerator(CBASEGenerator):
 
 			# Tests...
 			testfiles_to_copy = []
+			testfiles_to_copy.append("CMakeLists.txt")
 			testfiles_to_copy.append("Test.ThreadingConcepts.cpp")
+			testfiles_to_copy.append("test_main.cpp")
 
 			tests_allplatformsfrom = os.path.join(allplatformsfrom, "testsuite")
 			tests_allplatformsto = os.path.join(allplatformsto, "testsuite")
 
 			FileCopyUtil(tests_allplatformsfrom, tests_allplatformsto, testfiles_to_copy)
+
+			# Micro Unit Test Framework
+			microunit_files_to_copy = []
+			microunit_files_to_copy.append("minunit.h")
+			microunit_files_to_copy.append("minunit.cpp")
+
+			microunit_allplatformsfrom = os.path.join(tests_allplatformsfrom, "minunit")
+			microunit_allplatformsto = os.path.join(tests_allplatformsfrom, "minunit")
+
+			FileCopyUtil(microunit_allplatformsfrom, microunit_allplatformsto, microunit_files_to_copy)
+
 
 	''' Used for Protocol Generation
 	'''

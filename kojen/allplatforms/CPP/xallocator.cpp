@@ -6,6 +6,10 @@
 #include <task.h>
 #include <string.h>
 #endif
+#ifdef WIN32
+#include <windows.h>
+#include <synchapi.h>
+#endif
 
 using namespace std;
 

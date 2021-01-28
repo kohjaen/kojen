@@ -25,6 +25,9 @@
 */
 #pragma once
 
+#ifdef __arm__
+#else
+
 #include "basetypes.h"
 
 namespace XKoJen 
@@ -70,3 +73,5 @@ namespace XKoJen
 		std::condition_variable m_condition;
 	};
 }
+
+#endif // #ifdef __arm__

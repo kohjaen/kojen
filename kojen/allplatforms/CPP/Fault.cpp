@@ -6,6 +6,9 @@
 #else
 #include <assert.h>
 #endif
+#ifdef WIN32
+#include <debugapi.h>
+#endif
 
 //----------------------------------------------------------------------------
 // FaultHandler

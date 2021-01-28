@@ -18,14 +18,9 @@ For any feedback please contact the original author : koh.jaen@yahoo.de.
 
 */
 
+#include "minunit/minunit.h"
+
 #ifdef __arm__
-
-#include <asf.h>
-#ifdef FAIL
-#undef FAIL
-#endif // FAIL
-
-// Present assumption : CppUTest is used on ARM
 
 #else
 
@@ -37,12 +32,6 @@ For any feedback please contact the original author : koh.jaen@yahoo.de.
 #include "../IConnection.h"
 #include "../MsgHeader.h"
 #include <string.h>
-
-#if UNIT_TEST_FW == testfw_BOOST
-#include <boost/test/unit_test.hpp>
-#elif UNIT_TEST_FW == testfw_CPUuTEST
-#include "CppUTest/TestHarness.h"
-#endif
 
 	#define TEST_PREAMBLE 0xDEAD
 
@@ -91,70 +80,40 @@ For any feedback please contact the original author : koh.jaen@yahoo.de.
 
 	void IsEqual(const sCustomStruct& customstruct,const sCustomStruct& customstruct2)
 	{
-#if UNIT_TEST_FW == testfw_CPUuTEST
-		CHECK_EQUAL_TEXT(customstruct.reusable1 , customstruct2.reusable1, "sCustomStruct.reusable1 is not equal");
-		CHECK_EQUAL_TEXT(customstruct.reusable1 , customstruct2.reusable1, "sCustomStruct.reusable2 is not equal");
-		CHECK_EQUAL_TEXT(customstruct.reusable1 , customstruct2.reusable1, "sCustomStruct.reusable3 is not equal");
-#elif UNIT_TEST_FW == testfw_BOOST
-		BOOST_REQUIRE_MESSAGE(customstruct.reusable1 == customstruct2.reusable1, "sCustomStruct.reusable1 is not equal");
-		BOOST_REQUIRE_MESSAGE(customstruct.reusable1 == customstruct2.reusable1, "sCustomStruct.reusable2 is not equal");
-		BOOST_REQUIRE_MESSAGE(customstruct.reusable1 == customstruct2.reusable1, "sCustomStruct.reusable3 is not equal");
-#endif
+		mu_assert(customstruct.reusable1 == customstruct2.reusable1, "sCustomStruct.reusable1 is not equal");
+		mu_assert(customstruct.reusable1 == customstruct2.reusable1, "sCustomStruct.reusable2 is not equal");
+		mu_assert(customstruct.reusable1 == customstruct2.reusable1, "sCustomStruct.reusable3 is not equal");
 	}
 	void IsEqual(const sMsgHeader& header,const sMsgHeader& header2)
 	{
-#if UNIT_TEST_FW == testfw_CPUuTEST
-		CHECK_EQUAL_TEXT(header.Preamble			, header2.Preamble			, "sMsgHeader.Preamble is not equal");
-		CHECK_EQUAL_TEXT(header.PayloadSize			, header2.PayloadSize		, "sMsgHeader.PayloadSize is not equal");
-		CHECK_EQUAL_TEXT(header.TypeID				, header2.TypeID			, "sMsgHeader.TypeID is not equal");
-#elif UNIT_TEST_FW == testfw_BOOST
-		BOOST_REQUIRE_MESSAGE(header.Preamble			== header2.Preamble			, "sMsgHeader.Preamble is not equal");
-		BOOST_REQUIRE_MESSAGE(header.PayloadSize		== header2.PayloadSize		, "sMsgHeader.PayloadSize is not equal");
-		BOOST_REQUIRE_MESSAGE(header.TypeID				== header2.TypeID			, "sMsgHeader.TypeID is not equal");
-#endif
+		mu_assert(header.Preamble			== header2.Preamble			, "sMsgHeader.Preamble is not equal");
+		mu_assert(header.PayloadSize		== header2.PayloadSize		, "sMsgHeader.PayloadSize is not equal");
+		mu_assert(header.TypeID				== header2.TypeID			, "sMsgHeader.TypeID is not equal");
 	}
 	void IsEqual(const sSomeCmd& cmd,const sSomeCmd& cmd2)
 	{
 		IsEqual(cmd.Header, cmd2.Header);
-#if UNIT_TEST_FW == testfw_CPUuTEST
-		CHECK_EQUAL_TEXT(cmd.plEnableBla , cmd2.plEnableBla, "sSomeCmd.plEnableBla is not equal");
-#elif UNIT_TEST_FW == testfw_BOOST
-		BOOST_REQUIRE_MESSAGE(cmd.plEnableBla == cmd2.plEnableBla, "sSomeCmd.plEnableBla is not equal");
-#endif
+		mu_assert(cmd.plEnableBla == cmd2.plEnableBla, "sSomeCmd.plEnableBla is not equal");
 	}
 	void IsEqual(const sSomeCmdRsp& rsp,const sSomeCmdRsp& rsp2)
 	{
 		IsEqual(rsp.Header, rsp2.Header);
 		IsEqual(rsp.CommonData, rsp2.CommonData);
-#if UNIT_TEST_FW == testfw_CPUuTEST
-		CHECK_EQUAL_TEXT(rsp.plStatus , rsp2.plStatus, "sSomeCmdRsp.plStatus is not equal");
-#elif UNIT_TEST_FW == testfw_BOOST
-		BOOST_REQUIRE_MESSAGE(rsp.plStatus == rsp2.plStatus, "sSomeCmdRsp.plStatus is not equal");
-#endif
+		mu_assert(rsp.plStatus == rsp2.plStatus, "sSomeCmdRsp.plStatus is not equal");
 	}
 	void IsEqual(const sSomeReq& rsp,const sSomeReq& rsp2)
 	{
 		IsEqual(rsp.Header, rsp2.Header);
-#if UNIT_TEST_FW == testfw_CPUuTEST
-		CHECK_EQUAL_TEXT(rsp.PLEASE , rsp2.PLEASE, "sSomeReq.PLEASE is not equal");
-#elif UNIT_TEST_FW == testfw_BOOST
-		BOOST_REQUIRE_MESSAGE(rsp.PLEASE == rsp2.PLEASE, "sSomeReq.PLEASE is not equal");
-#endif
+		mu_assert(rsp.PLEASE == rsp2.PLEASE, "sSomeReq.PLEASE is not equal");
 	}
 	void IsEqual(const sSomeReqRsp& rsp,const sSomeReqRsp& rsp2)
 	{
 		IsEqual(rsp.Header, rsp2.Header);
 		IsEqual(rsp.CommonData1, rsp2.CommonData1);
 		IsEqual(rsp.CommonData2, rsp2.CommonData2);
-#if UNIT_TEST_FW == testfw_CPUuTEST
-		CHECK_EQUAL_TEXT(rsp.plHere1 , rsp2.plHere1, "sSomeReqRsp.plHere1 is not equal");
-		CHECK_EQUAL_TEXT(rsp.plHere2 , rsp2.plHere2, "sSomeReqRsp.plHere2 is not equal");
-		CHECK_EQUAL_TEXT(rsp.plHere3 , rsp2.plHere3, "sSomeReqRsp.plHere3 is not equal");
-#elif UNIT_TEST_FW == testfw_BOOST
-		BOOST_REQUIRE_MESSAGE(rsp.plHere1 == rsp2.plHere1, "sSomeReqRsp.plHere1 is not equal");
-		BOOST_REQUIRE_MESSAGE(rsp.plHere2 == rsp2.plHere2, "sSomeReqRsp.plHere2 is not equal");
-		BOOST_REQUIRE_MESSAGE(rsp.plHere3 == rsp2.plHere3, "sSomeReqRsp.plHere3 is not equal");
-#endif
+		mu_assert(rsp.plHere1 == rsp2.plHere1, "sSomeReqRsp.plHere1 is not equal");
+		mu_assert(rsp.plHere2 == rsp2.plHere2, "sSomeReqRsp.plHere2 is not equal");
+		mu_assert(rsp.plHere3 == rsp2.plHere3, "sSomeReqRsp.plHere3 is not equal");
 	}
 	void IsEqual(const sHeaderOnlyCmd& rsp, const sHeaderOnlyCmd& rsp2)
 	{
@@ -264,7 +223,7 @@ For any feedback please contact the original author : koh.jaen@yahoo.de.
 		CTestConnection(){};
 		~CTestConnection(){};
 
-		virtual bool SendData( const uint8_t* data_buffer, const uint16_t& number_of_bytes ) override{
+		virtual bool SendData(const uint8* data_buffer, const uint16& number_of_bytes) override {
 			// Loopback
 			OnDataReceived(data_buffer, number_of_bytes);
 			return true;
@@ -298,377 +257,306 @@ For any feedback please contact the original author : koh.jaen@yahoo.de.
 	#define FRAGMENT_BUF_SIZE 1024
 #endif
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST_GROUP(MsgByteStreamHandlingGroup)
-#elif UNIT_TEST_FW == testfw_BOOST
-struct MsgByteStreamHandlingGroup
-#endif // __arm__
+	namespace {
+		struct MsgByteStreamHandlingGroup
+		{
+			CTestMsgReceiver m_rx;
+			CTestConnection m_tx;
+
+			uint8 buffer[FRAGMENT_BUF_SIZE];
+
+			// TX Data...
+			sSomeCmd		m_somecmd;
+			sSomeCmdRsp		m_somecmdrsp;
+			sSomeReq		m_somereq;
+			sSomeReqRsp		m_somereqrsp;
+			sHeaderOnlyCmd	m_headeronlycmd;
+
+			MsgByteStreamHandlingGroup()
+			{
+				m_tx.SetMsgReceiver(&m_rx);
+				// Seeing as this unit test IF is not autogenerated, this needs to be set manually.
+				uint16 preamble = m_rx.Preamble();
+				// Setup defaults...
+				m_somecmd.Header.Preamble = preamble;
+				m_somecmd.Header.PayloadSize = sizeof(sSomeCmd) - sizeof(sMsgHeader);
+				m_somecmd.Header.TypeID = 6;
+				m_somecmd.plEnableBla = 111;
+
+				m_somecmdrsp.Header.Preamble = preamble;
+				m_somecmdrsp.Header.PayloadSize = sizeof(sSomeCmdRsp) - sizeof(sMsgHeader);
+				m_somecmdrsp.Header.TypeID = 7;
+				m_somecmdrsp.CommonData.reusable1 = 3;
+				m_somecmdrsp.CommonData.reusable2 = 2;
+				m_somecmdrsp.CommonData.reusable3 = 1;
+				m_somecmdrsp.plStatus = 123;
+
+				// Setup defaults...
+				m_somereq.Header.Preamble = preamble;
+				m_somereq.Header.PayloadSize = sizeof(sSomeReq) - sizeof(sMsgHeader);
+				m_somereq.Header.TypeID = 8;
+				m_somereq.PLEASE = 222;
+
+				m_somereqrsp.Header.Preamble = preamble;
+				m_somereqrsp.Header.PayloadSize = sizeof(sSomeReqRsp) - sizeof(sMsgHeader);
+				m_somereqrsp.Header.TypeID = 9;
+				m_somereqrsp.CommonData1.reusable1 = 333;
+				m_somereqrsp.CommonData1.reusable2 = 222;
+				m_somereqrsp.CommonData1.reusable3 = 111;
+				m_somereqrsp.CommonData2.reusable1 = 3333;
+				m_somereqrsp.CommonData2.reusable2 = 2222;
+				m_somereqrsp.CommonData2.reusable3 = 1111;
+				m_somereqrsp.plHere1 = 123456;
+				m_somereqrsp.plHere2 = 123456;
+				m_somereqrsp.plHere3 = 123456;
+
+				m_headeronlycmd.Header.Preamble = preamble;
+				m_headeronlycmd.Header.TypeID = 12;
+				m_headeronlycmd.Header.PayloadSize = sizeof(sHeaderOnlyCmd) - sizeof(sMsgHeader);
+
+				clear_rx();
+			}
+			void clear_rx()
+			{
+				memset((void*)&m_rx.m_rxsomecmd, 0, sizeof(sSomeCmd));
+				memset((void*)&m_rx.m_rxsomecmdrsp, 0, sizeof(sSomeCmdRsp));
+				memset((void*)&m_rx.m_rxsomereq, 0, sizeof(sSomeReq));
+				memset((void*)&m_rx.m_rxsomereqrsp, 0, sizeof(sSomeReqRsp));
+				memset((void*)&m_rx.m_rxheaderonlycmd, 0, sizeof(sHeaderOnlyCmd));
+			}
+		};
+	}
+
+MU_TEST(Scenario1_ByteForByteIndividualPackets)
 {
-	CTestMsgReceiver m_rx;
-	CTestConnection m_tx;
+	MsgByteStreamHandlingGroup fixture;
+	mu_assert(fixture.m_tx.HasMsgReceiver(),	  "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
-	uint8 buffer[FRAGMENT_BUF_SIZE];
-
-	// TX Data...
-	sSomeCmd		m_somecmd;
-	sSomeCmdRsp		m_somecmdrsp;
-	sSomeReq		m_somereq;
-	sSomeReqRsp		m_somereqrsp;
-	sHeaderOnlyCmd	m_headeronlycmd;
-
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	void setup() 
-#elif UNIT_TEST_FW == testfw_BOOST
-	MsgByteStreamHandlingGroup()
-#endif // __arm__
-	{
-		m_tx.SetMsgReceiver(&m_rx);
-		// Seeing as this unit test IF is not autogenerated, this needs to be set manually.
-		uint16 preamble = m_rx.Preamble();
-		// Setup defaults...
-		m_somecmd.Header.Preamble = preamble;
-		m_somecmd.Header.PayloadSize = sizeof(sSomeCmd) - sizeof(sMsgHeader);
-		m_somecmd.Header.TypeID = 6;
-		m_somecmd.plEnableBla = 111;
-
-		m_somecmdrsp.Header.Preamble = preamble;
-		m_somecmdrsp.Header.PayloadSize = sizeof(sSomeCmdRsp) - sizeof(sMsgHeader);
-		m_somecmdrsp.Header.TypeID = 7;
-		m_somecmdrsp.CommonData.reusable1 = 3;
-		m_somecmdrsp.CommonData.reusable2 = 2;
-		m_somecmdrsp.CommonData.reusable3 = 1;
-		m_somecmdrsp.plStatus = 123;
-
-		// Setup defaults...
-		m_somereq.Header.Preamble = preamble;
-		m_somereq.Header.PayloadSize = sizeof(sSomeReq) - sizeof(sMsgHeader);
-		m_somereq.Header.TypeID = 8;
-		m_somereq.PLEASE = 222;
-
-		m_somereqrsp.Header.Preamble = preamble;
-		m_somereqrsp.Header.PayloadSize = sizeof(sSomeReqRsp) - sizeof(sMsgHeader);
-		m_somereqrsp.Header.TypeID = 9;
-		m_somereqrsp.CommonData1.reusable1 = 333;
-		m_somereqrsp.CommonData1.reusable2 = 222;
-		m_somereqrsp.CommonData1.reusable3 = 111;
-		m_somereqrsp.CommonData2.reusable1 = 3333;
-		m_somereqrsp.CommonData2.reusable2 = 2222;
-		m_somereqrsp.CommonData2.reusable3 = 1111;
-		m_somereqrsp.plHere1 = 123456;
-		m_somereqrsp.plHere2 = 123456;
-		m_somereqrsp.plHere3 = 123456;
-
-		m_headeronlycmd.Header.Preamble = preamble;
-		m_headeronlycmd.Header.TypeID = 12;
-		m_headeronlycmd.Header.PayloadSize = sizeof(sHeaderOnlyCmd) - sizeof(sMsgHeader);
-
-		clear_rx();
-	}
-	void clear_rx()
-	{
-		memset((void*)&m_rx.m_rxsomecmd, 0, sizeof(sSomeCmd));
-		memset((void*)&m_rx.m_rxsomecmdrsp, 0, sizeof(sSomeCmdRsp));
-		memset((void*)&m_rx.m_rxsomereq, 0, sizeof(sSomeReq));
-		memset((void*)&m_rx.m_rxsomereqrsp, 0, sizeof(sSomeReqRsp));
-		memset((void*)&m_rx.m_rxheaderonlycmd, 0, sizeof(sHeaderOnlyCmd));
-	}
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	void teardown() {
-	}
-#endif
-};
-
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario1_ByteForByteIndividualPackets)
-#elif UNIT_TEST_FW == testfw_BOOST
-
-BOOST_AUTO_TEST_SUITE(XKoJen_suite);
-BOOST_AUTO_TEST_SUITE(PacketHandling_suite);
-
-BOOST_FIXTURE_TEST_CASE(Scenario1_ByteForByteIndividualPackets, MsgByteStreamHandlingGroup)
-#endif
-{
-
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(),	  "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
 
 	// Scenario 1...Byte For byte...per message...
-	memcpy((void*) buffer, &m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
 	uint16 total = sizeof(sSomeCmd);
 	for(uint16 cnt = 0; cnt < total;cnt=cnt+1)
 	{
-		m_tx.SendData(&buffer[cnt],1);
+		fixture.m_tx.SendData(&fixture.buffer[cnt],1);
 	}
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
 	
-	memcpy((void*) buffer, &m_somecmdrsp, sizeof(sSomeCmdRsp));
+	memcpy((void*)fixture.buffer, &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
 	for(uint16 cnt = 0; cnt < sizeof(sSomeCmdRsp);++cnt)
 	{
-		m_tx.SendData(&buffer[cnt],1);
+		fixture.m_tx.SendData(&fixture.buffer[cnt],1);
 	}
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-	memcpy((void*) buffer, &m_somereq, sizeof(sSomeReq));
+	memcpy((void*)fixture.buffer, &fixture.m_somereq, sizeof(sSomeReq));
 	for(uint16 cnt = 0; cnt < sizeof(sSomeReq);++cnt)
 	{
-		m_tx.SendData(&buffer[cnt],1);
+		fixture.m_tx.SendData(&fixture.buffer[cnt],1);
 	}
-	IsEqual(m_somereq, m_rx.m_rxsomereq);
+	IsEqual(fixture.m_somereq, fixture.m_rx.m_rxsomereq);
 
-	memcpy((void*) buffer, &m_somereqrsp, sizeof(sSomeReqRsp));
+	memcpy((void*)fixture.buffer, &fixture.m_somereqrsp, sizeof(sSomeReqRsp));
 	for(uint16 cnt = 0; cnt < sizeof(sSomeReqRsp);++cnt)
 	{
-		m_tx.SendData(&buffer[cnt],1);
+		fixture.m_tx.SendData(&fixture.buffer[cnt],1);
 	}
-	IsEqual(m_somereqrsp, m_rx.m_rxsomereqrsp);
+	IsEqual(fixture.m_somereqrsp, fixture.m_rx.m_rxsomereqrsp);
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received");
-#endif
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received");
 }
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario2_SmallFragments)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario2_SmallFragments, MsgByteStreamHandlingGroup)
-#endif
+
+MU_TEST(Scenario2_SmallFragments)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	/// Scenario 2...greater than header, but less than message...
 	{
-		memcpy((void*) buffer, &m_somecmdrsp, sizeof(sSomeCmdRsp));
+		memcpy((void*)fixture.buffer, &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
 		uint16 size_1 = sizeof(sMsgHeader) + (sizeof(sSomeCmdRsp) - sizeof(sMsgHeader))*0.5;
 		uint16 size_2 = sizeof(sSomeCmdRsp) - size_1;
-		m_tx.SendData(&buffer[0],size_1);
-		m_tx.SendData(&buffer[size_1],size_2);
-		IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+		fixture.m_tx.SendData(&fixture.buffer[0],size_1);
+		fixture.m_tx.SendData(&fixture.buffer[size_1],size_2);
+		IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 	}
 	{
-		memcpy((void*) buffer, &m_somereqrsp, sizeof(sSomeReqRsp));
+		memcpy((void*)fixture.buffer, &fixture.m_somereqrsp, sizeof(sSomeReqRsp));
 		uint16 size_1 = sizeof(sMsgHeader) + (sizeof(sSomeReqRsp) - sizeof(sMsgHeader))*0.5;
 		uint16 size_2 = sizeof(sSomeReqRsp) - size_1;
-		m_tx.SendData(&buffer[0],size_1);
-		m_tx.SendData(&buffer[size_1],size_2);
-		IsEqual(m_somereqrsp, m_rx.m_rxsomereqrsp);
+		fixture.m_tx.SendData(&fixture.buffer[0],size_1);
+		fixture.m_tx.SendData(&fixture.buffer[size_1],size_2);
+		IsEqual(fixture.m_somereqrsp, fixture.m_rx.m_rxsomereqrsp);
 	}
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received");
-#endif
+
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received");
 }
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario3_FullPackets)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario3_FullPackets, MsgByteStreamHandlingGroup)
-#endif
+
+MU_TEST(Scenario3_FullPackets)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	/// Scenario 3...full...
-	memcpy((void*) buffer, &m_somecmd, sizeof(sSomeCmd));
-	m_tx.SendData(&buffer[0],sizeof(sSomeCmd));
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	fixture.m_tx.SendData(&fixture.buffer[0],sizeof(sSomeCmd));
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
 	
-	memcpy((void*) buffer, &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	m_tx.SendData(&buffer[0],sizeof(sSomeCmdRsp));
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+	memcpy((void*)fixture.buffer, &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0],sizeof(sSomeCmdRsp));
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-	memcpy((void*) buffer, &m_somereq, sizeof(sSomeReq));
-	m_tx.SendData(&buffer[0],sizeof(sSomeReq));
-	IsEqual(m_somereq, m_rx.m_rxsomereq);
+	memcpy((void*)fixture.buffer, &fixture.m_somereq, sizeof(sSomeReq));
+	fixture.m_tx.SendData(&fixture.buffer[0],sizeof(sSomeReq));
+	IsEqual(fixture.m_somereq, fixture.m_rx.m_rxsomereq);
 	
-	memcpy((void*) buffer, &m_somereqrsp, sizeof(sSomeReqRsp));
-	m_tx.SendData(&buffer[0],sizeof(sSomeReqRsp));
-	IsEqual(m_somereqrsp, m_rx.m_rxsomereqrsp);
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received");
-#endif
+	memcpy((void*)fixture.buffer, &fixture.m_somereqrsp, sizeof(sSomeReqRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0],sizeof(sSomeReqRsp));
+	IsEqual(fixture.m_somereqrsp, fixture.m_rx.m_rxsomereqrsp);
+
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received");
 }
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario4_1_FullPacketsConcatenated)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario4_1_FullPacketsConcatenated, MsgByteStreamHandlingGroup)
-#endif
+
+MU_TEST(Scenario4_1_FullPacketsConcatenated)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	/// Scanerio 4...data received concatenated...
-	memcpy((void*) buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)], &m_somereq, sizeof(sSomeReq));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)+sizeof(sSomeReq)], &m_somereqrsp, sizeof(sSomeReqRsp));
-	m_tx.SendData(&buffer[0],sizeof(sSomeCmd) + sizeof(sSomeCmdRsp) + sizeof(sSomeReq) + sizeof(sSomeReqRsp));
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
-	IsEqual(m_somereq, m_rx.m_rxsomereq);
-	IsEqual(m_somereqrsp, m_rx.m_rxsomereqrsp);
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received");
-#endif
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)], &fixture.m_somereq, sizeof(sSomeReq));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)+sizeof(sSomeReq)], &fixture.m_somereqrsp, sizeof(sSomeReqRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0],sizeof(sSomeCmd) + sizeof(sSomeCmdRsp) + sizeof(sSomeReq) + sizeof(sSomeReqRsp));
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
+	IsEqual(fixture.m_somereq, fixture.m_rx.m_rxsomereq);
+	IsEqual(fixture.m_somereqrsp, fixture.m_rx.m_rxsomereqrsp);
+
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received");
 }
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario4_2_FullPacketsConcatenated_ByteForByte)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario4_2_FullPacketsConcatenated_ByteForByte, MsgByteStreamHandlingGroup)
-#endif
+
+MU_TEST(Scenario4_2_FullPacketsConcatenated_ByteForByte)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	/// Scanerio 4...data received concatenated...but byte for byte
-	memcpy((void*) buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)], &m_somereq, sizeof(sSomeReq));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)+sizeof(sSomeReq)], &m_somereqrsp, sizeof(sSomeReqRsp));
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)], &fixture.m_somereq, sizeof(sSomeReq));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)+sizeof(sSomeReq)], &fixture.m_somereqrsp, sizeof(sSomeReqRsp));
 	for(uint16 cnt = 0; cnt < sizeof(sSomeCmd) + sizeof(sSomeCmdRsp)+sizeof(sSomeReq) + sizeof(sSomeReqRsp);++cnt)
 	{
-		m_tx.SendData(&buffer[cnt],1);
+		fixture.m_tx.SendData(&fixture.buffer[cnt],1);
 	}
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
-	IsEqual(m_somereq, m_rx.m_rxsomereq);
-	IsEqual(m_somereqrsp, m_rx.m_rxsomereqrsp);
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received");
-#endif
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
+	IsEqual(fixture.m_somereq, fixture.m_rx.m_rxsomereq);
+	IsEqual(fixture.m_somereqrsp, fixture.m_rx.m_rxsomereqrsp);
+
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received");
 }
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario_5_FragmentedAndMoreFragmented)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_5_FragmentedAndMoreFragmented, MsgByteStreamHandlingGroup)
-#endif
+
+MU_TEST(Scenario_5_FragmentedAndMoreFragmented)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
+
 
 	/// 5) data received concatenated and fragmented.
 	/// - several messages received with fragmented messages at the end.
 	/// - followed by more fragmented messages...
 	/// --> this is a good test!
-	memcpy((void*) buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)], &m_somereq, sizeof(sSomeReq));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)+sizeof(sSomeReq)], &m_somereqrsp, sizeof(sSomeReqRsp));
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)], &fixture.m_somereq, sizeof(sSomeReq));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)+sizeof(sSomeCmdRsp)+sizeof(sSomeReq)], &fixture.m_somereqrsp, sizeof(sSomeReqRsp));
 
 	size_t total_size = sizeof(sSomeCmd) + sizeof(sSomeCmdRsp) + sizeof(sSomeReq) + sizeof(sSomeReqRsp);
 	size_t size_1 = sizeof(sSomeCmd) + sizeof(sSomeCmdRsp) + sizeof(sSomeReq)*0.3;
 	size_t size_2 = (total_size - size_1) * 0.7;
 	size_t size_3 = total_size - size_1 - size_2;
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL(total_size, size_1 + size_2 + size_3);
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_CHECK_EQUAL(total_size, size_1 + size_2 + size_3);
-#endif
+
+	mu_check(total_size == size_1 + size_2 + size_3);
+
 	size_t cnt = 0;
 
 	// Vary byte-for-byte betwe the 3 transmissions...
 
 	// 1
-	m_tx.SendData(&buffer[cnt], size_1);
+	fixture.m_tx.SendData(&fixture.buffer[cnt], size_1);
 	cnt+=size_1;
-	m_tx.SendData(&buffer[cnt], size_2);
+	fixture.m_tx.SendData(&fixture.buffer[cnt], size_2);
 	cnt+=size_2;
 	for(uint16 i = 0; i < size_3 ;++i)
 	{
-		m_tx.SendData(&buffer[cnt],1);
+		fixture.m_tx.SendData(&fixture.buffer[cnt],1);
 		++cnt;
 	}
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
-	IsEqual(m_somereq, m_rx.m_rxsomereq);
-	IsEqual(m_somereqrsp, m_rx.m_rxsomereqrsp);
-	clear_rx();
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
+	IsEqual(fixture.m_somereq, fixture.m_rx.m_rxsomereq);
+	IsEqual(fixture.m_somereqrsp, fixture.m_rx.m_rxsomereqrsp);
+	fixture.clear_rx();
 	cnt = 0;
 	// 2
-	m_tx.SendData(&buffer[cnt], size_1);
+	fixture.m_tx.SendData(&fixture.buffer[cnt], size_1);
 	cnt+=size_1;
 	for(uint16 i = 0; i < size_2 ;++i)
 	{
-		m_tx.SendData(&buffer[cnt],1);
+		fixture.m_tx.SendData(&fixture.buffer[cnt],1);
 		++cnt;
 	}
-	m_tx.SendData(&buffer[cnt], size_3);
+	fixture.m_tx.SendData(&fixture.buffer[cnt], size_3);
 	cnt+=size_3;
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
-	IsEqual(m_somereq, m_rx.m_rxsomereq);
-	IsEqual(m_somereqrsp, m_rx.m_rxsomereqrsp);
-	clear_rx();
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
+	IsEqual(fixture.m_somereq, fixture.m_rx.m_rxsomereq);
+	IsEqual(fixture.m_somereqrsp, fixture.m_rx.m_rxsomereqrsp);
+	fixture.clear_rx();
 	cnt = 0;
 	// 3
 	for(uint16 i = 0; i < size_1 ;++i)
 	{
-		m_tx.SendData(&buffer[cnt],1);
+		fixture.m_tx.SendData(&fixture.buffer[cnt],1);
 		++cnt;
 	}
-	m_tx.SendData(&buffer[cnt], size_2);
+	fixture.m_tx.SendData(&fixture.buffer[cnt], size_2);
 	cnt+=size_2;
-	m_tx.SendData(&buffer[cnt], size_3);
+	fixture.m_tx.SendData(&fixture.buffer[cnt], size_3);
 	cnt+=size_3;
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
-	IsEqual(m_somereq, m_rx.m_rxsomereq);
-	IsEqual(m_somereqrsp, m_rx.m_rxsomereqrsp);
-	clear_rx();
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
+	IsEqual(fixture.m_somereq, fixture.m_rx.m_rxsomereq);
+	IsEqual(fixture.m_somereqrsp, fixture.m_rx.m_rxsomereqrsp);
+	fixture.clear_rx();
 	cnt = 0;
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received");
-#endif
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received");
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-struct sUnknownToCommunicationLayer
-{
-	sMsgHeader Header;
-	sCustomStruct CommonData;
-	uint8 plStatus[2*FRAGMENT_BUF_SIZE]   __attribute__ ((packed));
-};
+namespace {
+	struct sUnknownToCommunicationLayer
+	{
+		sMsgHeader Header;
+		sCustomStruct CommonData;
+		uint8 plStatus[2 * FRAGMENT_BUF_SIZE]   __attribute__((packed));
+	};
+}
 #define INIT_DATA_UNKNOWN_DIFFERENT_PREAMBLE \
 	data_unknown.Header.Preamble = 0x66;\
 	data_unknown.Header.PayloadSize = sizeof(sUnknownToCommunicationLayer) - sizeof(sMsgHeader);\
@@ -681,59 +569,41 @@ struct sUnknownToCommunicationLayer
 	data_unknown.Header.TypeID = 66;\
 	memset((void*)&data_unknown.plStatus,23,2*FRAGMENT_BUF_SIZE*sizeof(uint8));
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario_6_1_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_ByteForByte)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_6_1_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_ByteForByte, MsgByteStreamHandlingGroup)
-#endif
+MU_TEST(Scenario_6_1_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_ByteForByte)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	sUnknownToCommunicationLayer data_unknown;
 	INIT_DATA_UNKNOWN_SAME_PREAMBLE;
 	uint8* start_data = (uint8*)&data_unknown;
 	// Shouldnt crash, should simply get a printout...
 	for(size_t i = 0; i < sizeof(sUnknownToCommunicationLayer); ++i){
-		m_tx.SendData(&start_data[i],1);
+		fixture.m_tx.SendData(&start_data[i],1);
 	}
 	// Other messages should still work
 #ifdef __arm__
-	CHECK(!m_tx.HasDataExceedingFragmentBufferSize()); // Would have already been cleared.
+	mu_check(!fixture.m_tx.HasDataExceedingFragmentBufferSize()); // Would have already been cleared.
 #endif
 
 	/// Scanerio 4...data received concatenated...
-	memcpy((void*) buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	m_tx.SendData(&buffer[0],sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0],sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, true, "Unknown message NOTreceived");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_rx.m_unknown_message_received, "Unknown message NOT received");
-#endif
-
+	mu_assert(fixture.m_rx.m_unknown_message_received, "Unknown message NOT received");
 }
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario_6_2_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_Fragmented)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_6_2_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_Fragmented, MsgByteStreamHandlingGroup)
-#endif
+
+MU_TEST(Scenario_6_2_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_Fragmented)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	sUnknownToCommunicationLayer data_unknown;
 	INIT_DATA_UNKNOWN_SAME_PREAMBLE;
@@ -745,127 +615,94 @@ BOOST_FIXTURE_TEST_CASE(Scenario_6_2_UnknownDataBiggerThanFragmentBuf_SAME_PREAM
 	while(tx_rem != 0){
 		if(tx_cnt > tx_rem)
 			tx_cnt = tx_rem;
-		m_tx.SendData(&start_data[i_cnt],tx_cnt);
+		fixture.m_tx.SendData(&start_data[i_cnt],tx_cnt);
 		tx_rem -= tx_cnt;
 		i_cnt  += tx_cnt;
 #ifdef __arm__
 		if(tx_rem > 0){
-			CHECK(m_tx.HasDataExceedingFragmentBufferSize());
+			mu_check(fixture.m_tx.HasDataExceedingFragmentBufferSize());
 		}
 		else{ // Would have been reset once all the bytes were parsed...
-			CHECK(!m_tx.HasDataExceedingFragmentBufferSize());
+			mu_check(!fixture.m_tx.HasDataExceedingFragmentBufferSize());
 		}
 #endif
 	}
 	// Other messages should still work
 #ifdef __arm__
-	CHECK(!m_tx.HasDataExceedingFragmentBufferSize()); // Would have already been cleared.
+	mu_check(!fixture.m_tx.HasDataExceedingFragmentBufferSize()); // Would have already been cleared.
 #endif
 
 	/// Scanerio 4...data received concatenated...
-	memcpy((void*) buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	m_tx.SendData(&buffer[0],sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0],sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, true, "Unknown message NOTreceived");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_rx.m_unknown_message_received, "Unknown message NOT received");
-#endif
+	mu_assert(fixture.m_rx.m_unknown_message_received, "Unknown message NOT received");
 }
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario_6_3_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_Whole)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_6_3_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_Whole, MsgByteStreamHandlingGroup)
-#endif
+MU_TEST(Scenario_6_3_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_Whole)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	sUnknownToCommunicationLayer data_unknown;
 	INIT_DATA_UNKNOWN_SAME_PREAMBLE;
 	// Shouldnt crash, should simply get a printout...
-	m_tx.SendData((uint8*)&data_unknown,sizeof(sUnknownToCommunicationLayer));
+	fixture.m_tx.SendData((uint8*)&data_unknown,sizeof(sUnknownToCommunicationLayer));
 	// Other messages should still work
 #ifdef __arm__
-	CHECK(!m_tx.HasDataExceedingFragmentBufferSize()); // Would have already been cleared.
+	mu_check(!fixture.m_tx.HasDataExceedingFragmentBufferSize()); // Would have already been cleared.
 #endif
 
 	/// Scanerio 4...data received concatenated...
-	memcpy((void*) buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*) &buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	m_tx.SendData(&buffer[0],sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*) &fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0],sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, true, "Unknown message NOTreceived");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_rx.m_unknown_message_received, "Unknown message NOT received");
-#endif
+	mu_assert(fixture.m_rx.m_unknown_message_received, "Unknown message NOT received");
 }
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario_6_4_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_ByteForByte)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_6_4_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_ByteForByte, MsgByteStreamHandlingGroup)
-#endif
+MU_TEST(Scenario_6_4_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_ByteForByte)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	sUnknownToCommunicationLayer data_unknown;
 	INIT_DATA_UNKNOWN_DIFFERENT_PREAMBLE;
 	uint8* start_data = (uint8*)&data_unknown;
 	// Shouldnt crash, should simply get a printout...
 	for (size_t i = 0; i < sizeof(sUnknownToCommunicationLayer); ++i) {
-		m_tx.SendData(&start_data[i], 1);
+		fixture.m_tx.SendData(&start_data[i], 1);
 	}
 	// Other messages should still work
 #ifdef __arm__
-	CHECK(!m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
+	mu_check(!fixture.m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
 #endif
 
 													   /// Scanerio 4...data received concatenated...
-	memcpy((void*)buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*)&buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	m_tx.SendData(&buffer[0], sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*)&fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0], sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received...data should never make it this far in this case");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received...data should never make it this far in this case");
-#endif
-
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received...data should never make it this far in this case");
 }
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario_6_5_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_Fragmented)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_6_5_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_Fragmented, MsgByteStreamHandlingGroup)
-#endif
+
+MU_TEST(Scenario_6_5_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_Fragmented)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	sUnknownToCommunicationLayer data_unknown;
 	INIT_DATA_UNKNOWN_DIFFERENT_PREAMBLE;
@@ -877,115 +714,85 @@ BOOST_FIXTURE_TEST_CASE(Scenario_6_5_UnknownDataBiggerThanFragmentBuf_DIFFERENT_
 	while (tx_rem != 0) {
 		if (tx_cnt > tx_rem)
 			tx_cnt = tx_rem;
-		m_tx.SendData(&start_data[i_cnt], tx_cnt);
+		fixture.m_tx.SendData(&start_data[i_cnt], tx_cnt);
 		tx_rem -= tx_cnt;
 		i_cnt += tx_cnt;
 #ifdef __arm__
 		if (tx_rem > 0) {
-			CHECK(!m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
+			mu_check(!fixture.m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
 		}
 		else {
-			CHECK(!m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
+			mu_check(!fixture.m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
 		}
 #endif
 	}
 	// Other messages should still work
 #ifdef __arm__
-	CHECK(!m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
+	mu_assert(!fixture.m_tx.HasDataExceedingFragmentBufferSize(),"Has data exceeding fragment buffer size."); // data should never make it this far from a different preamble/interface
 #endif
 
 													   /// Scanerio 4...data received concatenated...
-	memcpy((void*)buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*)&buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	m_tx.SendData(&buffer[0], sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*)&fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0], sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received...data should never make it this far in this case");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received...data should never make it this far in this case");
-#endif
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received...data should never make it this far in this case");
 }
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario_6_6_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_Whole)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_6_6_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_Whole, MsgByteStreamHandlingGroup)
-#endif
+MU_TEST(Scenario_6_6_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_Whole)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	sUnknownToCommunicationLayer data_unknown;
 	INIT_DATA_UNKNOWN_DIFFERENT_PREAMBLE;
 	// Shouldnt crash, should simply get a printout...
-	m_tx.SendData((uint8*)&data_unknown, sizeof(sUnknownToCommunicationLayer));
+	fixture.m_tx.SendData((uint8*)&data_unknown, sizeof(sUnknownToCommunicationLayer));
 	// Other messages should still work
 #ifdef __arm__
-	CHECK(!m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
+	mu_check(!fixture.m_tx.HasDataExceedingFragmentBufferSize()); // data should never make it this far from a different preamble/interface
 #endif
 
 													   /// Scanerio 4...data received concatenated...
-	memcpy((void*)buffer, &m_somecmd, sizeof(sSomeCmd));
-	memcpy((void*)&buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-	m_tx.SendData(&buffer[0], sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
-	IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-	IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+	memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+	memcpy((void*)&fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+	fixture.m_tx.SendData(&fixture.buffer[0], sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
+	IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+	IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received...data should never make it this far in this case");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received...data should never make it this far in this case");
-#endif
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received...data should never make it this far in this case");
 }
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(MsgByteStreamHandlingGroup, Scenario_7_HeaderOnlyMessages)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_7_HeaderOnlyMessages, MsgByteStreamHandlingGroup)
-#endif // __arm__
+MU_TEST(Scenario_7_HeaderOnlyMessages)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), true, "Does not have a message receiver, but should have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), false, "Has a raw data receiver, but should not have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
+	mu_assert(fixture.m_tx.HasMsgReceiver(), "Does not have a message receiver, but should have.");
+	mu_assert(!fixture.m_tx.HasRawDataReceiver(), "Has a raw data receiver, but should not have.");
 
 	/// 7) messages with zero payload (header only messages)
-	memcpy((void*)buffer, &m_headeronlycmd, sizeof(sHeaderOnlyCmd));
-	m_tx.SendData(&buffer[0], sizeof(sHeaderOnlyCmd));
-	IsEqual(m_headeronlycmd, m_rx.m_rxheaderonlycmd);
+	memcpy((void*)fixture.buffer, &fixture.m_headeronlycmd, sizeof(sHeaderOnlyCmd));
+	fixture.m_tx.SendData(&fixture.buffer[0], sizeof(sHeaderOnlyCmd));
+	IsEqual(fixture.m_headeronlycmd, fixture.m_rx.m_rxheaderonlycmd);
 
-	clear_rx();
+	fixture.clear_rx();
 
 	for(size_t i = 0; i < sizeof(sHeaderOnlyCmd); ++i)
-		m_tx.SendData(&buffer[i], 1);
-	IsEqual(m_headeronlycmd, m_rx.m_rxheaderonlycmd);
+		fixture.m_tx.SendData(&fixture.buffer[i], 1);
+	IsEqual(fixture.m_headeronlycmd, fixture.m_rx.m_rxheaderonlycmd);
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received");
-#endif
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received");
 }
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
 uint8 garbage_buffer[FRAGMENT_BUF_SIZE];
-TEST(MsgByteStreamHandlingGroup, Scenario_8_RealDataBetweenGARBAGE_sync_to_stream)
+MU_TEST(Scenario_8_RealDataBetweenGARBAGE_sync_to_stream)
 {
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_8_RealDataBetweenGARBAGE_sync_to_stream, MsgByteStreamHandlingGroup)
-{
-	uint8 garbage_buffer[FRAGMENT_BUF_SIZE];
-#endif
+	MsgByteStreamHandlingGroup fixture;
+
 	/// 8) Random bytes that are not protocol based. GARBAGE.
 	for (auto i = 0; i < FRAGMENT_BUF_SIZE; ++i)
 		garbage_buffer[i] = i;
@@ -1003,38 +810,47 @@ BOOST_FIXTURE_TEST_CASE(Scenario_8_RealDataBetweenGARBAGE_sync_to_stream, MsgByt
 		// How to treat this? And how likely is such a scenario? This could be fixed with 'ack' style ping-pong...no ack sent, so transmitter tries again...
 		// For now...I do this
 		// VArying amounts of garbage at the end...asd blob
-		m_tx.SendData(&garbage_buffer[0], j);
+		fixture.m_tx.SendData(&garbage_buffer[0], j);
 
 				/// Scanerio 4...data received concatenated...
-		memcpy((void*)buffer, &m_somecmd, sizeof(sSomeCmd));
-		memcpy((void*)&buffer[sizeof(sSomeCmd)], &m_somecmdrsp, sizeof(sSomeCmdRsp));
-		m_tx.SendData(&buffer[0], sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
-		IsEqual(m_somecmd, m_rx.m_rxsomecmd);
-		IsEqual(m_somecmdrsp, m_rx.m_rxsomecmdrsp);
+		memcpy((void*)fixture.buffer, &fixture.m_somecmd, sizeof(sSomeCmd));
+		memcpy((void*)&fixture.buffer[sizeof(sSomeCmd)], &fixture.m_somecmdrsp, sizeof(sSomeCmdRsp));
+		fixture.m_tx.SendData(&fixture.buffer[0], sizeof(sSomeCmd) + sizeof(sSomeCmdRsp));
+		IsEqual(fixture.m_somecmd, fixture.m_rx.m_rxsomecmd);
+		IsEqual(fixture.m_somecmdrsp, fixture.m_rx.m_rxsomecmdrsp);
 
-		clear_rx();
+		fixture.clear_rx();
 
 		// VArying amounts of garbage at the end...asd blob
-		m_tx.SendData(&garbage_buffer[0], j);
+		fixture.m_tx.SendData(&garbage_buffer[0], j);
 	}
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.m_unknown_message_received, false, "Unknown message received");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_rx.m_unknown_message_received, "Unknown message received");
-#endif
+	mu_assert(!fixture.m_rx.m_unknown_message_received, "Unknown message received");
 }
 
+
+MU_TEST_SUITE(MsgByteStreamHandling_Suite) {
+	MU_RUN_TEST(Scenario1_ByteForByteIndividualPackets);
+	MU_RUN_TEST(Scenario2_SmallFragments);
+	MU_RUN_TEST(Scenario3_FullPackets);
+	MU_RUN_TEST(Scenario4_1_FullPacketsConcatenated);
+	MU_RUN_TEST(Scenario4_2_FullPacketsConcatenated_ByteForByte);
+	MU_RUN_TEST(Scenario_5_FragmentedAndMoreFragmented);
+	MU_RUN_TEST(Scenario_6_1_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_ByteForByte);
+	MU_RUN_TEST(Scenario_6_2_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_Fragmented);
+	MU_RUN_TEST(Scenario_6_3_UnknownDataBiggerThanFragmentBuf_SAME_PREAMBLE_Whole);
+	MU_RUN_TEST(Scenario_6_4_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_ByteForByte);
+	MU_RUN_TEST(Scenario_6_5_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_Fragmented);
+	MU_RUN_TEST(Scenario_6_6_UnknownDataBiggerThanFragmentBuf_DIFFERENT_PREAMBLE_Whole);
+	MU_RUN_TEST(Scenario_7_HeaderOnlyMessages);
+	MU_RUN_TEST(Scenario_8_RealDataBetweenGARBAGE_sync_to_stream);
+}
 
 /// This testgroup should cover the following test scenarios:
 ///
 /// 1) raw data is passed through
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST_GROUP(RawDataByteStreamHandlingGroup)
-#elif UNIT_TEST_FW == testfw_BOOST
 struct RawDataByteStreamHandlingGroup
-#endif
 {
 	CTestRawDataReceiver m_rx;
 	CTestConnection		 m_tx;
@@ -1043,11 +859,7 @@ struct RawDataByteStreamHandlingGroup
 	uint8 rxbuffer[FRAGMENT_BUF_SIZE];
 
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	void setup()
-#elif UNIT_TEST_FW == testfw_BOOST
 	RawDataByteStreamHandlingGroup()
-#endif
 	{
 		uint8* r = &rxbuffer[0];
 		m_rx.SetRxBuf(r);
@@ -1064,49 +876,26 @@ struct RawDataByteStreamHandlingGroup
 	{
 		memset((void*)&rxbuffer[0], 0, sizeof(uint8)*FRAGMENT_BUF_SIZE);
 	}
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	void teardown() {
-	}
-#endif
 };
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-TEST(RawDataByteStreamHandlingGroup, Scenario_1_RawDataThroughput)
-#elif UNIT_TEST_FW == testfw_BOOST
-BOOST_FIXTURE_TEST_CASE(Scenario_1_RawDataThroughput, RawDataByteStreamHandlingGroup)
-#endif
+MU_TEST(Scenario_1_RawDataThroughput)
 {
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_tx.HasMsgReceiver(), false, "Has a message data receiver, but should not have.");
-	CHECK_EQUAL_TEXT(m_tx.HasRawDataReceiver(), true, "Does not have a raw receiver, but should have.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(!m_tx.HasMsgReceiver(), "Has a message data receiver, but should not have.");
-	BOOST_REQUIRE_MESSAGE(m_tx.HasRawDataReceiver(), "Does not have a raw receiver, but should have.");
-#endif
+	RawDataByteStreamHandlingGroup fixture;
+
+	mu_assert(!fixture.m_tx.HasMsgReceiver(), "Has a message data receiver, but should not have.");
+	mu_assert(fixture.m_tx.HasRawDataReceiver(), "Does not have a raw receiver, but should have.");
 
 	/// 1) Raw data is passed through...
-	m_tx.SendData(&txbuffer[0], sizeof(uint8)*FRAGMENT_BUF_SIZE);
+	fixture.m_tx.SendData(&fixture.txbuffer[0], sizeof(uint8)*FRAGMENT_BUF_SIZE);
 	
-#if UNIT_TEST_FW == testfw_CPUuTEST
-	CHECK_EQUAL_TEXT(m_rx.NumberOfBytedRx(), FRAGMENT_BUF_SIZE, "Unequal number of bytes throughtput.");
-#elif UNIT_TEST_FW == testfw_BOOST
-	BOOST_REQUIRE_MESSAGE(m_rx.NumberOfBytedRx() == FRAGMENT_BUF_SIZE, "Unequal number of bytes throughtput.");
-#endif // __arm__
+	mu_assert(fixture.m_rx.NumberOfBytedRx() == FRAGMENT_BUF_SIZE, "Unequal number of bytes throughtput.");
 
 	for (uint16 i = 0; i < FRAGMENT_BUF_SIZE; ++i)
 	{
-#if UNIT_TEST_FW == testfw_CPUuTEST
-		CHECK_EQUAL_TEXT(txbuffer[i], rxbuffer[i], "Unequal byte in bytestream.");
-#elif UNIT_TEST_FW == testfw_BOOST
-		BOOST_REQUIRE_MESSAGE(txbuffer[i] == rxbuffer[i], "Unequal byte in bytestream.");
-#endif
+		mu_assert(fixture.txbuffer[i] == fixture.rxbuffer[i], "Unequal byte in bytestream.");
 	}
 }
 
-#if UNIT_TEST_FW == testfw_CPUuTEST
-#else
-
-BOOST_AUTO_TEST_SUITE_END();
-BOOST_AUTO_TEST_SUITE_END();
-
-#endif
+MU_TEST_SUITE(RawDataByteStreamHandling_Suite) {
+	MU_RUN_TEST(Scenario_1_RawDataThroughput);
+}

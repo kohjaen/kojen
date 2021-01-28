@@ -13,23 +13,36 @@ namespace XKoJen
 	#endif
 	}
 	thread::thread(char const*name, unsigned portBASE_TYPE priority,	unsigned portSHORT stackDepth)
+		: m_name{ name }, m_priority{ priority }, m_stackDepth{stackDepth}
 	{
-		 if (pdPASS != xTaskCreate(&handle_dispatch_internal, (const char*)name, stackDepth, this, priority, &m_handle))
-		 {
+		 
+	}
+
+	bool thread::Start()
+	{
+		if (!m_started)
+		{
+			auto res = xTaskCreate(&thread::handle_dispatch_internal, (const char*)m_name, m_stackDepth, this, m_priority, &m_handle);
+			m_started = (res == pdPASS);
+			if (!m_started)
+			{
 #ifdef printf			 
-			printf("ERROR : out of memory...\r\n");
+				printf("ERROR : out of memory...\r\n");
 #endif
-		 }
+			}
+		}
+		return m_started;
 	}
 	
 	void thread::handle_dispatch_internal(void* parm)
 	{
-		static_cast<thread*>(parm)->Run();
+		auto* task = static_cast<thread*>(parm);
+		task->Run();
 	#if INCLUDE_vTaskDelete
-		vTaskDelete(static_cast<thread*>(parm)->m_handle);
+		vTaskDelete(task->m_handle);
 	#else
 		while(1)
-			vTaskDelay(10000);
+			vTaskDelay(portMAX_DELAY);
 	#endif
 	}
 

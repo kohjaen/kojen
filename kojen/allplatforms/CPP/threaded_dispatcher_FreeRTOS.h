@@ -26,12 +26,7 @@
 
 #pragma once
 
-#ifdef __arm__
 #ifdef __FREERTOS__
-#pragma message "Use threaded_dispatcher_FreeRTOS.h."
-#else
-#pragma message "threaded_dispatcher needs to be ported to your ARM RTOS."
-#endif
 
 #include "threadsafe_queue_FreeRTOS.h"
 #include "thread_FreeRTOS.h"
@@ -88,7 +83,7 @@ namespace XKoJen
 		*/
 		virtual void handle_dispatch(ptr_type item) = 0;
 	private:
-		void handle_dispatch_internal() 
+		virtual void Run() override
 		{
 			while (!m_shutting_down) {
 				ptr_type item_to_dispatch; // wait_and_pop will return nullptr if interrupted.
@@ -101,4 +96,4 @@ namespace XKoJen
 		bool m_shutting_down = false;
 	};
 }
-#endif // __arm__
+#endif // __FREERTOS__

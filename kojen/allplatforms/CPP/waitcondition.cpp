@@ -1,4 +1,8 @@
 #include "waitcondition.h"
+
+#ifdef __arm__
+#else
+
 #include <chrono>
 
 namespace XKoJen
@@ -36,3 +40,5 @@ namespace XKoJen
 		m_condition.notify_all();
 	}
 }
+
+#endif // #ifdef __arm__

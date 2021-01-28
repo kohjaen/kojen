@@ -14,6 +14,10 @@
 #include "I<<<STATEMACHINENAME>>>Controller.h"
 #include <memory>
 
+#ifdef __FREERTOS__
+#include "FreeRTOS.h"
+#endif
+
 /// {{{USER_HEADER_INCLUDES}}}
 /// {{{USER_HEADER_INCLUDES}}}
 
@@ -30,7 +34,11 @@ namespace <<<NAMESPACE>>>
 	public:
 		// The memory of what is returned is NEW'd. This means that you are responsible for it.
 		// Luckily a SM is created once, and lives throughout the application lifetime, so 'free' should not be necessary.
-		static I<<<STATEMACHINENAME>>>StateMachine* Create(I<<<STATEMACHINENAME>>>Controller* controller);
+#if defined(__FREERTOS__) && defined(THREADED)
+        static I<<<STATEMACHINENAME>>>StateMachine* Create(I<<<STATEMACHINENAME>>>Controller* controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth=configMINIMAL_STACK_SIZE);
+#else
+        static I<<<STATEMACHINENAME>>>StateMachine* Create(I<<<STATEMACHINENAME>>>Controller* controller);
+#endif // __FREERTOS__
 		virtual ~I<<<STATEMACHINENAME>>>StateMachine(){};
 
 		// Flag check

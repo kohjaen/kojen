@@ -7,10 +7,8 @@
 /// {{{USER_PCH}}}
 #include "I<<<STATEMACHINENAME>>>Controller.h"
 #include "<<<STATEMACHINENAME>>>StateMachine.h"
-#ifdef __arm__
 #ifdef __FREERTOS__
 #include "allplatforms/threaded_dispatcher_FreeRTOS.h"
-#endif
 #else
 #include "allplatforms/threaded_dispatcher.h"
 #endif
@@ -20,9 +18,6 @@
 /// {{{USER_HEADER_INCLUDES}}}
 /// {{{USER_HEADER_INCLUDES}}}
 
-/** Should you not wish to run the state machine on a threaded dispatcher,
-    add '#define NO_THREAD' somewhere in the below 'USER_FORWARD_DECLARATIONS'.
-*/
 /// {{{USER_FORWARD_DECLARATIONS}}}
 /// {{{USER_FORWARD_DECLARATIONS}}}
 
@@ -154,17 +149,13 @@ namespace <<<NAMESPACE>>>
 
 	class C<<<STATEMACHINENAME>>>StateMachineImpl
 		: public I<<<STATEMACHINENAME>>>StateMachine
-#ifdef NO_THREAD
-#else
-//#ifdef __arm__
-//#else
+#ifdef THREADED
 		  ,public XKoJen::threaded_dispatcher<Event>
-//#endif // __arm__
-#endif // NO_THREAD
+#endif // THREADED
 	{
 	public:
 
-#ifdef NO_THREAD
+#if !defined(THREADED)
 		typedef std::unique_ptr<Event> ptr_type;
 #endif
 
@@ -172,14 +163,18 @@ namespace <<<NAMESPACE>>>
 		{
 			delete m_sm;
 		};
-		C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller)
-#ifdef NO_THREAD
+
+#ifdef THREADED
+    #ifdef __FREERTOS__
+        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth)
+            : XKoJen::threaded_dispatcher<Event>("<<<STATEMACHINENAME>>> Dispatcher", priority, stackDepth)
+    #else
+        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller)
+            : XKoJen::threaded_dispatcher<Event>("<<<STATEMACHINENAME>>> Dispatcher")
+    #endif // __FREERTOS__
 #else
-#ifdef __arm__
-#else
-			: XKoJen::threaded_dispatcher<Event>("<<<STATEMACHINENAME>>> Dispatcher")
-#endif // __arm__
-#endif // NO_THREAD
+        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller)
+#endif //THREADED
 		{
 			m_sm = new msm::sm<C<<<STATEMACHINENAME>>>StateMachine>(&(*controller));
 		}
@@ -195,10 +190,10 @@ namespace <<<NAMESPACE>>>
 
 		virtual void TriggerEvent(std::unique_ptr<Event> event) override
 		{
-#ifdef NO_THREAD
-			handle_dispatch(std::move(event));
-#else
+#ifdef THREADED
 			dispatch(event);
+#else
+			handle_dispatch(std::move(event));
 #endif
 		}
 
@@ -207,10 +202,10 @@ namespace <<<NAMESPACE>>>
 	protected:
 		msm::sm<C<<<STATEMACHINENAME>>>StateMachine> * m_sm;
 
-#ifdef NO_THREAD
-		void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type item)
-#else
+#ifdef THREADED
 		virtual void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type item) override
+#else
+		void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type item)
 #endif
 		{
 			/// {{{USER_DISPATCH_EVENT_PROCESSING}}}
@@ -227,8 +222,17 @@ namespace <<<NAMESPACE>>>
 	////////////////////////////////////////////////////////////
 	// I<<<STATEMACHINENAME>>>StateMachine
 	////////////////////////////////////////////////////////////
-	I<<<STATEMACHINENAME>>>StateMachine* I<<<STATEMACHINENAME>>>StateMachine::Create(I<<<STATEMACHINENAME>>>Controller* controller)
-	{
+#if defined(__FREERTOS__) && defined(THREADED)
+    I<<<STATEMACHINENAME>>>StateMachine* I<<<STATEMACHINENAME>>>StateMachine::Create(I<<<STATEMACHINENAME>>>Controller* controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth)
+    {
+		auto res = new C<<<STATEMACHINENAME>>>StateMachineImpl(controller, priority, stackDepth);
+		res->Start();
+		return res;
+	}
+#else
+    I<<<STATEMACHINENAME>>>StateMachine* I<<<STATEMACHINENAME>>>StateMachine::Create(I<<<STATEMACHINENAME>>>Controller* controller)
+    {
 		return new C<<<STATEMACHINENAME>>>StateMachineImpl(controller);
 	}
+#endif // #ifdef __FREERTOS__
 }
