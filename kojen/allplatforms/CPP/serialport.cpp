@@ -23,7 +23,7 @@ For any feedback please contact the original author : koh.jaen@yahoo.de.
 #include "IRawDataReceiver.h"
 
 #ifdef __arm__
-#pragma message "serialport.cpp is not supported for ARM."
+#pragma message("serialport.cpp is not supported for ARM.")
 #else
 
 #ifdef USING_BOOST

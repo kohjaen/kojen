@@ -28,7 +28,7 @@
 #include "basetypes.h"
 
 #ifdef __arm__
-#pragma message "clientserver.h is not supported for ARM."
+#pragma message("clientserver.h is not supported for ARM.")
 #else
 	
 #ifdef USING_BOOST

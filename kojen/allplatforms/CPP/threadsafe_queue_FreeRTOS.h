@@ -25,24 +25,20 @@
 */
 #pragma once
 
-#ifdef __arm__
-#ifndef __FREERTOS__
-#pragma message "threadsafe_queue only needed if using FreeRTOS (or some other RTOS, which currently would need support). No need for bare-metal ARM!"
-#else
+#ifdef __FREERTOS__
 
 #include "FreeRTOS.h"
 #include <semphr.h> // Freertos
 #include <event_groups.h>
-#include <compiler.h>
 
 #include <memory>
 #include <algorithm>
 
 //#define _USE_STL_QUEUE
 #ifdef _USE_STL_QUEUE
-//#include <queue>
+// #include <queue>
 // The problem with STL is not the stability or speed of their algorithms, but their unfettered use of the heap.
-// Luckily there is a work-around using fixed-block allocators (which also gives speed improvements, even on a PC)...
+// Luckily there is a work-around which resolves that using fixed-block allocators for all STL containers (which also gives great speed improvements, even on a PC)...
 #include "xqueue.h"
 #endif
 
@@ -59,7 +55,7 @@ namespace XKoJen
 	{
 	public:
 		queue(){
-			Assert(max_size <= 255);
+			configASSERT(max_size <= 255);
 		}
 		virtual ~queue(){}
 
@@ -111,53 +107,70 @@ namespace XKoJen
 	/************************************************************************/
 	/* BEGIN : Attempt STL interface for cleaner programming                */
 	/************************************************************************/
+		
+	/// Definitions for dispatch event flags (condition variable emulation)
+	#define DISPATCH_WAKE_EVT    (0x1)
+	#define DISPATCH_EXIT_EVT    (0x2)
+
+	// FWD declare
+	struct condition_variable;
 	/** Standard cplusplus style Lock -> use scope to lock/unlock a semaphore/mutex etc.
 	*/
 	struct lock_guard
 	{
-		explicit lock_guard(SemaphoreHandle_t& sem):m_sem(sem){
+		explicit lock_guard(SemaphoreHandle_t& sem) :m_sem(sem) {
 			// no need to check if this is true ... this blocks until it is
-			auto status = xSemaphoreTake( m_sem, ( TickType_t ) portMAX_DELAY );
-			Assert(status == pdTRUE); // "Failed to lock mutex!"
+			auto status = xSemaphoreTake(m_sem, (TickType_t)portMAX_DELAY);
+			configASSERT(status == pdTRUE); // "Failed to lock mutex!"
 		}
-		~lock_guard(){
-			auto status = xSemaphoreGive( m_sem );
-			Assert(status == pdTRUE); // "Failed to unlock mutex!"
+		~lock_guard() {
+			auto status = xSemaphoreGive(m_sem);
+			configASSERT(status == pdTRUE); // "Failed to unlock mutex!"
 		}
-		private:
-			SemaphoreHandle_t& m_sem;
+	private:
+		friend struct condition_variable;
+		SemaphoreHandle_t& m_sem;
 	};
-	
-	/// Definitions for dispatch event flags (condition variable emulation)
-	#define DISPATCH_WAKE_EVT    (0x1)
-	#define DISPATCH_EXIT_EVT    (0x2)
-	
+	/** Standard cplusplus style condition variable
+	*/
 	struct condition_variable
 	{
 		explicit condition_variable(){
 			m_cond_flags = xEventGroupCreate();
-			Assert(m_cond_flags != NULL); // "Failed to create event group!"
+			configASSERT(m_cond_flags != NULL); // "Failed to create event group!"
 		}
 		~condition_variable()
 		{
 			notify_exit();
 		}
 		template <class Predicate>
-		void wait(Predicate pred)
+		void wait(lock_guard& lock, Predicate pred)
 		{
 			if(!pred()){
+				// unlock
+				auto status = xSemaphoreGive(lock.m_sem);
+				configASSERT(status == pdTRUE); // "Failed to unlock mutex!"
+
 				// wait for data (and exit) and clear the flags.
 				xEventGroupWaitBits(m_cond_flags,DISPATCH_WAKE_EVT | DISPATCH_EXIT_EVT, pdTRUE, pdFALSE, portMAX_DELAY);
+
+				// lock
+				status = xSemaphoreTake(lock.m_sem, (TickType_t)portMAX_DELAY);
+				configASSERT(status == pdTRUE); // "Failed to lock mutex!"
 			}
 		}
 		void notify_one(){
 			// Notifies threads that new work is in the queue
 			auto status = xEventGroupSetBits(m_cond_flags, DISPATCH_WAKE_EVT);
-			Assert(status == pdTRUE); // "Failed to set WAKE event flags!"
+			// According to : https://www.freertos.org/xEventGroupSetBits.html 
+			// if a task was waiting (and/or has a higher priority) for the this bit
+			// it may have already processed it (and cleared it) by the time this call returns...
+			// so its not a good idea to assume any state here.
+			//configASSERT(status != 0); // "Failed to set WAKE event flags!"
 		}
 		void notify_exit(){
 			auto status = xEventGroupSetBits(m_cond_flags,DISPATCH_EXIT_EVT);
-			Assert(status == pdTRUE); // "Failed to set EXIT event flags!"
+			//configASSERT(status != 0); // "Failed to set EXIT event flags!"
 		}
 		private:
 			EventGroupHandle_t m_cond_flags;
@@ -166,7 +179,7 @@ namespace XKoJen
 	/************************************************************************/
 	/* END : Attempt STL interface for cleaner programming                */
 	/************************************************************************/
-	
+
 	/** A templatized thread-safe queue. Ownership of items to/from by pushing/popping is transferred using C++11 move symantics.
 	*	
 	*	Thanks to Mr Anthony Williams, author of the boost::thread and std::thread libraries.
@@ -190,7 +203,7 @@ namespace XKoJen
 			//: m_stopped{ false }
 		{
 			m_mutex = xSemaphoreCreateMutex();
-			Assert(m_mutex != NULL); // "Failed to create mutex!"
+			configASSERT(m_mutex != NULL); // "Failed to create mutex!"
 		}
 		/** Destructor
 		*/
@@ -242,7 +255,7 @@ namespace XKoJen
 		ptr_type wait_and_pop()
 		{
 			lock_guard lk(m_mutex);
-			m_cond.wait([this]{return !m_data.empty()/* || m_stopped*/;});
+			m_cond.wait(lk, [this]{return !m_data.empty()/* || m_stopped*/;});
 			ptr_type res;
 			if(!m_data.empty()){
 				res = std::move(m_data.front());
@@ -327,4 +340,3 @@ namespace XKoJen
 
 }
 #endif // __FREERTOS__
-#endif // __arm__

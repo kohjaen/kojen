@@ -109,7 +109,8 @@ if(header->Preamble != m_receiver_preamble){\
 		{
 			// What if someone puts in chars that dont match anything? USE the max message size...clear once it get to that...
 #if defined(__arm__)
-			if (m_fragment_buffer_cnt >= m_largest_message_size /*&& m_fragment_buffer_bytes_required == 0*/) // this might fail a unit test on arm ... need to check...
+			if (m_fragment_buffer_cnt >= m_largest_message_size && m_fragment_buffer_bytes_required == 0)
+			//if (m_fragment_buffer_cnt >= m_largest_message_size /*&& m_fragment_buffer_bytes_required == 0*/) // this might fail a unit test on arm ... need to check...
 				RESET_FRAG;
 #else
 			size_t m_fragment_buffer_cnt = m_fragment_buffer.size();

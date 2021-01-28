@@ -26,7 +26,13 @@
 #pragma once
 
 #ifdef __arm__
-#pragma message "threadsafe_queue needs to be ported to ARM."
+
+#ifdef __FREERTOS__
+#pragma message "Use threadsafe_queue_FreeRTOS.h."
+#else
+#pragma message "threadsafe_queue needs to be ported to your ARM RTOS."
+#endif // __FREERTOS__
+
 #else
 
 #include <queue>

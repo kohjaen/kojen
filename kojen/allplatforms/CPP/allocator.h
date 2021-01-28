@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 /// See http://www.codeproject.com/Articles/1083210/An-efficient-Cplusplus-fixed-block-memory-allocato
-class Allocator
+class KOJEN_API Allocator
 {
 public:
     /// Constructor

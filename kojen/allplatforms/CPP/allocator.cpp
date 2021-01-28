@@ -10,6 +10,15 @@
 // - this has a problem in that its out of FreeRTOS management.
 // For C++ we thus want to use the FreeRTOS heap, as its malloc/free are thread safe, and it would be a good idea to keep track of consumption.
 
+extern "C" {
+#ifndef EXPORT
+    // In unit testing freertos on win32 (using freertos port), best way is to create DLLs...and one needs to export using declspec.
+    #define EXPORT
+#endif
+    EXPORT void* pvPortMalloc(size_t xWantedSize);
+    EXPORT void vAssertCalled(unsigned long ulLine, const char* const pcFileName);
+}
+
 void * operator new( size_t size )
 {
 	return pvPortMalloc( size );

@@ -27,7 +27,13 @@
 #pragma once
 
 #ifdef __arm__
-#pragma message "threaded_dispatcher needs to be ported to ARM."
+
+#ifdef __FREERTOS__
+#pragma message "Use threaded_dispatcher_FreeRTOS.h."
+#else
+#pragma message "threaded_dispatcher needs to be ported to your ARM RTOS."
+#endif // __FREERTOS__
+
 #else
 
 #include "threadsafe_queue.h"
