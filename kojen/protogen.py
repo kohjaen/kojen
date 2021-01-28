@@ -120,6 +120,7 @@ def Generate(output_dir, pythonfile, namespacename, classname, declspec="", temp
 		files_to_copy.append("allocator.h")
 		files_to_copy.append("allocator.cpp")
 		files_to_copy.append("basetypes.h")
+		files_to_copy.append("CMakeLists.txt")
 		files_to_copy.append("IConnection.h")
 		files_to_copy.append("IConnection.cpp")
 		files_to_copy.append("IMsgReceiver.h")
@@ -139,14 +140,24 @@ def Generate(output_dir, pythonfile, namespacename, classname, declspec="", temp
 
 		# Tests...
 		testfiles_to_copy = []
+		testfiles_to_copy.append("CMakeLists.txt")
 		testfiles_to_copy.append("Test.IConnection.cpp")
+		testfiles_to_copy.append("test_main.cpp")
 
 		tests_allplatformsfrom = os.path.join(allplatformsfrom, "testsuite")
 		tests_allplatformsto = os.path.join(allplatformsto, "testsuite")
 
 		FileCopyUtil(tests_allplatformsfrom, tests_allplatformsto, testfiles_to_copy)
 
+		# Micro Unit Test Framework
+		microunit_files_to_copy = []
+		microunit_files_to_copy.append("minunit.h")
+		microunit_files_to_copy.append("minunit.cpp")
 
+		microunit_allplatformsfrom = os.path.join(tests_allplatformsfrom, "minunit")
+		microunit_allplatformsto = os.path.join(tests_allplatformsto, "minunit")
+
+		FileCopyUtil(microunit_allplatformsfrom, microunit_allplatformsto, microunit_files_to_copy)
 
 
 if __name__ == "__main__":
