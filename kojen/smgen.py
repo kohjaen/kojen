@@ -720,7 +720,7 @@ class CStateMachineGenerator(CBASEGenerator):
 			microunit_files_to_copy.append("minunit.cpp")
 
 			microunit_allplatformsfrom = os.path.join(tests_allplatformsfrom, "minunit")
-			microunit_allplatformsto = os.path.join(tests_allplatformsfrom, "minunit")
+			microunit_allplatformsto = os.path.join(tests_allplatformsto, "minunit")
 
 			FileCopyUtil(microunit_allplatformsfrom, microunit_allplatformsto, microunit_files_to_copy)
 
