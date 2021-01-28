@@ -44,7 +44,7 @@ except (ModuleNotFoundError, ImportError) as e:
 
 
 class UnitTestFramework:
-    NO_FW, BOOST, CPPuTEST = range(3)
+    NO_FW, BOOST, CPPuTEST, MINUNIT = range(4)
 
 
 class UnitTestWriter:
@@ -161,6 +161,8 @@ class UnitTestWriter:
             result.append(WHITESPACE + 'size_t serialized_size = ToByteStream_' + message.Name + '(' + instancename + ', ' + bytestream_of_message_variable_name + ')' + ";")
             if unittestfw == UnitTestFramework.NO_FW:
                 result.append(WHITESPACE + 'assert(serialized_size == sizeof('+message.Name+'));')
+            elif unittestfw == UnitTestFramework.MINUNIT:
+                result.append(WHITESPACE + 'mu_check(serialized_size == sizeof(' + message.Name + '));')
             elif unittestfw == UnitTestFramework.BOOST:
                 result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE(serialized_size == sizeof('+message.Name+'), "ERROR : Serialized size of ' + message.Name + ' is not as expected.");')
             elif unittestfw == UnitTestFramework.CPPuTEST:
@@ -204,6 +206,8 @@ class UnitTestWriter:
                 result.append(WHITESPACE + language.If(indexer + ' != serialized_size'))
                 result.append(WHITESPACE + language.OpenBrace())
                 result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Indexing count %i not match the stream %i ..." ,' + indexer + ',serialized_size'))
+            elif unittestfw == UnitTestFramework.MINUNIT:
+                result.append(WHITESPACE + 'mu_assert('+indexer+' == serialized_size, "ERROR : Indexing count does not match the stream size.");')
             elif unittestfw == UnitTestFramework.BOOST:
                 result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE('+indexer+' == serialized_size, "ERROR : Indexing count does not match the stream size.");')
             elif unittestfw == UnitTestFramework.CPPuTEST:
@@ -215,6 +219,8 @@ class UnitTestWriter:
                 result.append(WHITESPACE + language.If(indexer+' != '+bytestream_of_message_variable_name+'->size()'))
                 result.append(WHITESPACE + language.OpenBrace())
                 result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Indexing count %i not match the stream %i ..." ,' + indexer + ',' + bytestream_of_message_variable_name + '->size()'))
+            elif unittestfw == UnitTestFramework.MINUNIT:
+                result.append(WHITESPACE + 'mu_assert('+indexer+' == '+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.");')
             elif unittestfw == UnitTestFramework.BOOST:
                 result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE('+indexer+' == '+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.");')
             elif unittestfw == UnitTestFramework.CPPuTEST:
@@ -264,6 +270,8 @@ class UnitTestWriter:
             result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Equality check for '+message.Name+' failed"'))
             result.append(WHITESPACE + language.WhiteSpace(0) + 'return false;')
             result.append(WHITESPACE + language.CloseBrace())
+        elif unittestfw == UnitTestFramework.MINUNIT:
+            result.append(WHITESPACE + 'mu_assert(' + equality_check + ', "ERROR : Equality check for '+message.Name+' failed.");')
         elif unittestfw == UnitTestFramework.BOOST:
             result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE(' + equality_check + ', "ERROR : Equality check for '+message.Name+' failed.");')
         elif unittestfw == UnitTestFramework.CPPuTEST:
@@ -305,6 +313,8 @@ class UnitTestWriter:
             result.append(WHITESPACE + language.WhiteSpace(1) + language.PrintError('"ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts: %i != %i" ,' + size_struct_name + ',' + size_accum_struct_name))
             result.append(WHITESPACE + language.WhiteSpace(1) + 'return false;')
             result.append(WHITESPACE + language.WhiteSpace(0) + language.CloseBrace())
+        elif unittestfw == UnitTestFramework.MINUNIT:
+            result.append(WHITESPACE + language.WhiteSpace(0) + 'mu_assert(' + size_struct_name + ' == ' + size_accum_struct_name + ', "ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts.");')
         elif unittestfw == UnitTestFramework.BOOST:
             result.append(WHITESPACE + language.WhiteSpace(0) + 'BOOST_REQUIRE_MESSAGE(' + size_struct_name + ' == ' + size_accum_struct_name + ', "ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts.");')
         elif unittestfw == UnitTestFramework.CPPuTEST:
@@ -412,6 +422,8 @@ class UnitTestWriter:
 
             result.append(WHITESPACE + language.WhiteSpace(1) + 'return false;')
             result.append(WHITESPACE + language.WhiteSpace(0) + language.CloseBrace())
+        elif unittestfw == UnitTestFramework.MINUNIT:
+            result.append(WHITESPACE + language.WhiteSpace(0) + 'mu_assert(' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ' == ' + size_accumulator + ', "ERROR : Size of ' + struct_name + ' payload size does not equal the sum of its separate parts (less pointers to data).");')
         elif unittestfw == UnitTestFramework.BOOST:
             result.append(WHITESPACE + language.WhiteSpace(0) + 'BOOST_REQUIRE_MESSAGE(' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ' == ' + size_accumulator + ', "ERROR : Size of ' + struct_name + ' payload size does not equal the sum of its separate parts (less pointers to data).");')
         elif unittestfw == UnitTestFramework.CPPuTEST:
