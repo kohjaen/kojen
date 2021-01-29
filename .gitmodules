@@ -1,3 +1,6 @@
 [submodule "kojen/allplatforms/CPP/testsuite/minunit"]
 	path = kojen/allplatforms/CPP/testsuite/minunit
 	url = https://github.com/kohjaen/minunit.git
+[submodule "kojen/allplatforms/CPP/sml"]
+	path = kojen/allplatforms/CPP/sml
+	url = https://github.com/boost-ext/sml.git

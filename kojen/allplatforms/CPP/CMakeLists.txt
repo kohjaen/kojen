@@ -42,10 +42,6 @@ include(${TEST_SUITE_DIR}/CMakeLists.txt)
 #  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output/${CMAKE_BUILD_TYPE})
 #endif()
 
-# User also needs to clone and install boost sml...
-set(SML_INCLUDE "D:/sml/include" CACHE FILEPATH "Path to your local SML single-header include.")
-include_directories(${SML_INCLUDE})
-
 add_executable(KoJen_Tests
 	${AUTOGEN_FILES}
     ${SOURCE_FILES}
