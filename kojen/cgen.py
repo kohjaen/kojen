@@ -105,7 +105,7 @@ class CBASEGenerator:
         CWD = self.input_template_file_dir
         for root, dirs, files in os.walk(CWD):
             for file in files:
-                if file.lower().find(filter_files_containing_in_name.lower()) > -1 or not filter_files_containing_in_name.strip():
+                if (file.lower().find(filter_files_containing_in_name.lower()) > -1 or not filter_files_containing_in_name.strip()) and not file.lower().find(".removed") > -1 :
                     template_file_found = True
                     with open(os.path.join(root, file)) as f:
                         lines = []

@@ -703,6 +703,13 @@ class CStateMachineGenerator(CBASEGenerator):
 
 			FileCopyUtil(allplatformsfrom, allplatformsto, files_to_copy)
 
+			# Boost SML ...
+			smlfrom = os.path.join(allplatformsfrom,	os.path.join("sml", os.path.join("include","boost")))
+			smlto = os.path.join(allplatformsto, "boost")
+			smlfiles_to_copy = []
+			smlfiles_to_copy.append("sml.hpp")
+			FileCopyUtil(smlfrom, smlto, smlfiles_to_copy)
+
 			# Tests...
 			testfiles_to_copy = []
 			testfiles_to_copy.append("CMakeLists.txt")
