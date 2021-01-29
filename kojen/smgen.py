@@ -695,7 +695,7 @@ class CStateMachineGenerator(CBASEGenerator):
 			files_to_copy.append("xmap.h")
 			files_to_copy.append("xqueue.h")
 			files_to_copy.append("xset.h")
-			files_to_copy.append("xstream.h")
+			files_to_copy.append("xsstream.h")
 			files_to_copy.append("xstring.h")
 
 			allplatformsfrom = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("allplatforms", "CPP"))
