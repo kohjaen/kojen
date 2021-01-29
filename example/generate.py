@@ -73,7 +73,7 @@ transition_table.append(['StatePlay',  'EventStop', 			 'StateStop',  'OnStop', 
 transition_table.append(['StatePause', 'EventPlay', 			 'StatePlay',  'OnPlayTrack', 		   'None'])
 transition_table.append(['StatePause', 'EventAfter10Minutes', 	 'StateStop',  'OnStop', 			   'None'])
 
-Generate.StateMachine(transition_table, None, outputdir, namespacename, classname, declspec, username, templatedir)
+Generate.StateMachine(transition_table, eventsinterface, outputdir, namespacename, classname, declspec, username, templatedir)
 
 #
 # UML (C++/C# ... to do it directly from a model, please write to koh.jaen@yahoo.de)
