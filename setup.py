@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="kojen",
-    version="1.0.19",
+    version="1.0.20",
     author="kohjaen",
     author_email="koh.jaen@yahoo.de",
     description="Code generation tools.",
@@ -20,7 +20,7 @@ setuptools.setup(
     ],
     python_requires='>=3.7',
 	package_data={'': ['allplatforms/CPP/*.*', 
-                       'allplatforms/CPP/boost/*.*', 
+                       'allplatforms/CPP/sml/include/boost/*.*', 
                        'allplatforms/CPP/testsuite/*.*', 
                        'allplatforms/CPP/testsuite/minunit/minunit.h', 
                        'allplatforms/CPP/testsuite/minunit/minunit.cpp', 
