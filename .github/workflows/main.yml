@@ -1,4 +1,4 @@
-# This is a basic workflow to help you get started with Actions
+# This was started from a basic workflow
 
 name: CI
 
@@ -40,8 +40,16 @@ jobs:
           pip install flake8 pytest
           # I choose to put my single dependency here.
           pip install cogapp
+          pip install setuptools wheel # twine -> don't want to publish (yet)...want to install locally and generate C++ code to test.
           #if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           
+      - name: Install Kojen locally from this repository
+          pip install -find-links=. kojen
+          
+      - name: Generate example code
+          cd example
+          python generate.py
+          cd ..
       #- name: Lint with flake8
       #  run: |
       #    # stop the build if there are Python syntax errors or undefined names
