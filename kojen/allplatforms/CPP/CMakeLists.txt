@@ -48,7 +48,7 @@ add_executable(KoJen_Tests
 	${HEADER_FILES}
     )
 	
-set(GENERATE_FREERTOS OFF "Enable this to create a FreeRTOS shared library for FREERTOS win32 port testing")
+set(GENERATE_FREERTOS OFF)
 message(CHECK_START "Generating FreeRTOS project...")
 if(${GENERATE_FREERTOS})
 	message(CHECK_PASS "enabled")
