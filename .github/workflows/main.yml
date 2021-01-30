@@ -40,7 +40,7 @@ jobs:
           pip install flake8 pytest
           # I choose to put my single dependency here.
           pip install cogapp
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          #if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           
       #- name: Lint with flake8
       #  run: |
