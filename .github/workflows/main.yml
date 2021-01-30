@@ -53,8 +53,7 @@ jobs:
         run: python setup.py bdist_wheel
           
       - name: Install Kojen locally from this repository
-        run: |
-          pip install -find-links=relative ./dist/ kojen
+        run: pip install ./dist/*.whl
           
       - name: Generate example code
         run: |
