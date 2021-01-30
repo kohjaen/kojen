@@ -113,7 +113,7 @@ static void lock_init()
 	BOOL success = InitializeCriticalSectionAndSpinCount(&_criticalSection, 0x00000400);
 	ASSERT_TRUE(success != 0);
 #endif
-	_xallocInitialized = TRUE;
+	_xallocInitialized = true;
 }
 
 /// Destroy the xallocator lock.
@@ -122,13 +122,13 @@ static void lock_destroy()
 #if defined(_MSC_VER)
 	DeleteCriticalSection(&_criticalSection);
 #endif
-	_xallocInitialized = FALSE;
+	_xallocInitialized = false;
 }
 
 /// Lock the shared resource. 
 static inline void lock_get()
 {
-	if (_xallocInitialized == FALSE)
+	if (_xallocInitialized == false)
 		return;
 #if defined(_MSC_VER)
 	EnterCriticalSection(&_criticalSection);
@@ -141,7 +141,7 @@ static inline void lock_get()
 /// Unlock the shared resource. 
 static inline void lock_release()
 {
-	if (_xallocInitialized == FALSE)
+	if (_xallocInitialized == false)
 		return;
 #if defined(_MSC_VER)
 	LeaveCriticalSection(&_criticalSection);
