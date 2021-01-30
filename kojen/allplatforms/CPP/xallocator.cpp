@@ -17,10 +17,16 @@ using namespace std;
 #define CHAR_BIT	8 
 #endif
 
-#ifdef __FREERTOS__
+#if defined(__FREERTOS__)
 // use taskENTER_CRITICAL
-#else
+#else if defined(_MSC_VER)
 static CRITICAL_SECTION _criticalSection; 
+static bool _xallocInitialized = false;
+#else if defined(__GNUC__) || defined(__clang__) ) && !defined(__arm__)
+/* Sample C/C++, Unix/Linux */
+#include <pthread.h>
+/* This is the critical section object (statically allocated). */
+static pthread_mutex_t _criticalSection =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 static bool _xallocInitialized = false;
 #endif
 
@@ -103,15 +109,19 @@ T nexthigher(T k)
 /// Create the xallocator lock. Call only one time at startup. 
 static void lock_init()
 {
+#if defined(_MSC_VER)
 	BOOL success = InitializeCriticalSectionAndSpinCount(&_criticalSection, 0x00000400);
 	ASSERT_TRUE(success != 0);
+#endif
 	_xallocInitialized = TRUE;
 }
 
 /// Destroy the xallocator lock.
 static void lock_destroy()
 {
+#if defined(_MSC_VER)
 	DeleteCriticalSection(&_criticalSection);
+#endif
 	_xallocInitialized = FALSE;
 }
 
@@ -120,8 +130,12 @@ static inline void lock_get()
 {
 	if (_xallocInitialized == FALSE)
 		return;
-
-	EnterCriticalSection(&_criticalSection); 
+#if defined(_MSC_VER)
+	EnterCriticalSection(&_criticalSection);
+#else if defined(__GNUC__) || defined(__clang__) ) && !defined(__arm__)
+	/* Enter the critical section -- other threads are locked out */
+    pthread_mutex_lock( &_criticalSection );
+ #endif
 }
 
 /// Unlock the shared resource. 
@@ -129,8 +143,12 @@ static inline void lock_release()
 {
 	if (_xallocInitialized == FALSE)
 		return;
-
+#if defined(_MSC_VER)
 	LeaveCriticalSection(&_criticalSection);
+#else if defined(__GNUC__) || defined(__clang__) ) && !defined(__arm__)
+	/*Leave the critical section -- other threads can now pthread_mutex_lock()  */
+    pthread_mutex_unlock( &_criticalSection );
+#endif
 }
 #endif
 
