@@ -463,7 +463,7 @@ extern "C" void xalloc_stats()
 #else
 	lock_get();
 	
-	for (INT i=0; i<MAX_ALLOCATORS; i++)
+	for (int i=0; i<MAX_ALLOCATORS; i++)
 	{
 		if (_allocators[i] == 0)
 			break;
