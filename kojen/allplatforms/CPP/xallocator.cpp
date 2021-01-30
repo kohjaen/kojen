@@ -19,10 +19,10 @@ using namespace std;
 
 #if defined(__FREERTOS__)
 // use taskENTER_CRITICAL
-#else if defined(_MSC_VER)
+#elif defined(_MSC_VER)
 static CRITICAL_SECTION _criticalSection; 
 static bool _xallocInitialized = false;
-#else if (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__)
+#elif (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__)
 /* Sample C/C++, Unix/Linux */
 #include <pthread.h>
 /* This is the critical section object (statically allocated). */
@@ -132,7 +132,7 @@ static inline void lock_get()
 		return;
 #if defined(_MSC_VER)
 	EnterCriticalSection(&_criticalSection);
-#else if (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__) && !defined(__arm__)
+#elif (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__) && !defined(__arm__)
 	/* Enter the critical section -- other threads are locked out */
     pthread_mutex_lock( &_criticalSection );
  #endif
@@ -145,7 +145,7 @@ static inline void lock_release()
 		return;
 #if defined(_MSC_VER)
 	LeaveCriticalSection(&_criticalSection);
-#else if (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__) && !defined(__arm__)
+#elif (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__) && !defined(__arm__)
 	/*Leave the critical section -- other threads can now pthread_mutex_lock()  */
     pthread_mutex_unlock( &_criticalSection );
 #endif
