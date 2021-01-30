@@ -10,7 +10,7 @@
 #include "CDPlayerStateMachine.h"
 
 /// {{{USER_HEADER_INCLUDES}}}
-#if defined(WIN32) && !defined(__arm__)
+#if ( defined(_MSC_VER) || defined(__GNUC__) || defined(__clang__) ) && !defined(__arm__)
 #include <thread>
 #include <chrono>
 #endif
