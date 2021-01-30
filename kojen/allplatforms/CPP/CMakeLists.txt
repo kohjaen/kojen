@@ -48,7 +48,7 @@ add_executable(KoJen_Tests
 	${HEADER_FILES}
     )
 	
-option(GENERATE_FREERTOS "Enable this to create a FreeRTOS shared library for FREERTOS win32 port testing")
+option(GENERATE_FREERTOS "Enable this to create a FreeRTOS shared library for FREERTOS win32 port testing" OFF)
 if(GENERATE_FREERTOS)
 	###
 	### For freertos (in windows) testing DLL project. DONT link to the executable...that is standalone.
