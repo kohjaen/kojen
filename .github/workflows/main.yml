@@ -49,7 +49,7 @@ jobs:
           pip install setuptools wheel # twine -> don't want to publish (yet)...want to install locally and generate C++ code to test.
           #if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           
-      - name Create Wheel
+      - name: Create Wheel
         run: python setup.py bdist_wheel
           
       - name: Install Kojen locally from this repository
