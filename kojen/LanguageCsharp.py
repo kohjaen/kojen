@@ -203,7 +203,7 @@ class UnitTestWriter:
             if unittestfw == UnitTestFramework.NO_FW:
                 result.append(WHITESPACE + language.If(indexer + ' != serialized_size'))
                 result.append(WHITESPACE + language.OpenBrace())
-                result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Indexing count %i not match the stream %i ..." ,' + indexer + ',serialized_size'))
+                result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Indexing count %i not match the stream %i ..." ,' + indexer + ',serialized_size"'))
             elif unittestfw == UnitTestFramework.BOOST:
                 result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE('+indexer+' == serialized_size, "ERROR : Indexing count does not match the stream size.");')
             elif unittestfw == UnitTestFramework.CPPuTEST:
@@ -214,7 +214,7 @@ class UnitTestWriter:
             if unittestfw == UnitTestFramework.NO_FW:
                 result.append(WHITESPACE + language.If(indexer+' != '+bytestream_of_message_variable_name+'->size()'))
                 result.append(WHITESPACE + language.OpenBrace())
-                result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Indexing count %i not match the stream %i ..." ,' + indexer + ',' + bytestream_of_message_variable_name + '->size()'))
+                result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Indexing count %i not match the stream %i ..." ,' + indexer + ',' + bytestream_of_message_variable_name + '->size()"'))
             elif unittestfw == UnitTestFramework.BOOST:
                 result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE('+indexer+' == '+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.");')
             elif unittestfw == UnitTestFramework.CPPuTEST:
@@ -302,7 +302,7 @@ class UnitTestWriter:
         if unittestfw == UnitTestFramework.NO_FW:
             result.append(WHITESPACE + language.WhiteSpace(0) + language.If(size_struct_name + ' != ' + size_accum_struct_name))
             result.append(WHITESPACE + language.WhiteSpace(0) + language.OpenBrace())
-            result.append(WHITESPACE + language.WhiteSpace(1) + language.PrintError('"ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts: %i != %i" ,' + size_struct_name + ',' + size_accum_struct_name))
+            result.append(WHITESPACE + language.WhiteSpace(1) + language.PrintError('"ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts: %i != %i" ,' + size_struct_name + ',' + size_accum_struct_name +'"'))
             result.append(WHITESPACE + language.WhiteSpace(1) + 'return false;')
             result.append(WHITESPACE + language.WhiteSpace(0) + language.CloseBrace())
         elif unittestfw == UnitTestFramework.BOOST:
@@ -330,13 +330,13 @@ class UnitTestWriter:
             result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetAllocations(),' + struct_name + '::GetDeallocations(),"ERROR : Somebody is using ' + struct_name + 's without deleting them (3).");')
         else:
             result.append(WHITESPACE + "if(" + struct_name + "::GetBlocksInUse() != " + str(len(to_delete)) + ")")
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them.'))
+            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them."'))
             for delete in to_delete:
                 result.append(WHITESPACE + 'delete ' + delete + ';')
             result.append(WHITESPACE + 'if(' + struct_name + '::GetBlocksInUse() != 0)')
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them (2).'))
+            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them (2)."'))
             result.append(WHITESPACE + 'if(' + struct_name + '::GetAllocations() != ' + struct_name + '::GetDeallocations())')
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them (3).'))
+            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them (3)."'))
 
         result.append('#endif // __arm__')
         return result
@@ -406,7 +406,7 @@ class UnitTestWriter:
         if unittestfw == UnitTestFramework.NO_FW:
             result.append(WHITESPACE + language.WhiteSpace(0) + language.If(self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ' != ' + size_accumulator))
             result.append(WHITESPACE + language.WhiteSpace(0) + language.OpenBrace())
-            result.append(WHITESPACE + language.WhiteSpace(1) + language.PrintError('"ERROR : Size of ' + struct.Name + ' payload size does not equal the sum of its separate parts (less pointers to data): %i != %i " ,' + size_accumulator + ',' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize()))
+            result.append(WHITESPACE + language.WhiteSpace(1) + language.PrintError('"ERROR : Size of ' + struct.Name + ' payload size does not equal the sum of its separate parts (less pointers to data): %i != %i " ,' + size_accumulator + ',' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize())+'"')
 
             result.extend(self.WRITE_DELETERS(to_delete, struct_name, WHITESPACE + language.WhiteSpace(0), unittestfw))
 
