@@ -53,9 +53,7 @@ jobs:
         run: python setup.py bdist_wheel
           
       - name: Install Kojen locally from this repository
-        run: |
-          pip uninstall kojen
-          pip install ./dist/*.whl
+        run: pip install --no-index ./dist/*.whl
           
       - name: Generate example code
         run: |
