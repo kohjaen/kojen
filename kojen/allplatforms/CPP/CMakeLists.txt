@@ -48,39 +48,39 @@ add_executable(KoJen_Tests
 	${HEADER_FILES}
     )
 	
-set(GENERATE_FREERTOS OFF "Enable this to create a FreeRTOS shared library for FREERTOS win32 port testing")
-message(CHECK_START "Generating FreeRTOS project...")
-if(GENERATE_FREERTOS)
-	message(CHECK_PASS "enabled")
-	###
-	### For freertos (in windows) testing DLL project. DONT link to the executable...that is standalone.
-	### The lib is to be used from another project...add specific options to it.
-	###
-	add_library (KoJen_FreeRTOS_Win32 SHARED
-		${AUTOGEN_FILES}
-		${SOURCE_FILES}
-		${HEADER_FILES}
-		)
-	target_compile_definitions(KoJen_FreeRTOS_Win32
-							PUBLIC 
-							__FREERTOS__
-							__arm__
-							)
-	
-	set(FREERTOS_SOURCE_INCLUDE "D:/FreeRTOS/FreeRTOS/Source/include" CACHE FILEPATH "Path to your FreeRTOS source includes.")
-	set(FREERTOS_DEMO_INCLUDE "D:/FreeRTOS/FreeRTOS/Demo/WIN32-MSVC" CACHE FILEPATH "Path to your FreeRTOS Win32 DEMO.")
-	set(FREERTOS_PLUS_TRACE_INCLUDE "D:/FreeRTOS/FreeRTOS-Plus/Source/FreeRTOS-Plus-Trace/Include" CACHE FILEPATH "Path to your FreeRTOS PLUS Trace include.")
-	set(FREERTOS_PLUS_TRACE_REC_CONFIG_INCLUDE "D:/FreeRTOS/FreeRTOS/Demo/WIN32-MSVC/Trace_Recorder_Configuration" CACHE FILEPATH "Path to your FreeRTOS Win32 port trace recorder configuration include.")
-	set(FREERTOS_PORT_INCLUDE "D:/FreeRTOS/FreeRTOS/Source/portable/MSVC-MingW" CACHE FILEPATH "Path to your FreeRTOS port.")						   
-	target_include_directories(KoJen_FreeRTOS_Win32
-							PUBLIC
-							${FREERTOS_SOURCE_INCLUDE}
-							${FREERTOS_DEMO_INCLUDE}
-							${FREERTOS_PLUS_TRACE_INCLUDE}
-							${FREERTOS_PLUS_TRACE_REC_CONFIG_INCLUDE}
-							${FREERTOS_PORT_INCLUDE}
-							)
-else()
-	message(CHECK_FAIL "disabled")
-endif()
-unset(GENERATE_FREERTOS CACHE) 
+#set(GENERATE_FREERTOS OFF "Enable this to create a FreeRTOS shared library for FREERTOS win32 port testing")
+#message(CHECK_START "Generating FreeRTOS project...")
+#if(GENERATE_FREERTOS)
+#	message(CHECK_PASS "enabled")
+#	###
+#	### For freertos (in windows) testing DLL project. DONT link to the executable...that is standalone.
+#	### The lib is to be used from another project...add specific options to it.
+#	###
+#	add_library (KoJen_FreeRTOS_Win32 SHARED
+#		${AUTOGEN_FILES}
+#		${SOURCE_FILES}
+#		${HEADER_FILES}
+#		)
+#	target_compile_definitions(KoJen_FreeRTOS_Win32
+#							PUBLIC 
+#							__FREERTOS__
+#							__arm__
+#							)
+#	
+#	set(FREERTOS_SOURCE_INCLUDE "D:/FreeRTOS/FreeRTOS/Source/include" CACHE FILEPATH "Path to your FreeRTOS source includes.")
+#	set(FREERTOS_DEMO_INCLUDE "D:/FreeRTOS/FreeRTOS/Demo/WIN32-MSVC" CACHE FILEPATH "Path to your FreeRTOS Win32 DEMO.")
+#	set(FREERTOS_PLUS_TRACE_INCLUDE "D:/FreeRTOS/FreeRTOS-Plus/Source/FreeRTOS-Plus-Trace/Include" CACHE FILEPATH "Path to your FreeRTOS PLUS Trace include.")
+#	set(FREERTOS_PLUS_TRACE_REC_CONFIG_INCLUDE "D:/FreeRTOS/FreeRTOS/Demo/WIN32-MSVC/Trace_Recorder_Configuration" CACHE FILEPATH "Path to your FreeRTOS Win32 port trace recorder configuration include.")
+#	set(FREERTOS_PORT_INCLUDE "D:/FreeRTOS/FreeRTOS/Source/portable/MSVC-MingW" CACHE FILEPATH "Path to your FreeRTOS port.")						   
+#	target_include_directories(KoJen_FreeRTOS_Win32
+#							PUBLIC
+#							${FREERTOS_SOURCE_INCLUDE}
+#							${FREERTOS_DEMO_INCLUDE}
+#							${FREERTOS_PLUS_TRACE_INCLUDE}
+#							${FREERTOS_PLUS_TRACE_REC_CONFIG_INCLUDE}
+#							${FREERTOS_PORT_INCLUDE}
+#							)
+#else()
+#	message(CHECK_FAIL "disabled")
+#endif()
+#unset(GENERATE_FREERTOS CACHE) 
