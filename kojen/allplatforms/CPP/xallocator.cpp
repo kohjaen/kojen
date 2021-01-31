@@ -19,7 +19,7 @@ using namespace std;
 #ifdef __FREERTOS__
 // use taskENTER_CRITICAL
 #else
-/*static*/ std::mutex _criticalSection; 
+static std::mutex _criticalSection; 
 #endif
 
 // Define STATIC_POOLS to switch from heap blocks mode to static pools mode
@@ -219,34 +219,31 @@ extern "C" void xalloc_destroy()
 	taskENTER_CRITICAL();
 #else	
 	//std::lock_guard<std::mutex> lk(_criticalSection);
-	_criticalSection.lock();
 	// Problem on macos
-	//if (_criticalSection.try_lock())
-	//{
+	bool must_unlock = _criticalSection.try_lock();
 #endif
 
 #ifdef STATIC_POOLS
-		for (int i = 0; i < MAX_ALLOCATORS; i++)
-		{
-			_allocators[i]->~Allocator();
-			_allocators[i] = 0;
-		}
+	for (int i=0; i<MAX_ALLOCATORS; i++)
+	{
+		_allocators[i]->~Allocator();
+		_allocators[i] = 0;
+	}
 #else
-		for (int i = 0; i < MAX_ALLOCATORS; i++)
-		{
-			if (_allocators[i] == 0)
-				break;
-			delete _allocators[i];
-			_allocators[i] = 0;
-		}
+	for (int i=0; i<MAX_ALLOCATORS; i++)
+	{
+		if (_allocators[i] == 0)
+			break;
+		delete _allocators[i];
+		_allocators[i] = 0;
+	}
 #endif
 
 #ifdef __FREERTOS__
 	taskEXIT_CRITICAL();
 #else
+	if (must_unlock)
 		_criticalSection.unlock();
-	//	_criticalSection.unlock();
-	//}
 #endif
 }
 
