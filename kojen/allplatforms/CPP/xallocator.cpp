@@ -218,8 +218,7 @@ extern "C" void xalloc_destroy()
 #ifdef __FREERTOS__
 	taskENTER_CRITICAL();
 #else	
-	std::unique_lock<std::mutex> lk(_criticalSection);
-	lk.lock();
+	std::lock_guard<std::mutex> lk(_criticalSection);
 #endif
 
 #ifdef STATIC_POOLS
@@ -240,8 +239,6 @@ extern "C" void xalloc_destroy()
 
 #ifdef __FREERTOS__
 	taskEXIT_CRITICAL();
-#else
-	lk.unlock();
 #endif
 }
 
@@ -294,8 +291,7 @@ extern "C" void *xmalloc(size_t size)
 #ifdef __FREERTOS__
 	taskENTER_CRITICAL();
 #else	
-	std::unique_lock<std::mutex> lk(_criticalSection);
-	lk.lock();
+	std::lock_guard<std::mutex> lk(_criticalSection);
 #endif
 	// Allocate a raw memory block 
 	Allocator* allocator = xallocator_get_allocator(size);
@@ -303,8 +299,6 @@ extern "C" void *xmalloc(size_t size)
 
 #ifdef __FREERTOS__
 	taskEXIT_CRITICAL();
-#else
-	lk.unlock();
 #endif
 
 	// Set the block Allocator* within the raw memory block region
@@ -329,8 +323,7 @@ extern "C" void xfree(void* ptr)
 #ifdef __FREERTOS__
 	taskENTER_CRITICAL();
 #else
-	std::unique_lock<std::mutex> lk(_criticalSection);
-	lk.lock();
+	std::lock_guard<std::mutex> lk(_criticalSection);
 #endif
 
 	// Deallocate the block 
@@ -338,8 +331,6 @@ extern "C" void xfree(void* ptr)
 
 #ifdef __FREERTOS__
 	taskEXIT_CRITICAL();
-#else
-	lk.unlock();
 #endif
 }
 
@@ -400,8 +391,7 @@ extern "C" void xalloc_stats()
 	
 	taskEXIT_CRITICAL();
 #else
-	std::unique_lock<std::mutex> lk(_criticalSection);
-	lk.lock();
+	std::lock_guard<std::mutex> lk(_criticalSection);
 	for (int i=0; i<MAX_ALLOCATORS; i++)
 	{
 		if (_allocators[i] == 0)
@@ -414,7 +404,6 @@ extern "C" void xalloc_stats()
 		cout << " Blocks In Use: " << _allocators[i]->GetBlocksInUse();
 		cout << endl;
 	}
-	lk.unlock();
 #endif
 }
 
