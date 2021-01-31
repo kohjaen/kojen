@@ -105,4 +105,4 @@ jobs:
       - name: Run Tests
         shell: bash
         working-directory: ${{github.workspace}}/build
-        run: ./$BUILD_TYPE/RunTests
+        run: $GITHUB_WORKSPACE/build/$BUILD_TYPE/RunTests
