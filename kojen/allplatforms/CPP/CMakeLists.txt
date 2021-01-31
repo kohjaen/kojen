@@ -48,6 +48,12 @@ add_executable(KoJen_Tests
 	${HEADER_FILES}
     )
 	
+# CMake magic to find and link correct threading library based on platform (https://stackoverflow.com/questions/1620918/cmake-and-libpthread)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(KoJen_Tests PRIVATE Threads::Threads)
+
+	
 set(GENERATE_FREERTOS OFF)
 message(CHECK_START "Generating FreeRTOS project...")
 if(${GENERATE_FREERTOS})
