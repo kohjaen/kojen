@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.9.0)
-project(KoJen_Tests)
+project(RunTests)
 
 message(STATUS "running 'CPP' makelists...")
 
@@ -41,13 +41,11 @@ include_directories(${TEST_SUITE_DIR})
 include(${TEST_SUITE_DIR}/CMakeLists.txt)
 
 # Windows will do this automatically
-#if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if (not WIN32)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
-#else()
-#  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output/${CMAKE_BUILD_TYPE})
-#endif()
+endif()
 
-add_executable(KoJen_Tests
+add_executable(RunTests
 	${AUTOGEN_FILES}
     ${SOURCE_FILES}
 	${HEADER_FILES}
@@ -57,7 +55,7 @@ add_executable(KoJen_Tests
 # to find and link correct threading library based on platform (https://stackoverflow.com/questions/1620918/cmake-and-libpthread)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-target_link_libraries(KoJen_Tests PRIVATE Threads::Threads)
+target_link_libraries(RunTests PRIVATE Threads::Threads)
 
 	
 set(GENERATE_FREERTOS OFF)
