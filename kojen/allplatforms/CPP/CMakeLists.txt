@@ -41,7 +41,7 @@ include_directories(${TEST_SUITE_DIR})
 include(${TEST_SUITE_DIR}/CMakeLists.txt)
 
 # Windows will do this automatically
-if (not WIN32)
+if (NOT WIN32)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 endif()
 
