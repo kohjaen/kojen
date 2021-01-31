@@ -218,10 +218,10 @@ extern "C" void xalloc_destroy()
 #ifdef __FREERTOS__
 	taskENTER_CRITICAL();
 #else	
-	//std::lock_guard<std::mutex> lk(_criticalSection);
+	std::lock_guard<std::mutex> lk(_criticalSection);
 	// Problem on macos
-	if (_criticalSection.try_lock())
-	{
+	//if (_criticalSection.try_lock())
+	//{
 #endif
 
 #ifdef STATIC_POOLS
@@ -243,8 +243,8 @@ extern "C" void xalloc_destroy()
 #ifdef __FREERTOS__
 	taskEXIT_CRITICAL();
 #else
-		_criticalSection.unlock();
-	}
+	//	_criticalSection.unlock();
+	//}
 #endif
 }
 
