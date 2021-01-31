@@ -40,8 +40,8 @@ classname = "CExampleIF"
 declspec = ""
 outputdir = "./autogen"
 templatedir = "" # defaults
-
-Generate.Protocol(outputdir, "example_protocol.py", namespacename, classname, declspec)
+protocolfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), "example_protocol.py")
+Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec)
 
 #
 # Generate Statemachine (from TransitionTable ... to do it directly from a model, please write to koh.jaen@yahoo.de)
