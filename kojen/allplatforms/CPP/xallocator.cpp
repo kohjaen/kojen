@@ -19,7 +19,7 @@ using namespace std;
 #ifdef __FREERTOS__
 // use taskENTER_CRITICAL
 #else
-static std::mutex _criticalSection; 
+/*static*/ std::mutex _criticalSection; 
 #endif
 
 // Define STATIC_POOLS to switch from heap blocks mode to static pools mode
