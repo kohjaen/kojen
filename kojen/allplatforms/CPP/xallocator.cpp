@@ -5,11 +5,10 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <string.h>
+#else
+#include <mutex>
 #endif
-#ifdef WIN32
-#include <windows.h>
-#include <synchapi.h>
-#endif
+
 
 using namespace std;
 
@@ -17,17 +16,10 @@ using namespace std;
 #define CHAR_BIT	8 
 #endif
 
-#if defined(__FREERTOS__)
+#ifdef __FREERTOS__
 // use taskENTER_CRITICAL
-#elif defined(_MSC_VER)
-static CRITICAL_SECTION _criticalSection; 
-static bool _xallocInitialized = false;
-#elif (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__)
-/* Sample C/C++, Unix/Linux */
-#include <pthread.h>
-/* This is the critical section object (statically allocated). */
-static pthread_mutex_t _criticalSection =  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-static bool _xallocInitialized = false;
+#else
+static std::mutex _criticalSection; 
 #endif
 
 // Define STATIC_POOLS to switch from heap blocks mode to static pools mode
@@ -102,55 +94,6 @@ T nexthigher(T k)
         k |= (k >> i);
     return k+1;
 }
-
-#ifdef __FREERTOS__
-// Simply use a critical section of FreeRTOS
-#else
-/// Create the xallocator lock. Call only one time at startup. 
-static void lock_init()
-{
-#if defined(_MSC_VER)
-	BOOL success = InitializeCriticalSectionAndSpinCount(&_criticalSection, 0x00000400);
-	ASSERT_TRUE(success != 0);
-#endif
-	_xallocInitialized = true;
-}
-
-/// Destroy the xallocator lock.
-static void lock_destroy()
-{
-#if defined(_MSC_VER)
-	DeleteCriticalSection(&_criticalSection);
-#endif
-	_xallocInitialized = false;
-}
-
-/// Lock the shared resource. 
-static inline void lock_get()
-{
-	if (_xallocInitialized == false)
-		return;
-#if defined(_MSC_VER)
-	EnterCriticalSection(&_criticalSection);
-#elif (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__) && !defined(__arm__)
-	/* Enter the critical section -- other threads are locked out */
-    pthread_mutex_lock( &_criticalSection );
- #endif
-}
-
-/// Unlock the shared resource. 
-static inline void lock_release()
-{
-	if (_xallocInitialized == false)
-		return;
-#if defined(_MSC_VER)
-	LeaveCriticalSection(&_criticalSection);
-#elif (defined(__GNUC__) || defined(__clang__)) && !defined(__arm__) && !defined(__arm__)
-	/*Leave the critical section -- other threads can now pthread_mutex_lock()  */
-    pthread_mutex_unlock( &_criticalSection );
-#endif
-}
-#endif
 
 /// Stored a pointer to the allocator instance within the block region. 
 ///	a pointer to the client's area within the block.
@@ -235,11 +178,6 @@ static inline void insert_allocator(Allocator* allocator)
 /// API is called. XallocInitDestroy constructor calls this function automatically. 
 extern "C" void xalloc_init()
 {
-#ifdef __FREERTOS__
-#else	
-	lock_init();
-#endif
-
 #ifdef STATIC_POOLS
 	// For STATIC_POOLS mode, the allocators must be initialized before any other
 	// static user class constructor is run. Therefore, use placement new to initialize
@@ -280,7 +218,7 @@ extern "C" void xalloc_destroy()
 #ifdef __FREERTOS__
 	taskENTER_CRITICAL();
 #else	
-	lock_get();
+	std::unique_lock<std::mutex> lk(_criticalSection);
 #endif
 
 #ifdef STATIC_POOLS
@@ -301,10 +239,6 @@ extern "C" void xalloc_destroy()
 
 #ifdef __FREERTOS__
 	taskEXIT_CRITICAL();
-#else
-	lock_release();
-
-	lock_destroy();
 #endif
 }
 
@@ -357,7 +291,7 @@ extern "C" void *xmalloc(size_t size)
 #ifdef __FREERTOS__
 	taskENTER_CRITICAL();
 #else	
-	lock_get();
+	std::unique_lock<std::mutex> lk(_criticalSection);
 #endif
 	// Allocate a raw memory block 
 	Allocator* allocator = xallocator_get_allocator(size);
@@ -365,8 +299,6 @@ extern "C" void *xmalloc(size_t size)
 
 #ifdef __FREERTOS__
 	taskEXIT_CRITICAL();
-#else
-	lock_release();
 #endif
 
 	// Set the block Allocator* within the raw memory block region
@@ -391,7 +323,7 @@ extern "C" void xfree(void* ptr)
 #ifdef __FREERTOS__
 	taskENTER_CRITICAL();
 #else
-	lock_get();
+	std::unique_lock<std::mutex> lk(_criticalSection);
 #endif
 
 	// Deallocate the block 
@@ -399,8 +331,6 @@ extern "C" void xfree(void* ptr)
 
 #ifdef __FREERTOS__
 	taskEXIT_CRITICAL();
-#else
-	lock_release();
 #endif
 }
 
@@ -461,7 +391,7 @@ extern "C" void xalloc_stats()
 	
 	taskEXIT_CRITICAL();
 #else
-	lock_get();
+	std::unique_lock<std::mutex> lk(_criticalSection);
 	
 	for (int i=0; i<MAX_ALLOCATORS; i++)
 	{
@@ -475,8 +405,6 @@ extern "C" void xalloc_stats()
 		cout << " Blocks In Use: " << _allocators[i]->GetBlocksInUse();
 		cout << endl;
 	}
-	
-	lock_release();
 #endif
 }
 

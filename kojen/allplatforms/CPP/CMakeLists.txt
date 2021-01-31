@@ -55,9 +55,9 @@ add_executable(KoJen_Tests
 	
 # Internal CMake module magic (https://github.com/Kitware/CMake/tree/v3.1.0/Modules)
 # to find and link correct threading library based on platform (https://stackoverflow.com/questions/1620918/cmake-and-libpthread)
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-target_link_libraries(KoJen_Tests PRIVATE Threads::Threads)
+#set(THREADS_PREFER_PTHREAD_FLAG ON)
+#find_package(Threads REQUIRED)
+#target_link_libraries(KoJen_Tests PRIVATE Threads::Threads)
 
 	
 set(GENERATE_FREERTOS OFF)
