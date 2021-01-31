@@ -58,9 +58,7 @@ jobs:
           
       - name: Generate example code
         run: |
-          cd example
-          python generate.py
-          cd ..
+          python example/generate.py
           
       #- name: Lint with flake8
       #  run: |
