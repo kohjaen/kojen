@@ -38,7 +38,7 @@ username = "yourname@yourdomain.com"
 namespacename = "ExampleIO"
 classname = "CExampleIF"
 declspec = ""
-outputdir = "./autogen"
+outputdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "autogen")
 templatedir = "" # defaults
 protocolfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), "example_protocol.py")
 Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec)
@@ -49,7 +49,6 @@ Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec)
 namespacename = "CDPlayerSM"
 classname = "CDPlayer"
 declspec = ""
-outputdir = "./autogen"
 templatedir = "" # defaults are for 'SML'
 
 from kojen.interface_base import *
