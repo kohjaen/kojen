@@ -1,3 +1,5 @@
+![CI](https://github.com/kohjaen/kojen/workflows/CI/badge.svg)
+
 # Description
 
 Kojen is a C++ protocol and state-machine code-generator written in python.
