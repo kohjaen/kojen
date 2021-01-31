@@ -3,6 +3,11 @@ project(KoJen_Tests)
 
 message(STATUS "running 'CPP' makelists...")
 
+# Set the correct C++ Standard (https://crascit.com/2015/03/28/enabling-cxx11-in-cmake/)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Make certain, if windows, the correct declspecs (and windows platform) are defined.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # APPEND ANY OTHER COMPILER FLAGS HERE
@@ -48,7 +53,8 @@ add_executable(KoJen_Tests
 	${HEADER_FILES}
     )
 	
-# CMake magic to find and link correct threading library based on platform (https://stackoverflow.com/questions/1620918/cmake-and-libpthread)
+# Internal CMake module magic (https://github.com/Kitware/CMake/tree/v3.1.0/Modules)
+# to find and link correct threading library based on platform (https://stackoverflow.com/questions/1620918/cmake-and-libpthread)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(KoJen_Tests PRIVATE Threads::Threads)
