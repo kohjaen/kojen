@@ -99,4 +99,4 @@ jobs:
       - name: List Build Files
         working-directory: ${{github.workspace}}/build
         shell: bash
-        run: ls
+        run: ls -R
