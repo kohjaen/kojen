@@ -42,7 +42,7 @@ include(${TEST_SUITE_DIR}/CMakeLists.txt)
 
 # Windows will do this automatically
 if (NOT WIN32)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE})
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE})
 endif()
 
 add_executable(RunTests
