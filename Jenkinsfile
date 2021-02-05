@@ -1,9 +1,3 @@
-pipeline {
-    environment {
-        BUILD_TYPE = "Release"
-    }
-}
-
 node('docker') {
     stage('Checkout'){
         checkout scm
