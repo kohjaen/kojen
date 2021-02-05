@@ -1,0 +1,59 @@
+node('docker') {
+    stage 'Checkout'
+        checkout scm
+
+    stage 'Print Environmental Variables'
+        environVars()
+
+    stage 'Setup Python'
+        execute("pip install cogapp")
+        execute("pip install setuptools wheel")
+  
+    stage 'Create Wheel'
+        execute("python setup.py bdist_wheel")
+    
+    stage 'Install Kojen locally from this repository'
+        execute("pip install --no-index ./dist/*.whl")
+
+    stage 'Generate example code'
+        execute("python example/generate.py")
+
+    //stage 'Create Build Environment'
+    //    execute("cmake -E make_directory ${{github.workspace}}/build")
+    
+    //stage 'Configure CMake'
+}
+
+def environVars(){
+    if (isUnix()) {
+        sh('printenv | sort')
+    } else {
+        bat('set')
+    }
+}
+def execute(commandString) {
+    if (isUnix()) {
+        sh(commandString)
+    } else {
+        bat(commandString)
+    }
+}
+
+/**
+ * Execute a program that exists in the current working directory.
+ *
+ * On Unix, the current working directory is not implicitly in the PATH,
+ * so the command must be prefixed with "./".
+ *
+ * On Windows, the current directory is first in the search path, but
+ * it does not like the "./" used for a Unix-style command.
+ *
+ * Therefore we have to do something special in each case.
+ */
+def executeCwd(commandString) {
+    if (isUnix()) {
+        execute("./" + commandString)
+    } else {
+        execute(".\\" + commandString)
+    }
+}
