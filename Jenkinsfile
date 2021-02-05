@@ -1,7 +1,7 @@
-node('centos7-slave && ubuntu20-slave') {
+node('docker') {
     //pipeline {
     // can use 'image' here (as in docker image)
-    //agent { docker { label 'centos7-slave && ubuntu20-slave' } }
+    agent { label 'centos7-slave && ubuntu20-slave' } 
     stages{
     stage('Checkout'){
         checkout scm
