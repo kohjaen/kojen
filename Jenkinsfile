@@ -1,8 +1,6 @@
 node('docker') {
-    //pipeline {
-    // can use 'image' here (as in docker image)
     agent { label 'centos7-slave && ubuntu20-slave' } 
-    stages{
+   
     stage('Checkout'){
         checkout scm
         execute("git submodule update --init --recursive")
@@ -38,9 +36,7 @@ node('docker') {
     stage('Run Tests'){
         execute("${env.WORKSPACE}/build/${env.BUILD_TYPE}/RunTests")
     }
-    }
-    }
-//}
+}
 
 def environVars(){
     if (isUnix()) {
