@@ -14,10 +14,13 @@ node('docker') {
         execute("python setup.py bdist_wheel")
     }
     stage('Install Kojen locally from this repository'){
-        execute("python -m pip install --upgrade --force-reinstall --no-index ./dist/*.*.whl")
+        execute("python -m pip install --no-index ./dist/*.whl")
     }
     stage('Generate example code'){
         execute("python example/generate.py")
+    }
+    stage('Clean local Kojen'){
+        execute("python -m pip uninstall kojen")
     }
     stage('Create Build Environment'){
         execute("cmake -E make_directory ${env.WORKSPACE}/build")
