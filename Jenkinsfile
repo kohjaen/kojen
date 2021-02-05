@@ -14,7 +14,8 @@ node('docker') {
         execute("python setup.py bdist_wheel")
     }
     stage('Install Kojen locally from this repository'){
-        execute("python -m pip install --upgrade --force-reinstall --no-index ./dist/*.whl")
+        //execute("python -m pip install --upgrade --force-reinstall --no-index ./dist/*.whl")
+        execute("python -m pip install --force-reinstall --no-index ./dist/*.whl")
     }
     stage('Generate example code'){
         execute("python example/generate.py")
