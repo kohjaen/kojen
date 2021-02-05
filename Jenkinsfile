@@ -31,7 +31,7 @@ node('docker') {
         execute("cmake -S ${env.WORKSPACE}/example/autogen/allplatforms -B ${env.WORKSPACE}/build -DCMAKE_BUILD_TYPE=${env.BUILD_TYPE}")
     }
     stage('Build'){
-        execute('cmake --build . --config ${env.BUILD_TYPE}')
+        execute("cmake --build . --config ${env.BUILD_TYPE}")
     }
     stage('Run Tests'){
         execute("${env.WORKSPACE}/build/${env.BUILD_TYPE}/RunTests")
