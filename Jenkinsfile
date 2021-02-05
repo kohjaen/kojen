@@ -7,14 +7,14 @@ node('docker') {
         environVars()
     }
     stage('Setup Python'){
-        execute("pip install cogapp")
-        execute("pip install setuptools wheel")
+        execute("python -m pip install cogapp")
+        execute("python -m pip install setuptools wheel")
     }
     stage('Create Wheel'){
         execute("python setup.py bdist_wheel")
     }
     stage('Install Kojen locally from this repository'){
-        execute("pip install --upgrade --force-reinstall --no-index ./dist/*.whl")
+        execute("python -m pip install --upgrade --force-reinstall --no-index ./dist/*.whl")
     }
     stage('Generate example code'){
         execute("python example/generate.py")
