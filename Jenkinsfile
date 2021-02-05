@@ -18,6 +18,7 @@ node('docker') {
         execute("python setup.py bdist_wheel")
     }
     stage('Install Kojen locally from this repository'){
+        execute("pip uninstall kojen")
         execute("pip install --no-index ./dist/*.whl")
     }
     stage('Generate example code'){
