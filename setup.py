@@ -33,5 +33,5 @@ setuptools.setup(
                        'docs/images/*.*', 
                        'docs/*.*']},
 	include_package_data=True,
-    install_requires=['cogapp>=3.0',],
+    install_requires=['cogapp>=3.0.0',],
 )
