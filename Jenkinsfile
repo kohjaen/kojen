@@ -1,6 +1,11 @@
+environment {
+    BUILD_TYPE = "Release"
+}
+
 node('docker') {
     stage('Checkout'){
         checkout scm
+        execute("git submodule update --init --recursive")
     }
     stage('Print Environmental Variables'){
         environVars()
@@ -22,13 +27,13 @@ node('docker') {
         execute("cmake -E make_directory ${env.WORKSPACE}/build")
     }
     stage('Configure CMake'){
-        execute("cmake -S ${env.WORKSPACE}/example/autogen/allplatforms -B ${env.WORKSPACE}/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE")
+        execute("cmake -S ${env.WORKSPACE}/example/autogen/allplatforms -B ${env.WORKSPACE}/build -DCMAKE_BUILD_TYPE=${env.BUILD_TYPE}")
     }
     stage('Build'){
         execute('cmake --build . --config $BUILD_TYPE')
     }
     stage('Run Tests'){
-        execute("${env.WORKSPACE}/build/$BUILD_TYPE/RunTests")
+        execute("${env.WORKSPACE}/build/${env.BUILD_TYPE}/RunTests")
     }
 }
 
