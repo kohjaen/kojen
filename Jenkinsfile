@@ -1,27 +1,35 @@
 node('docker') {
-    stage 'Checkout'
+    stage('Checkout'){
         checkout scm
-
-    stage 'Print Environmental Variables'
+    }
+    stage('Print Environmental Variables'){
         environVars()
-
-    stage 'Setup Python'
+    }
+    stage('Setup Python'){
         execute("pip install cogapp")
         execute("pip install setuptools wheel")
-  
-    stage 'Create Wheel'
+    }
+    stage('Create Wheel'){
         execute("python setup.py bdist_wheel")
-    
-    stage 'Install Kojen locally from this repository'
+    }
+    stage('Install Kojen locally from this repository'){
         execute("pip install --no-index ./dist/*.whl")
-
-    stage 'Generate example code'
+    }
+    stage('Generate example code'){
         execute("python example/generate.py")
-
-    //stage 'Create Build Environment'
-    //    execute("cmake -E make_directory ${{github.workspace}}/build")
-    
-    //stage 'Configure CMake'
+    }
+    stage('Create Build Environment'){
+        execute("cmake -E make_directory ${env.WORKSPACE}/build")
+    }
+    stage('Configure CMake'){
+        execute("cmake -S ${env.WORKSPACE}/example/autogen/allplatforms -B ${env.WORKSPACE}/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE")
+    }
+    stage('Build'){
+        execute('cmake --build . --config $BUILD_TYPE')
+    }
+    stage('Run Tests'){
+        execute("${env.WORKSPACE}/build/$BUILD_TYPE/RunTests")
+    }
 }
 
 def environVars(){
