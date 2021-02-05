@@ -20,7 +20,7 @@ node('docker') {
         execute("python example/generate.py")
     }
     stage('Clean local Kojen'){
-        execute("python -m pip uninstall kojen")
+        execute("python -m pip uninstall kojen -y")
     }
     stage('Create Build Environment'){
         execute("cmake -E make_directory ${env.WORKSPACE}/build")
