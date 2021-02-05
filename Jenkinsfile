@@ -1,6 +1,4 @@
-node('docker') {
-    agent { label 'centos7-slave && ubuntu20-slave' } 
-   
+node('centos7-slave && ubuntu20-slave') {   
     stage('Checkout'){
         checkout scm
         execute("git submodule update --init --recursive")
