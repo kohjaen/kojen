@@ -4,7 +4,7 @@ project(RunTests)
 message(STATUS "running 'CPP' makelists...")
 
 # Set the correct C++ Standard (https://crascit.com/2015/03/28/enabling-cxx11-in-cmake/)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
