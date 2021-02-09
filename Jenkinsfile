@@ -45,7 +45,7 @@ pipeline {
                             //checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/kohjaen/kojen.git']]])
                             //git branch: 'master', url: 'https://github.com/kohjaen/kojen.git'
 							checkout scm
-                            execute("git submodule update --init --recursive")
+                            //execute("git submodule update --init --recursive")
                         }
                     }
                     stage('Setup Python'){
