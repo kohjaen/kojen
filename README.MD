@@ -12,7 +12,8 @@ Unit testing : Tests for protocols are generated, and tests for state-machines t
 
 It currently supports Windows/Linux/MacOS and FreeRTOS and includes multi-threading components (threads/queues/dispatchers/fixed-block-memory-allocators as well as stl-with-fixed-block-mem-allocator wrappers for no spurious heap usage and much faster STL containers) that works on all platforms by including CMake configuration files in generated outputs.
 
-Message Queues are platform independant and adding a new RTOS will only mean adding a 'condition variable' like synchronization mechanism for that RTOS (the provided example of how it is done with FreeRTOS can be followed).
+Message Queues use move-semantics and are thus platform independant and adding a new RTOS will only mean adding a 'condition variable' like synchronization mechanism for that RTOS (the provided example of how it is done with FreeRTOS can be followed).
+
 # Quickstart
 ## Example folder
 
