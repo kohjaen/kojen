@@ -240,6 +240,8 @@ As the state-machine-implementation uses the controller base class, the followin
 
 All state queries and event triggering are done using the ```sm``` instance.
 
+Due to the use of move-semantics, parameterized event structs are unique_ptr's (allocated in fixed-blocks for embedded applications) and thus once an event is triggered those pointers are no longer valid in the calling context.
+
 <!---
 ### Deferred Events
 
