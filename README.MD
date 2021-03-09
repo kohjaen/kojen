@@ -8,11 +8,11 @@ The default generated state-machine uses the fast and lightweight single-header-
 
 For state-machines and software-architecture-from-UML-model : user-code is preserved within special comment tags. The main concept is that code-generation is a manually-initiated process and exists within a hand-crafted source-repository. The intention is to be able to manually program in all auto-generated state-machine / Class Diagram output source files, and preserve hand-crafted code within those files when system requirements change. Its not intended to disassociate the programmer from the code (like most CASE tools). Typically after the Design phase code-generation is done first in the initial implementation phase (and maybe a few more times until things are as they should be) and then development is done the usual way. Naturally in time further changes/additions can be done in the model (Updating the 'diagrams' first) and their changes propagated to code by generation : this also allows for updates to the design (from Model -> Code) in a non-intrusive manner. Protocols and their unit tests are the only files which require no hand-coding.
 
-Unit testing : Tests for protocols are generated, and tests for state-machines too (but those require some hand-coding, code preservation applies). The included testing framework is extremely light-weight and great for embedded (and PC) application : [minunit](https://github.com/kohjaen/minunit) is used for this and it is also linked to the repository as a git sub-module. The original fork of minunit is a C-based single header file, but some improvements have been made (not possible with C) so it now consists of a single header and a single cpp file.
+Unit testing : Tests for protocols are generated, and tests for state-machines too (but those require some hand-coding, code preservation applies). The included testing framework is extremely light-weight and great for embedded (and PC) applications : [minunit](https://github.com/kohjaen/minunit) is used for this and it is also linked to the repository as a git sub-module. The original fork of minunit is a C-based single header file, but some improvements have been made (not possible with C) so it now consists of a single header and a single cpp file. It contains a test-runner which will run all registered test-suites.
 
 It currently supports Windows/Linux/MacOS and FreeRTOS and includes multi-threading components (threads/queues/dispatchers/fixed-block-memory-allocators as well as stl-with-fixed-block-mem-allocator wrappers for no spurious heap usage and much faster STL containers) that works on all platforms by including CMake configuration files in generated outputs.
 
-Message Queues use move-semantics and are thus platform independant and adding a new RTOS will only mean adding a 'condition variable' like synchronization mechanism for that RTOS (the provided example of how it is done with FreeRTOS can be followed).
+Message Queues use move-semantics and are thus platform independant and adding a new RTOS will only require adding a 'condition variable' like synchronization mechanism for that RTOS (the provided example of how it is done with FreeRTOS can be followed).
 
 # Quickstart
 ## Example folder
@@ -239,6 +239,8 @@ As the state-machine-implementation uses the controller base class, the followin
 ```
 
 All state queries and event triggering are done using the ```sm``` instance.
+
+Due to the use of move-semantics, parameterized event structs are unique_ptr's (allocated in fixed-blocks for embedded applications) and thus once an event is triggered those pointers are no longer valid in the calling context.
 
 <!---
 ### Deferred Events
