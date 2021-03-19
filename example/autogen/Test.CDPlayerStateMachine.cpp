@@ -349,8 +349,6 @@ MU_TEST(TestCDPlayer_States)
 	mu_check(fixture.sm->IsStateStop());
 	// When stopping we cleared the current track...
 	mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 0);
-	
-	mu_assert_int_eq(1,2);
 
 	//
 	//  Deferred play : i.e. close is pressed and play, before tray closes...
