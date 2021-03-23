@@ -87,7 +87,7 @@ def Generate(output_dir, pythonfile, namespacename, classname, declspec="", temp
 	# Create Cog Input
 	writer = open(os.path.join(intermediate_dir, "files.txt"), 'w')
 	for f in filenames:
-		writer.write(os.path.abspath(os.path.join(intermediate_dir, f)) + " -o " + os.path.abspath(os.path.join(output_dir, f)) + "\r\n")
+		writer.write('"' + os.path.abspath(os.path.join(intermediate_dir, f)) + '" -o "' + os.path.abspath(os.path.join(output_dir, f)) + '"\r\n')
 	writer.close()
 	
 	'''
