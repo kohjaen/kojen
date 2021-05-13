@@ -421,267 +421,267 @@ namespace Network
         return ( boost::interprocess::ipcdetail::atomic_cas32( &m_error_state, 1, 1 ) == 1 );
     }
 
-	//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
-	SerialConnection::SerialConnection(boost::shared_ptr< Hive > hive)
-		: m_hive(hive), m_serialport(hive->GetService()), m_io_strand(hive->GetService()), m_timer(hive->GetService()), m_receive_buffer_size( /*4096*/65536), m_timer_interval(1000), m_error_state(0)
-	{
-	}
+    SerialConnection::SerialConnection(boost::shared_ptr< Hive > hive)
+        : m_hive(hive), m_serialport(hive->GetService()), m_io_strand(hive->GetService()), m_timer(hive->GetService()), m_receive_buffer_size( /*4096*/65536), m_timer_interval(1000), m_error_state(0)
+    {
+    }
 
-	SerialConnection::~SerialConnection()
-	{
-	}
+    SerialConnection::~SerialConnection()
+    {
+    }
 
-	void SerialConnection::Bind(const char *com_port_name, unsigned int baud_rate)
-	{
-		boost::system::error_code ec;
+    void SerialConnection::Bind(const char *com_port_name, unsigned int baud_rate)
+    {
+        boost::system::error_code ec;
 
-		if (m_serialport.is_open()) {
-			std::cout << "error : port is already opened..." << std::endl;
-			return;
-		}
+        if (m_serialport.is_open()) {
+            std::cout << "error : port is already opened..." << std::endl;
+            return;
+        }
 
-		m_serialport.open(com_port_name, ec);
-		if (ec) {
-			std::cout << "error : m_serialport.open() failed...com_port_name="
-				<< com_port_name << ", e=" << ec.message().c_str() << std::endl;
+        m_serialport.open(com_port_name, ec);
+        if (ec) {
+            std::cout << "error : m_serialport.open() failed...com_port_name="
+                << com_port_name << ", e=" << ec.message().c_str() << std::endl;
 
-			StartError(ec);
-			return;
-		}
+            StartError(ec);
+            return;
+        }
 
-		// option settings...
-		m_serialport.set_option(boost::asio::serial_port_base::baud_rate(baud_rate), ec);
-		if (ec)
-		{
-			StartError(ec);
-			return;
-		}
-		m_serialport.set_option(boost::asio::serial_port_base::character_size(8), ec);
-		if (ec)
-		{
-			StartError(ec);
-			return;
-		}
-		m_serialport.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one), ec);
-		if (ec)
-		{
-			StartError(ec);
-			return;
-		}
-		m_serialport.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none), ec);
-		if (ec)
-		{
-			StartError(ec);
-			return;
-		}
-		m_serialport.set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none), ec);
-		if (ec)
-		{
-			StartError(ec);
-			return;
-		}
+        // option settings...
+        m_serialport.set_option(boost::asio::serial_port_base::baud_rate(baud_rate), ec);
+        if (ec)
+        {
+            StartError(ec);
+            return;
+        }
+        m_serialport.set_option(boost::asio::serial_port_base::character_size(8), ec);
+        if (ec)
+        {
+            StartError(ec);
+            return;
+        }
+        m_serialport.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one), ec);
+        if (ec)
+        {
+            StartError(ec);
+            return;
+        }
+        m_serialport.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none), ec);
+        if (ec)
+        {
+            StartError(ec);
+            return;
+        }
+        m_serialport.set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none), ec);
+        if (ec)
+        {
+            StartError(ec);
+            return;
+        }
 
-		OnConnect(com_port_name, (uint16) baud_rate);
-		//Recv(); -> Done in OnConnect
-	}
+        OnConnect(com_port_name, (uint16) baud_rate);
+        //Recv(); -> Done in OnConnect
+    }
 
-	void SerialConnection::StartSend()
-	{
-		if (!m_pending_sends.empty())
-		{
-			boost::asio::async_write(m_serialport, boost::asio::buffer(*m_pending_sends.front()), m_io_strand.wrap(boost::bind(&SerialConnection::HandleSend, shared_from_this(), boost::asio::placeholders::error, m_pending_sends.begin())));
-		}
-	}
+    void SerialConnection::StartSend()
+    {
+        if (!m_pending_sends.empty())
+        {
+            boost::asio::async_write(m_serialport, boost::asio::buffer(*m_pending_sends.front()), m_io_strand.wrap(boost::bind(&SerialConnection::HandleSend, shared_from_this(), boost::asio::placeholders::error, m_pending_sends.begin())));
+        }
+    }
 
-	void SerialConnection::StartRecv(int32 total_bytes)
-	{
-		if (total_bytes > 0)
-		{
-			m_recv_buffer = boost::shared_ptr< std::vector< uint8 > >(new std::vector< uint8 >());
-			m_recv_buffer->resize((size_t)total_bytes);
-			boost::asio::async_read(m_serialport, boost::asio::buffer(*m_recv_buffer), m_io_strand.wrap(boost::bind(&SerialConnection::HandleRecv, shared_from_this(), _1, _2)));
-		}
-		else
-		{
-			m_recv_buffer = boost::shared_ptr< std::vector< uint8 > >(new std::vector< uint8 >());
-			m_recv_buffer->resize((size_t)m_receive_buffer_size);
-			m_serialport.async_read_some(boost::asio::buffer(*m_recv_buffer), m_io_strand.wrap(boost::bind(&SerialConnection::HandleRecv, shared_from_this(), _1, _2)));
-		}
-	}
+    void SerialConnection::StartRecv(int32 total_bytes)
+    {
+        if (total_bytes > 0)
+        {
+            m_recv_buffer = boost::shared_ptr< std::vector< uint8 > >(new std::vector< uint8 >());
+            m_recv_buffer->resize((size_t)total_bytes);
+            boost::asio::async_read(m_serialport, boost::asio::buffer(*m_recv_buffer), m_io_strand.wrap(boost::bind(&SerialConnection::HandleRecv, shared_from_this(), _1, _2)));
+        }
+        else
+        {
+            m_recv_buffer = boost::shared_ptr< std::vector< uint8 > >(new std::vector< uint8 >());
+            m_recv_buffer->resize((size_t)m_receive_buffer_size);
+            m_serialport.async_read_some(boost::asio::buffer(*m_recv_buffer), m_io_strand.wrap(boost::bind(&SerialConnection::HandleRecv, shared_from_this(), _1, _2)));
+        }
+    }
 
-	void SerialConnection::StartTimer()
-	{
-		m_last_time = boost::posix_time::microsec_clock::local_time();
-		m_timer.expires_from_now(boost::posix_time::milliseconds(m_timer_interval));
-		m_timer.async_wait(m_io_strand.wrap(boost::bind(&SerialConnection::DispatchTimer, shared_from_this(), _1)));
-	}
+    void SerialConnection::StartTimer()
+    {
+        m_last_time = boost::posix_time::microsec_clock::local_time();
+        m_timer.expires_from_now(boost::posix_time::milliseconds(m_timer_interval));
+        m_timer.async_wait(m_io_strand.wrap(boost::bind(&SerialConnection::DispatchTimer, shared_from_this(), _1)));
+    }
 
-	void SerialConnection::StartError(const boost::system::error_code & error)
-	{
-		if (boost::interprocess::ipcdetail::atomic_cas32(&m_error_state, 1, 0) == 0)
-		{
-			boost::system::error_code ec;
-			m_serialport.cancel(ec);
-			m_serialport.close(ec);
-			m_timer.cancel(ec);
-			OnError(error);
-		}
-	}
+    void SerialConnection::StartError(const boost::system::error_code & error)
+    {
+        if (boost::interprocess::ipcdetail::atomic_cas32(&m_error_state, 1, 0) == 0)
+        {
+            boost::system::error_code ec;
+            m_serialport.cancel(ec);
+            m_serialport.close(ec);
+            m_timer.cancel(ec);
+            OnError(error);
+        }
+    }
 
-	//void SerialConnection::HandleConnect(const boost::system::error_code & error)
-	//{
-	//	if (error || HasError() || m_hive->HasStopped())
-	//	{
-	//		StartError(error);
-	//	}
-	//	else
-	//	{
-	//		if (m_socket.is_open())
-	//		{
-	//			OnConnect(m_socket.remote_endpoint().address().to_string(), m_socket.remote_endpoint().port());
-	//		}
-	//		else
-	//		{
-	//			StartError(error);
-	//		}
-	//	}
-	//}
+    //void SerialConnection::HandleConnect(const boost::system::error_code & error)
+    //{
+    //	if (error || HasError() || m_hive->HasStopped())
+    //	{
+    //		StartError(error);
+    //	}
+    //	else
+    //	{
+    //		if (m_socket.is_open())
+    //		{
+    //			OnConnect(m_socket.remote_endpoint().address().to_string(), m_socket.remote_endpoint().port());
+    //		}
+    //		else
+    //		{
+    //			StartError(error);
+    //		}
+    //	}
+    //}
 
-	void SerialConnection::HandleSend(const boost::system::error_code & error, std::list< boost::shared_ptr < const std::vector< uint8 > > >::iterator itr)
-	{
-		if (error || HasError() || m_hive->HasStopped())
-		{
-			StartError(error);
-		}
-		else
-		{
-			OnSend(*itr);
-			m_pending_sends.erase(itr);
-			StartSend();
-		}
-	}
+    void SerialConnection::HandleSend(const boost::system::error_code & error, std::list< boost::shared_ptr < const std::vector< uint8 > > >::iterator itr)
+    {
+        if (error || HasError() || m_hive->HasStopped())
+        {
+            StartError(error);
+        }
+        else
+        {
+            OnSend(*itr);
+            m_pending_sends.erase(itr);
+            StartSend();
+        }
+    }
 
-	void SerialConnection::HandleRecv(const boost::system::error_code & error, size_t actual_bytes)
-	{
-		if (error || HasError() || m_hive->HasStopped())
-		{
-			StartError(error);
-		}
-		else
-		{
-			m_recv_buffer->resize(actual_bytes);
-			OnRecv(m_recv_buffer);
-			m_pending_recvs.pop_front();
-			if (!m_pending_recvs.empty())
-			{
-				StartRecv(m_pending_recvs.front());
-			}
-		}
-	}
+    void SerialConnection::HandleRecv(const boost::system::error_code & error, size_t actual_bytes)
+    {
+        if (error || HasError() || m_hive->HasStopped())
+        {
+            StartError(error);
+        }
+        else
+        {
+            m_recv_buffer->resize(actual_bytes);
+            OnRecv(m_recv_buffer);
+            m_pending_recvs.pop_front();
+            if (!m_pending_recvs.empty())
+            {
+                StartRecv(m_pending_recvs.front());
+            }
+        }
+    }
 
-	void SerialConnection::HandleTimer(const boost::system::error_code & error)
-	{
-		if (error || HasError() || m_hive->HasStopped())
-		{
-			StartError(error);
-		}
-		else
-		{
-			OnTimer(boost::posix_time::microsec_clock::local_time() - m_last_time);
-			StartTimer();
-		}
-	}
+    void SerialConnection::HandleTimer(const boost::system::error_code & error)
+    {
+        if (error || HasError() || m_hive->HasStopped())
+        {
+            StartError(error);
+        }
+        else
+        {
+            OnTimer(boost::posix_time::microsec_clock::local_time() - m_last_time);
+            StartTimer();
+        }
+    }
 
-	void SerialConnection::DispatchSend(boost::shared_ptr < const std::vector< uint8 > > buffer)
-	{
-		bool should_start_send = m_pending_sends.empty();
-		m_pending_sends.push_back(buffer);
-		if (should_start_send)
-		{
-			StartSend();
-		}
-	}
+    void SerialConnection::DispatchSend(boost::shared_ptr < const std::vector< uint8 > > buffer)
+    {
+        bool should_start_send = m_pending_sends.empty();
+        m_pending_sends.push_back(buffer);
+        if (should_start_send)
+        {
+            StartSend();
+        }
+    }
 
-	void SerialConnection::DispatchRecv(int32 total_bytes)
-	{
-		bool should_start_receive = m_pending_recvs.empty();
-		m_pending_recvs.push_back(total_bytes);
-		if (should_start_receive)
-		{
-			StartRecv(total_bytes);
-		}
-	}
+    void SerialConnection::DispatchRecv(int32 total_bytes)
+    {
+        bool should_start_receive = m_pending_recvs.empty();
+        m_pending_recvs.push_back(total_bytes);
+        if (should_start_receive)
+        {
+            StartRecv(total_bytes);
+        }
+    }
 
-	void SerialConnection::DispatchTimer(const boost::system::error_code & error)
-	{
-		m_io_strand.post(boost::bind(&SerialConnection::HandleTimer, shared_from_this(), error));
-	}
+    void SerialConnection::DispatchTimer(const boost::system::error_code & error)
+    {
+        m_io_strand.post(boost::bind(&SerialConnection::HandleTimer, shared_from_this(), error));
+    }
 
-	//void SerialConnection::Connect(const std::string & host, uint16 port)
-	//{
-	//	boost::system::error_code ec;
-	//	boost::asio::ip::tcp::resolver resolver(m_hive->GetService());
-	//	boost::asio::ip::tcp::resolver::query query(host, boost::lexical_cast< std::string >(port));
-	//	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
-	//	m_serialport.async_connect(*iterator, m_io_strand.wrap(boost::bind(&SerialConnection::HandleConnect, shared_from_this(), _1)));
-	//	StartTimer();
-	//}
+    //void SerialConnection::Connect(const std::string & host, uint16 port)
+    //{
+    //	boost::system::error_code ec;
+    //	boost::asio::ip::tcp::resolver resolver(m_hive->GetService());
+    //	boost::asio::ip::tcp::resolver::query query(host, boost::lexical_cast< std::string >(port));
+    //	boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
+    //	m_serialport.async_connect(*iterator, m_io_strand.wrap(boost::bind(&SerialConnection::HandleConnect, shared_from_this(), _1)));
+    //	StartTimer();
+    //}
 
-	void SerialConnection::Disconnect()
-	{
-		m_io_strand.post(boost::bind(&SerialConnection::HandleTimer, shared_from_this(), boost::asio::error::connection_reset));
-	}
+    void SerialConnection::Disconnect()
+    {
+        m_io_strand.post(boost::bind(&SerialConnection::HandleTimer, shared_from_this(), boost::asio::error::connection_reset));
+    }
 
-	void SerialConnection::Recv(int32 total_bytes)
-	{
-		m_io_strand.post(boost::bind(&SerialConnection::DispatchRecv, shared_from_this(), total_bytes));
-	}
+    void SerialConnection::Recv(int32 total_bytes)
+    {
+        m_io_strand.post(boost::bind(&SerialConnection::DispatchRecv, shared_from_this(), total_bytes));
+    }
 
-	void SerialConnection::Send(boost::shared_ptr< const std::vector< uint8 > > buffer)
-	{
-		m_io_strand.post(boost::bind(&SerialConnection::DispatchSend, shared_from_this(), buffer));
-	}
+    void SerialConnection::Send(boost::shared_ptr< const std::vector< uint8 > > buffer)
+    {
+        m_io_strand.post(boost::bind(&SerialConnection::DispatchSend, shared_from_this(), buffer));
+    }
 
-	boost::asio::serial_port & SerialConnection::GetSerialPort()
-	{
-		return m_serialport;
-	}
+    boost::asio::serial_port & SerialConnection::GetSerialPort()
+    {
+        return m_serialport;
+    }
 
-	boost::asio::strand & SerialConnection::GetStrand()
-	{
-		return m_io_strand;
-	}
+    boost::asio::strand & SerialConnection::GetStrand()
+    {
+        return m_io_strand;
+    }
 
-	boost::shared_ptr< Hive > SerialConnection::GetHive()
-	{
-		return m_hive;
-	}
+    boost::shared_ptr< Hive > SerialConnection::GetHive()
+    {
+        return m_hive;
+    }
 
-	void SerialConnection::SetReceiveBufferSize(int32 size)
-	{
-		m_receive_buffer_size = size;
-	}
+    void SerialConnection::SetReceiveBufferSize(int32 size)
+    {
+        m_receive_buffer_size = size;
+    }
 
-	int32 SerialConnection::GetReceiveBufferSize() const
-	{
-		return m_receive_buffer_size;
-	}
+    int32 SerialConnection::GetReceiveBufferSize() const
+    {
+        return m_receive_buffer_size;
+    }
 
-	int32 SerialConnection::GetTimerInterval() const
-	{
-		return m_timer_interval;
-	}
+    int32 SerialConnection::GetTimerInterval() const
+    {
+        return m_timer_interval;
+    }
 
-	void SerialConnection::SetTimerInterval(int32 timer_interval)
-	{
-		m_timer_interval = timer_interval;
-	}
+    void SerialConnection::SetTimerInterval(int32 timer_interval)
+    {
+        m_timer_interval = timer_interval;
+    }
 
-	bool SerialConnection::HasError()
-	{
-		return (boost::interprocess::ipcdetail::atomic_cas32(&m_error_state, 1, 1) == 1);
-	}
+    bool SerialConnection::HasError()
+    {
+        return (boost::interprocess::ipcdetail::atomic_cas32(&m_error_state, 1, 1) == 1);
+    }
 
 }
 #endif // USING_BOOST

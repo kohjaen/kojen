@@ -51,115 +51,115 @@ namespace Network{
     class Hive;
     class Acceptor;
     class Connection;
-	class SerialConnection;
+    class SerialConnection;
 
-	//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
-	class KOJEN_API SerialConnection : public boost::enable_shared_from_this< SerialConnection >
-	{
-		friend class Hive;
+    class KOJEN_API SerialConnection : public boost::enable_shared_from_this< SerialConnection >
+    {
+        friend class Hive;
 
-	private:
-		boost::shared_ptr< Hive > m_hive;
-		boost::asio::serial_port m_serialport;
-		boost::asio::strand m_io_strand;
-		boost::asio::deadline_timer m_timer;
-		boost::posix_time::ptime m_last_time;
-		boost::shared_ptr< std::vector< uint8 > > m_recv_buffer;
-		std::list< int32 > m_pending_recvs;
-		std::list< boost::shared_ptr< const std::vector< uint8 > > > m_pending_sends;
-		int32 m_receive_buffer_size;
-		int32 m_timer_interval;
-		volatile uint32 m_error_state;
+    private:
+        boost::shared_ptr< Hive > m_hive;
+        boost::asio::serial_port m_serialport;
+        boost::asio::strand m_io_strand;
+        boost::asio::deadline_timer m_timer;
+        boost::posix_time::ptime m_last_time;
+        boost::shared_ptr< std::vector< uint8 > > m_recv_buffer;
+        std::list< int32 > m_pending_recvs;
+        std::list< boost::shared_ptr< const std::vector< uint8 > > > m_pending_sends;
+        int32 m_receive_buffer_size;
+        int32 m_timer_interval;
+        volatile uint32 m_error_state;
 
-	protected:
-		SerialConnection(boost::shared_ptr< Hive > hive);
-		virtual ~SerialConnection();
+    protected:
+        SerialConnection(boost::shared_ptr< Hive > hive);
+        virtual ~SerialConnection();
 
-	private:
-		SerialConnection(const SerialConnection & rhs);
-		SerialConnection & operator =(const SerialConnection & rhs);
-		void StartSend();
-		void StartRecv(int32 total_bytes);
-		void StartTimer();
-		void StartError(const boost::system::error_code & error);
-		void DispatchSend(boost::shared_ptr< const std::vector< uint8 > > buffer);
-		void DispatchRecv(int32 total_bytes);
-		void DispatchTimer(const boost::system::error_code & error);
-		//void HandleConnect(const boost::system::error_code & error);
-		void HandleSend(const boost::system::error_code & error, std::list< boost::shared_ptr< const std::vector< uint8 > > >::iterator itr);
-		void HandleRecv(const boost::system::error_code & error, size_t actual_bytes);
-		void HandleTimer(const boost::system::error_code & error);
+    private:
+        SerialConnection(const SerialConnection & rhs);
+        SerialConnection & operator =(const SerialConnection & rhs);
+        void StartSend();
+        void StartRecv(int32 total_bytes);
+        void StartTimer();
+        void StartError(const boost::system::error_code & error);
+        void DispatchSend(boost::shared_ptr< const std::vector< uint8 > > buffer);
+        void DispatchRecv(int32 total_bytes);
+        void DispatchTimer(const boost::system::error_code & error);
+        //void HandleConnect(const boost::system::error_code & error);
+        void HandleSend(const boost::system::error_code & error, std::list< boost::shared_ptr< const std::vector< uint8 > > >::iterator itr);
+        void HandleRecv(const boost::system::error_code & error, size_t actual_bytes);
+        void HandleTimer(const boost::system::error_code & error);
 
-	private:
-		// Called when the connection has successfully connected to the local
-		// host.
+    private:
+        // Called when the connection has successfully connected to the local
+        // host.
 //		virtual void OnAccept(const std::string & host, uint16 port) = 0;
 
-		// Called when the connection has successfully connected to the remote
-		// host.
-		virtual void OnConnect(const std::string & comport, unsigned int baudrate) = 0;
+        // Called when the connection has successfully connected to the remote
+        // host.
+        virtual void OnConnect(const std::string & comport, unsigned int baudrate) = 0;
 
-		// Called when data has been sent by the connection.
-		virtual void OnSend(boost::shared_ptr < const std::vector< uint8 > > buffer) = 0;
+        // Called when data has been sent by the connection.
+        virtual void OnSend(boost::shared_ptr < const std::vector< uint8 > > buffer) = 0;
 
-		// Called when data has been received by the connection.
-		virtual void OnRecv(boost::shared_ptr < std::vector< uint8 > > buffer) = 0;
+        // Called when data has been received by the connection.
+        virtual void OnRecv(boost::shared_ptr < std::vector< uint8 > > buffer) = 0;
 
-		// Called on each timer event.
-		virtual void OnTimer(const boost::posix_time::time_duration & delta) = 0;
+        // Called on each timer event.
+        virtual void OnTimer(const boost::posix_time::time_duration & delta) = 0;
 
-		// Called when an error is encountered.
-		virtual void OnError(const boost::system::error_code & error) = 0;
+        // Called when an error is encountered.
+        virtual void OnError(const boost::system::error_code & error) = 0;
 
-	public:
-		// Returns the Hive object.
-		boost::shared_ptr< Hive > GetHive();
+    public:
+        // Returns the Hive object.
+        boost::shared_ptr< Hive > GetHive();
 
-		// Returns the socket object.
-		boost::asio::serial_port & GetSerialPort();
+        // Returns the socket object.
+        boost::asio::serial_port & GetSerialPort();
 
-		// Returns the strand object.
-		boost::asio::strand & GetStrand();
+        // Returns the strand object.
+        boost::asio::strand & GetStrand();
 
-		// Sets the application specific receive buffer size used. For stream
-		// based protocols such as HTTP, you want this to be pretty large, like
-		// 64kb. For packet based protocols, then it will be much smaller,
-		// usually 512b - 8kb depending on the protocol. The default value is
-		// 4kb.
-		void SetReceiveBufferSize(int32 size);
+        // Sets the application specific receive buffer size used. For stream
+        // based protocols such as HTTP, you want this to be pretty large, like
+        // 64kb. For packet based protocols, then it will be much smaller,
+        // usually 512b - 8kb depending on the protocol. The default value is
+        // 4kb.
+        void SetReceiveBufferSize(int32 size);
 
-		// Returns the size of the receive buffer size of the current object.
-		int32 GetReceiveBufferSize() const;
+        // Returns the size of the receive buffer size of the current object.
+        int32 GetReceiveBufferSize() const;
 
-		// Sets the timer interval of the object. The interval is changed after
-		// the next update is called.
-		void SetTimerInterval(int32 timer_interval_ms);
+        // Sets the timer interval of the object. The interval is changed after
+        // the next update is called.
+        void SetTimerInterval(int32 timer_interval_ms);
 
-		// Returns the timer interval of the object.
-		int32 GetTimerInterval() const;
+        // Returns the timer interval of the object.
+        int32 GetTimerInterval() const;
 
-		// Returns true if this object has an error associated with it.
-		bool HasError();
+        // Returns true if this object has an error associated with it.
+        bool HasError();
 
-		// Binds the socket to the specified interface.
-		void Bind(const char *com_port_name, unsigned int baud_rate = 9600);
+        // Binds the socket to the specified interface.
+        void Bind(const char *com_port_name, unsigned int baud_rate = 9600);
 
-		// Starts an a/synchronous connect.
-		//void Connect(const std::string & host, uint16 port);
+        // Starts an a/synchronous connect.
+        //void Connect(const std::string & host, uint16 port);
 
-		// Posts data to be sent to the connection.
-		void Send(boost::shared_ptr < const std::vector< uint8 > > buffer);
+        // Posts data to be sent to the connection.
+        void Send(boost::shared_ptr < const std::vector< uint8 > > buffer);
 
-		// Posts a recv for the connection to process. If total_bytes is 0, then
-		// as many bytes as possible up to GetReceiveBufferSize() will be
-		// waited for. If Recv is not 0, then the connection will wait for exactly
-		// total_bytes before invoking OnRecv.
-		void Recv(int32 total_bytes = 0);
+        // Posts a recv for the connection to process. If total_bytes is 0, then
+        // as many bytes as possible up to GetReceiveBufferSize() will be
+        // waited for. If Recv is not 0, then the connection will wait for exactly
+        // total_bytes before invoking OnRecv.
+        void Recv(int32 total_bytes = 0);
 
-		// Posts an asynchronous disconnect event for the object to process.
-		void Disconnect();
-	};
+        // Posts an asynchronous disconnect event for the object to process.
+        void Disconnect();
+    };
     
     //-----------------------------------------------------------------------------
     

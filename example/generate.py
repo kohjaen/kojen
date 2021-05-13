@@ -30,8 +30,9 @@ __author__ = 'eugene'
 import kojen.Generate as Generate
 import os
 
-username = "yourname@yourdomain.com"
-
+author = "yourname@yourdomain.com"
+group  = "GROUP_EXAMPLE"
+brief  = "An example demonstrating code-generation abilities."
 #
 # Generate Protocol
 #
@@ -41,13 +42,13 @@ declspec = ""
 outputdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "autogen")
 templatedir = "" # defaults
 protocolfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), "example_protocol.py")
-Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec)
+Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec, author, group, brief)
 
 #
 # Generate Statemachine (from TransitionTable ... to do it directly from a model, please write to koh.jaen@yahoo.de)
 #
 namespacename = "CDPlayerSM"
-classname = "CDPlayer"
+statemachinenameprefix = "CDPlayer"
 declspec = ""
 templatedir = "" # defaults are for 'SML'
 
@@ -72,7 +73,7 @@ transition_table.append(['StatePlay',  'EventStop', 			 'StateStop',  'OnStop', 
 transition_table.append(['StatePause', 'EventPlay', 			 'StatePlay',  'OnPlayTrack', 		   'None'])
 transition_table.append(['StatePause', 'EventAfter10Minutes', 	 'StateStop',  'OnStop', 			   'None'])
 
-Generate.StateMachine(transition_table, eventsinterface, outputdir, namespacename, classname, declspec, username, templatedir)
+Generate.StateMachine(outputdir, transition_table, eventsinterface, namespacename, statemachinenameprefix, declspec, author, group, brief, templatedir)
 
 #
 # UML (C++/C# ... to do it directly from a model, please write to koh.jaen@yahoo.de)

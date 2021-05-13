@@ -28,79 +28,79 @@ template <typename T>
 class stl_allocator
 {
 public:
-	typedef size_t size_type;
-	typedef ptrdiff_t difference_type;
-	typedef T* pointer;
-	typedef const T* const_pointer;
-	typedef T& reference;
-	typedef const T& const_reference;
-	typedef T value_type;
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+    typedef T* pointer;
+    typedef const T* const_pointer;
+    typedef T& reference;
+    typedef const T& const_reference;
+    typedef T value_type;
 
-	/// Constructor
-	stl_allocator(){}
+    /// Constructor
+    stl_allocator(){}
 
-	/// Destructor
-	~stl_allocator(){}
+    /// Destructor
+    ~stl_allocator(){}
 
-	/// Copy constructor
-	template <class U> stl_allocator(const stl_allocator<U>&){}
+    /// Copy constructor
+    template <class U> stl_allocator(const stl_allocator<U>&){}
 
-	template <class U>
-	struct rebind { typedef stl_allocator<U> other; };
+    template <class U>
+    struct rebind { typedef stl_allocator<U> other; };
 
-	/// Return reference address.
-	/// @return	Pointer to T memory.
-	pointer address(reference x) const {return &x;}
+    /// Return reference address.
+    /// @return	Pointer to T memory.
+    pointer address(reference x) const {return &x;}
 
-	/// Return reference address.
-	/// @return	Const pointer to T memory.
-	const_pointer address(const_reference x) const {return &x;}
+    /// Return reference address.
+    /// @return	Const pointer to T memory.
+    const_pointer address(const_reference x) const {return &x;}
 
-	/// Get the maximum size of memory.
-	/// @return	Max memory size in bytes.
-	size_type max_size() const throw() {return size_t(-1) / sizeof(value_type);}
+    /// Get the maximum size of memory.
+    /// @return	Max memory size in bytes.
+    size_type max_size() const throw() {return size_t(-1) / sizeof(value_type);}
 
-	/// Allocates a fixed block of memory
-	/// @param[in] n - size of memory to allocate in bytes
-	/// @param[in] hint
-	/// @return	Pointer to the allocated memory.
-	pointer allocate(size_type n, stl_allocator<void>::const_pointer hint = 0)
-	{
-		return static_cast<pointer>(xmalloc(n*sizeof(T)));
-	}
+    /// Allocates a fixed block of memory
+    /// @param[in] n - size of memory to allocate in bytes
+    /// @param[in] hint
+    /// @return	Pointer to the allocated memory.
+    pointer allocate(size_type n, stl_allocator<void>::const_pointer hint = 0)
+    {
+        return static_cast<pointer>(xmalloc(n*sizeof(T)));
+    }
 
-	/// Deallocate a previously allocated fixed memory block.
-	/// @param[in] p - pointer to the memory block
-	/// @param[in] n - size of memory in bytes
-	void deallocate(pointer p, size_type n)
-	{
-		xfree(p);
-	}
+    /// Deallocate a previously allocated fixed memory block.
+    /// @param[in] p - pointer to the memory block
+    /// @param[in] n - size of memory in bytes
+    void deallocate(pointer p, size_type n)
+    {
+        xfree(p);
+    }
 
-	/// Constructs a new instance.
-	/// @param[in] p - pointer to the memory where the instance is constructed
-	///		using placement new.
-	/// @param[in] val - instance of object to copy construct.
-	void construct(pointer p, const T& val)
-	{
-		new(static_cast<void*>(p)) T(val);
-	}
+    /// Constructs a new instance.
+    /// @param[in] p - pointer to the memory where the instance is constructed
+    ///		using placement new.
+    /// @param[in] val - instance of object to copy construct.
+    void construct(pointer p, const T& val)
+    {
+        new(static_cast<void*>(p)) T(val);
+    }
 
-	/// Create a new object instance using placement new. 
-	/// @param[in] p - pointer to the memory where the instance is constructed
-	///		using placement new.
-	void construct(pointer p)
-	{
-		new(static_cast<void*>(p)) T();
-	}
+    /// Create a new object instance using placement new.
+    /// @param[in] p - pointer to the memory where the instance is constructed
+    ///		using placement new.
+    void construct(pointer p)
+    {
+        new(static_cast<void*>(p)) T();
+    }
 
-	/// Destroys an instance. Objects created with placement new must
-	///	explicitly call the destructor.
-	/// @param[in] p - pointer to object instance.
-	void destroy(pointer p)
-	{
-		p->~T();
-	}
+    /// Destroys an instance. Objects created with placement new must
+    ///	explicitly call the destructor.
+    /// @param[in] p - pointer to object instance.
+    void destroy(pointer p)
+    {
+        p->~T();
+    }
 };
 
 template <typename T, typename U>
@@ -120,19 +120,19 @@ inline bool operator!=(const stl_allocator<T>&, const stl_allocator<U>){return f
 
 namespace std 
 {
-	template <class _Tp1, class _Tp2>
-	inline stl_allocator<_Tp2>& STD_ALLOC_CDECL
-	__stl_alloc_rebind(stl_allocator<_Tp1>& __a, const _Tp2*)
-	{
-		return (stl_allocator<_Tp2>&)(__a);
-	}
+    template <class _Tp1, class _Tp2>
+    inline stl_allocator<_Tp2>& STD_ALLOC_CDECL
+    __stl_alloc_rebind(stl_allocator<_Tp1>& __a, const _Tp2*)
+    {
+        return (stl_allocator<_Tp2>&)(__a);
+    }
 
-	template <class _Tp1, class _Tp2>
-	inline stl_allocator<_Tp2> STD_ALLOC_CDECL
-	__stl_alloc_create(const stl_allocator<_Tp1>&, const _Tp2*)
-	{
-		return stl_allocator<_Tp2>();
-	}
+    template <class _Tp1, class _Tp2>
+    inline stl_allocator<_Tp2> STD_ALLOC_CDECL
+    __stl_alloc_create(const stl_allocator<_Tp1>&, const _Tp2*)
+    {
+        return stl_allocator<_Tp2>();
+    }
 }
 
 #endif 

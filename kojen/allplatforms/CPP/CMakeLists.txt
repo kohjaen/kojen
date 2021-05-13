@@ -14,8 +14,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKOJEN_EXPORTS")
     # For some reason, in windows '_AMD64_' is not defined...and is required when using Windows stuff (inluding windows.h for critical sections etc)...to be better investigated. 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_AMD64_")
-	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dx86")
-	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32_WINNT=0x0601 -DWINVER=0x400")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dx86")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32_WINNT=0x0601 -DWINVER=0x400")
 endif()
 
 # Include all framework files
@@ -28,8 +28,8 @@ include_directories(${AUTOGEN_DIR})
 file(GLOB AUTOGEN_SRC_FILES ${AUTOGEN_DIR}/*.cpp)
 file(GLOB AUTOGEN_H_FILES ${AUTOGEN_DIR}/*.h)
 set(AUTOGEN_FILES
-	${AUTOGEN_SRC_FILES}
-	${AUTOGEN_H_FILES}
+    ${AUTOGEN_SRC_FILES}
+    ${AUTOGEN_H_FILES}
 )
 
 # Include the current directory
@@ -46,51 +46,51 @@ if (NOT WIN32)
 endif()
 
 add_executable(RunTests
-	${AUTOGEN_FILES}
+    ${AUTOGEN_FILES}
     ${SOURCE_FILES}
-	${HEADER_FILES}
+    ${HEADER_FILES}
     )
-	
+
 # Internal CMake module magic (https://github.com/Kitware/CMake/tree/v3.1.0/Modules)
 # to find and link correct threading library based on platform (https://stackoverflow.com/questions/1620918/cmake-and-libpthread)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(RunTests PRIVATE Threads::Threads)
 
-	
+
 set(GENERATE_FREERTOS OFF)
 message(CHECK_START "Generating FreeRTOS project...")
 if(${GENERATE_FREERTOS})
-	message(CHECK_PASS "enabled")
-	###
-	### For freertos (in windows) testing DLL project. DONT link to the executable...that is standalone.
-	### The lib is to be used from another project...add specific options to it.
-	###
-	add_library (KoJen_FreeRTOS_Win32 SHARED
-		${AUTOGEN_FILES}
-		${SOURCE_FILES}
-		${HEADER_FILES}
-		)
-	target_compile_definitions(KoJen_FreeRTOS_Win32
-							PUBLIC 
-							__FREERTOS__
-							__arm__
-							)
-	
-	set(FREERTOS_SOURCE_INCLUDE "D:/FreeRTOS/FreeRTOS/Source/include" CACHE FILEPATH "Path to your FreeRTOS source includes.")
-	set(FREERTOS_DEMO_INCLUDE "D:/FreeRTOS/FreeRTOS/Demo/WIN32-MSVC" CACHE FILEPATH "Path to your FreeRTOS Win32 DEMO.")
-	set(FREERTOS_PLUS_TRACE_INCLUDE "D:/FreeRTOS/FreeRTOS-Plus/Source/FreeRTOS-Plus-Trace/Include" CACHE FILEPATH "Path to your FreeRTOS PLUS Trace include.")
-	set(FREERTOS_PLUS_TRACE_REC_CONFIG_INCLUDE "D:/FreeRTOS/FreeRTOS/Demo/WIN32-MSVC/Trace_Recorder_Configuration" CACHE FILEPATH "Path to your FreeRTOS Win32 port trace recorder configuration include.")
-	set(FREERTOS_PORT_INCLUDE "D:/FreeRTOS/FreeRTOS/Source/portable/MSVC-MingW" CACHE FILEPATH "Path to your FreeRTOS port.")						   
-	target_include_directories(KoJen_FreeRTOS_Win32
-							PUBLIC
-							${FREERTOS_SOURCE_INCLUDE}
-							${FREERTOS_DEMO_INCLUDE}
-							${FREERTOS_PLUS_TRACE_INCLUDE}
-							${FREERTOS_PLUS_TRACE_REC_CONFIG_INCLUDE}
-							${FREERTOS_PORT_INCLUDE}
-							)
+    message(CHECK_PASS "enabled")
+    ###
+    ### For freertos (in windows) testing DLL project. DONT link to the executable...that is standalone.
+    ### The lib is to be used from another project...add specific options to it.
+    ###
+    add_library (KoJen_FreeRTOS_Win32 SHARED
+        ${AUTOGEN_FILES}
+        ${SOURCE_FILES}
+        ${HEADER_FILES}
+        )
+    target_compile_definitions(KoJen_FreeRTOS_Win32
+                            PUBLIC
+                            __FREERTOS__
+                            __arm__
+                            )
+
+    set(FREERTOS_SOURCE_INCLUDE "D:/FreeRTOS/FreeRTOS/Source/include" CACHE FILEPATH "Path to your FreeRTOS source includes.")
+    set(FREERTOS_DEMO_INCLUDE "D:/FreeRTOS/FreeRTOS/Demo/WIN32-MSVC" CACHE FILEPATH "Path to your FreeRTOS Win32 DEMO.")
+    set(FREERTOS_PLUS_TRACE_INCLUDE "D:/FreeRTOS/FreeRTOS-Plus/Source/FreeRTOS-Plus-Trace/Include" CACHE FILEPATH "Path to your FreeRTOS PLUS Trace include.")
+    set(FREERTOS_PLUS_TRACE_REC_CONFIG_INCLUDE "D:/FreeRTOS/FreeRTOS/Demo/WIN32-MSVC/Trace_Recorder_Configuration" CACHE FILEPATH "Path to your FreeRTOS Win32 port trace recorder configuration include.")
+    set(FREERTOS_PORT_INCLUDE "D:/FreeRTOS/FreeRTOS/Source/portable/MSVC-MingW" CACHE FILEPATH "Path to your FreeRTOS port.")
+    target_include_directories(KoJen_FreeRTOS_Win32
+                            PUBLIC
+                            ${FREERTOS_SOURCE_INCLUDE}
+                            ${FREERTOS_DEMO_INCLUDE}
+                            ${FREERTOS_PLUS_TRACE_INCLUDE}
+                            ${FREERTOS_PLUS_TRACE_REC_CONFIG_INCLUDE}
+                            ${FREERTOS_PORT_INCLUDE}
+                            )
 else()
-	message(CHECK_FAIL "disabled")
+    message(CHECK_FAIL "disabled")
 endif()
 unset(GENERATE_FREERTOS CACHE) 

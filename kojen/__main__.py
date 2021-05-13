@@ -19,4 +19,4 @@ if __name__ == '__main__':
     sys.exit(pip.main())
 
 '''
-import .protogen
+import protogen

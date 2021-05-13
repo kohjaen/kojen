@@ -58,7 +58,7 @@ class UnitTestWriter:
 
     ''' Returns a tuple([list of lines],[list of pointers to delete after])
     '''
-    def WRITE_CREATE_MESSAGE(self, WHITESPACE='\t\t'):
+    def WRITE_CREATE_MESSAGE(self, WHITESPACE='        '):
 
         if not self.interface.IsMessageStruct(self.message.Name):
             raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
@@ -127,7 +127,7 @@ class UnitTestWriter:
         result.append(WHITESPACE + language.InstantiateType(language.PtrToTypeName(message.Name), instancename, 'Create_' + message.Name + '(' + creation_string + ');'))
         return result, result_delete
 
-    def WRITE_MESSAGE_TO_STREAM(self, WHITESPACE='\t\t', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_MESSAGE_TO_STREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
         if not self.interface.IsMessageStruct(self.message.Name):
             raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
 
@@ -174,7 +174,7 @@ class UnitTestWriter:
 
     ''' Returns a tuple([list of lines],[list of pointers to delete after])
     '''
-    def WRITE_MESSAGE_FROM_STREAM(self, WHITESPACE='\t\t', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_MESSAGE_FROM_STREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
 
         if not self.interface.IsMessageStruct(self.message.Name):
             raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
@@ -273,7 +273,7 @@ class UnitTestWriter:
 
         return result, result_delete
 
-    def WRITE_UNITTEST_PACKED_STRUCT_SIZE(self, WHITESPACE='\t\t', unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_UNITTEST_PACKED_STRUCT_SIZE(self, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
         result = []
 
         struct = self.message
@@ -317,7 +317,7 @@ class UnitTestWriter:
 
         return result
 
-    def WRITE_DELETERS(self, to_delete, struct_name, WHITESPACE='\t\t', unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_DELETERS(self, to_delete, struct_name, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
         language = self.language
         result = []
         result.append("#ifdef __arm__")
@@ -341,7 +341,7 @@ class UnitTestWriter:
         result.append('#endif // __arm__')
         return result
 
-    def WRITE_UNITTEST_FACTORY_PAYLOAD_SIZE(self, WHITESPACE='\t\t', unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_UNITTEST_FACTORY_PAYLOAD_SIZE(self, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
         struct = self.message
         language = self.language
         interface = self.interface
@@ -426,7 +426,7 @@ class UnitTestWriter:
 
         return result
 
-    def WRITE_UNITTEST_TOFROM_BYTESTREAM(self, WHITESPACE='\t\t', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_UNITTEST_TOFROM_BYTESTREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
         struct = self.message
         struct_name = struct.Name
 
@@ -460,7 +460,7 @@ class LanguageCsharp:
 
     # White space
     def WhiteSpace(self, indentationlevels):
-        return (indentationlevels+1)*'\t'
+        return (indentationlevels+1)*'    '
 
     '''USED'''
     def ByteStreamTypeSharedPtr(self):
@@ -546,9 +546,9 @@ class LanguageCsharp:
                 ptr = "*" if isArray else ""
                 ref = "&" if isStruct or isMessage else ""
                 if (mem[0] in interface) and not isArray:
-                    factoryparams.append(("/*const*/ "+(self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref, mem[1]))
+                    factoryparams.append(((self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref, mem[1]))
                 else:
-                    factoryparams.append(("/*const*/ "+mem[0] + ptr + ref, mem[1]))
+                    factoryparams.append((mem[0] + ptr + ref, mem[1]))
         return factoryparams
 
     '''USED
@@ -563,9 +563,9 @@ class LanguageCsharp:
             if struct.IsArray(mem[1]):
                 ptr = "*"
             if (mem[0] in interface) and not struct.IsArray(mem[1]):
-                result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + ";")
+                result.append(whitespace + "public " + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
-                result.append(whitespace + self.InstantiateType(mem[0] + ptr, mem[1], '', attr_packed) + ";")
+                result.append(whitespace + "public " + self.InstantiateType(mem[0] + ptr, mem[1], '', attr_packed) + ";")
 
             if struct.IsArray(mem[1]):
                 arrayName.append(mem[1])
@@ -577,7 +577,7 @@ class LanguageCsharp:
             result.append(whitespace+"}")
         return result
     '''USED'''
-    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor):
+    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor = "."):
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
@@ -602,7 +602,7 @@ class LanguageCsharp:
                 # result.append(instance_accessor + self.InstantiateType("",array.Count(),array.Count()))
                 result.append(instance_accessor + self.InstantiateArray(array.type, array.Name, array.Count()) + ";")
                 result.append(whitespace + "if(nullptr != " + array.Name + ")")
-                result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t", '') + array.Name + ',(void*) ' + array.Name + ',sizeof(' + array.type + ")*" + array.Count() + ");")
+                result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t", '').replace("    ","") + array.Name + ',(void*) ' + array.Name + ',sizeof(' + array.type + ")*" + array.Count() + ");")
             else:
                 print("WTF : InstantiateStructMembers")
 
@@ -955,25 +955,25 @@ class LanguageCsharp:
         result = []
         result.append("--------------------------------------------------------------------------------")
         result.append("")
-        result.append('\t' + "This file is part of " + product_name + ".")
+        result.append('    ' + "This file is part of " + product_name + ".")
         result.append("")
-        result.append('\t' + product_name + " is free software: you can redistribute it and/or modify")
-        result.append('\t' + "it under the terms of the GNU General Public License as published by")
-        result.append('\t' + "the Free Software Foundation, either version 3 of the License, or")
-        result.append('\t' + "(at your option) any later version.")
+        result.append('    ' + product_name + " is free software: you can redistribute it and/or modify")
+        result.append('    ' + "it under the terms of the GNU General Public License as published by")
+        result.append('    ' + "the Free Software Foundation, either version 3 of the License, or")
+        result.append('    ' + "(at your option) any later version.")
         result.append("")
-        result.append('\t' + product_name + " is distributed in the hope that it will be useful,")
-        result.append('\t' + "but WITHOUT ANY WARRANTY; without even the implied warranty of")
-        result.append('\t' + "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
-        result.append('\t' + "GNU General Public License for more details.")
+        result.append('    ' + product_name + " is distributed in the hope that it will be useful,")
+        result.append('    ' + "but WITHOUT ANY WARRANTY; without even the implied warranty of")
+        result.append('    ' + "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
+        result.append('    ' + "GNU General Public License for more details.")
         result.append("")
-        result.append('\t' + "You should have received a copy of the GNU General Public License")
-        result.append('\t' + "along with " + product_name + ".  If not, see <http://www.gnu.org/licenses/>.")
-        result.append('\t' + "For any queries please contact : koh.jaen@yahoo.de.")
+        result.append('    ' + "You should have received a copy of the GNU General Public License")
+        result.append('    ' + "along with " + product_name + ".  If not, see <http://www.gnu.org/licenses/>.")
+        result.append('    ' + "For any queries please contact : koh.jaen@yahoo.de.")
         result.append("\n")
-        result.append('\t\t' + "This file was generated on    : " + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + ".")
-        result.append('\t\t' + "This file was generated using : " + sys.platform + ".")
-        result.append('\t\t' + "This file was generated by a machine. Do not modify it by hand.")
+        result.append('        ' + "This file was generated on    : " + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + ".")
+        result.append('        ' + "This file was generated using : " + sys.platform + ".")
+        result.append('        ' + "This file was generated by a machine. Do not modify it by hand.")
         result.append("")
         result.append("--------------------------------------------------------------------------------")
         return result
@@ -1112,7 +1112,7 @@ class LanguageCsharp:
             for _namespace, _classes in namespace_to_classes.items():
                 result = result + _getFormatNestedNamespaceBegin(_namespace) + "\n"
                 for _class in _classes:
-                    result = result + "\tclass " + _class + ";\n"
+                    result = result + "    class " + _class + ";\n"
                 result = result + _getFormatNestedNamespaceEnd(_namespace) + "\n"
 
             if result:
@@ -1310,8 +1310,8 @@ class LanguageCsharp:
                 if not classObj.PURE_VIRTUAL_INTERFACE or REALIZING_CLASS:
                     result = result + "\n"
                     result = result + "{\n"
-                    result = result + "\t/// {{{USER_" + ("CONSTRUCTOR" if is_constructor else CleanName(operation.RETURN_TYPE)) + "_" + classname + "_" + operation.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
-                    result = result + "\t/// {{{USER_" + ("CONSTRUCTOR" if is_constructor else CleanName(operation.RETURN_TYPE)) + "_" + classname + "_" + operation.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
+                    result = result + "    /// {{{USER_" + ("CONSTRUCTOR" if is_constructor else CleanName(operation.RETURN_TYPE)) + "_" + classname + "_" + operation.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
+                    result = result + "    /// {{{USER_" + ("CONSTRUCTOR" if is_constructor else CleanName(operation.RETURN_TYPE)) + "_" + classname + "_" + operation.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
                     result = result + "}\n"
                 else:
                     result = result + ";\n"
@@ -1352,9 +1352,9 @@ class LanguageCsharp:
                 #result = result + "\n"
                 result = result + "{\n"
                 for i in range(len(params)):
-                    result = result + "\t" + attr_names[i] + " = " + params[i][1] + ";\n"
-                result = result + "\t/// {{{USER_CONSTRUCTOR_" + classObj.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
-                result = result + "\t/// {{{USER_CONSTRUCTOR_" + classObj.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
+                    result = result + "    " + attr_names[i] + " = " + params[i][1] + ";\n"
+                result = result + "    /// {{{USER_CONSTRUCTOR_" + classObj.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
+                result = result + "    /// {{{USER_CONSTRUCTOR_" + classObj.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
                 result = result + "}\n"
         return result.rstrip("\n")
 
@@ -1372,14 +1372,14 @@ class LanguageCsharp:
                     result = result + self.DeclareFunction(a_type, classObj.NAME, type_and_name[1].replace("m_", "Get"), is_impl) + ("\n" if is_impl else ";\n")
                     if is_impl:
                         result = result + "{\n"
-                        result = result + "\treturn " + type_and_name[1] + ";\n"
+                        result = result + "    return " + type_and_name[1] + ";\n"
                         result = result + "}\n"
                 if attr.HAS_SETTER and not attr.IS_CONST:  # Cant set a const attribute!
                     inputvarName = type_and_name[1].replace("m_", "__new")
                     result = result + self.DeclareFunction("void", classObj.NAME, type_and_name[1].replace("m_", "Set"), is_impl, [(a_type, inputvarName)]) + ("\n" if is_impl else ";\n")
                     if is_impl:
                         result = result + "{\n"
-                        result = result + "\t" + type_and_name[1] + " = " + inputvarName + ";\n"
+                        result = result + "    " + type_and_name[1] + " = " + inputvarName + ";\n"
                         result = result + "}\n"
 
         if result:
@@ -1438,7 +1438,7 @@ class LanguageCsharp:
         if len(setOfProjectDependencies) > 0:
             result = "<ItemGroup>\n"
             for s in setOfProjectDependencies:
-                result = result + '\t<ProjectReference Include="..\\' + s + '\\' + s + '.csproj" />\n'
+                result = result + '    <ProjectReference Include="..\\' + s + '\\' + s + '.csproj" />\n'
             result = result + "</ItemGroup>\n"
         return result
 
@@ -1527,29 +1527,4 @@ def _getNamespaceToClassesFromFullyQualifiedNames(classObj, setOfClasses, is_fil
             namespace_to_class[ns] = []
         namespace_to_class[ns].append(full[-1])
     return namespace_to_class
-
-
-if __name__ == "__main__":
-    from TCPGen_IF_test import *
-    interface = CreateInterface()
-    structs = interface.Messages()
-    language = LanguageCsharp()
-    '''
-    for s in structs:
-            a_test_writer = UnitTestWriter(interface,s,language,"ptr2"+s.Name)
-            print (language.WhiteSpace(1) + language.OpenBrace())
-            guts = a_test_writer.WRITE_CREATE_MESSAGE(language.WhiteSpace(2))
-            for g in guts:
-                print (g)
-            guts = a_test_writer.WRITE_MESSAGE_TO_STREAM(language.WhiteSpace(2))
-            for g in guts:
-                print (g)
-            print (language.WhiteSpace(2)+'m_connection->SendData(' + a_test_writer.bytestream_of_message_variable_name + ');')
-            print (language.WhiteSpace(1) + language.CloseBrace())
-    '''
-    for s in structs:
-        test = UnitTestWriter(interface, s, language, "WATKYKJY")
-        guts = test.WRITE_UNITTEST_FACTORY_PAYLOAD_SIZE(language.WhiteSpace(0))
-        for g in guts:
-            print(g)
 

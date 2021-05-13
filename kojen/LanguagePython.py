@@ -48,7 +48,7 @@ class LanguagePython(Language):
 
     # White space
     def WhiteSpace(self, indentationlevels):
-        return (indentationlevels+1)*'\t'
+        return (indentationlevels+1)*'    '
 
     # Connection type
     def ConnectionType(self):
@@ -178,8 +178,7 @@ class LanguagePython(Language):
                     result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="+=", bytes="sizeof('" + array.type + "')*" + array.Count()))
                 # result.append(instance_accessor + self.InstantiateArray(array.type,array.Name,array.Count()))
                 # result.append(whitespace + "if(nullptr != " + array.Name + ")")
-                result.append(whitespace + instance_accessor.replace("\t", '') + array.Name + " = " + array.Name)
-                # result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t",'') +array.Name+',(void*) '+array.Name+',sizeof('+array.type+")*"+array.Count()+");")
+                result.append(whitespace + instance_accessor.replace("\t", '').replace("    ","") + array.Name + " = " + array.Name)
             else:
                 print("WTF : InstantiateStructMembers")
 

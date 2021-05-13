@@ -92,13 +92,15 @@ Then, create a file `Generate.py`.
 import kojen.Generate as Generate
 import os
 
-username = "myname@mydomain.com"
+author = "myname@mydomain.com"
+group  = "MY_PACKAGE"
+brief  = "An example demonstrating protocol code-generation abilities."
 namespacename = "ExampleIO"
 classname = "CExampleIF"
 declspec = "" # your define for symbol export/import in C++ e.g. MY_PROJECT_API
 outputdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("autogen","protocol"))
 protocolfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), "MyInterface.py")
-Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec)
+Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec, author, group, brief)
 ```
 
 Execute `Generate.py` using python. Your C++ code should be in the folder **./autogen/protocol**.
@@ -177,10 +179,20 @@ Create a file `Generate.py` (or add your state machine to the one already presen
 
 ```python
 from kojen import Generate
+from kojen.interface_base import *
 
 #
 # Generate Statemachine (from TransitionTable)
 #
+
+# For playing a track the tracknumber should be parameterized.
+EventPlay = Struct('EventPlay')
+EventPlay.AddType('m_track_no','uint16_t')
+
+eventsinterface = Interface('IMyIntefaceIO')
+eventsinterface.AddStruct(EventPlay)
+
+# Transition Table.
 transition_table = []
 #                         StartState    Event                     NextState     Action                 Guard
 transition_table.append(['StateStop',  'EventOpen',              'StateOpen',  'OnOpenDrive',         'None'                   ])
@@ -194,15 +206,18 @@ transition_table.append(['StatePlay',  'EventSkipPreviousTrack', 'None',       '
 transition_table.append(['StatePlay',  'EventStop',              'StateStop',  'OnStop',              'None'                   ])
 transition_table.append(['StatePause', 'EventPlay',              'StatePlay',  'OnPlayTrack',         'None'                   ])
 transition_table.append(['StatePause', 'EventAfter10Minutes',    'StateStop',  'OnStop',              'None'                   ])
-username = "myname@mydomain.com"
+
+author = "myname@mydomain.com"
+group  = "MY_PACKAGE"
+brief  = "An example demonstrating state-machine code-generation abilities."
 
 eventsinterface = None
 namespacename = "CDPlayerSM"
-classname = "CDPlayer"
+statemachinenameprefix = "CDPlayer"
 declspec = ""
 outputdir = "autogen/state_machine"
 templatedir = "" # defaults are for 'SML'
-Generate.StateMachine(transition_table, eventsinterface, outputdir, namespacename, classname, declspec, username, templatedir)
+Generate.StateMachine(outputdir, transition_table, eventsinterface, namespacename, statemachinenameprefix, declspec, author, group, brief, templatedir)
 ```
 
 Execute `Generate.py` using python. Your C++ code should be generated to the configured folder **./autogen/state_machine**.

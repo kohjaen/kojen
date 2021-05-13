@@ -58,7 +58,7 @@ class UnitTestWriter:
 
     ''' Returns a tuple([list of lines],[list of pointers to delete after])
     '''
-    def WRITE_CREATE_MESSAGE(self, WHITESPACE='\t\t'):
+    def WRITE_CREATE_MESSAGE(self, WHITESPACE='        '):
 
         if not self.interface.IsMessageStruct(self.message.Name):
             raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
@@ -127,7 +127,7 @@ class UnitTestWriter:
         result.append(WHITESPACE + language.InstantiateType(language.PtrToTypeName(message.Name), instancename, 'Create_' + message.Name + '(' + creation_string + ');'))
         return result, result_delete
 
-    def WRITE_MESSAGE_TO_STREAM(self, WHITESPACE='\t\t', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_MESSAGE_TO_STREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
         if not self.interface.IsMessageStruct(self.message.Name):
             raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
 
@@ -176,7 +176,7 @@ class UnitTestWriter:
 
     ''' Returns a tuple([list of lines],[list of pointers to delete after])
     '''
-    def WRITE_MESSAGE_FROM_STREAM(self, WHITESPACE='\t\t', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_MESSAGE_FROM_STREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
 
         if not self.interface.IsMessageStruct(self.message.Name):
             raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
@@ -281,7 +281,7 @@ class UnitTestWriter:
 
         return result, result_delete
 
-    def WRITE_UNITTEST_PACKED_STRUCT_SIZE(self, WHITESPACE='\t\t', unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_UNITTEST_PACKED_STRUCT_SIZE(self, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
         result = []
 
         struct = self.message
@@ -327,7 +327,7 @@ class UnitTestWriter:
 
         return result
 
-    def WRITE_DELETERS(self, to_delete, struct_name, WHITESPACE='\t\t', unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_DELETERS(self, to_delete, struct_name, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
         language = self.language
         result = []
         result.append("#ifdef __arm__")
@@ -351,7 +351,7 @@ class UnitTestWriter:
         result.append('#endif // __arm__')
         return result
 
-    def WRITE_UNITTEST_FACTORY_PAYLOAD_SIZE(self, WHITESPACE='\t\t', unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_UNITTEST_FACTORY_PAYLOAD_SIZE(self, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
         struct = self.message
         language = self.language
         interface = self.interface
@@ -438,7 +438,7 @@ class UnitTestWriter:
 
         return result
 
-    def WRITE_UNITTEST_TOFROM_BYTESTREAM(self, WHITESPACE='\t\t', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
+    def WRITE_UNITTEST_TOFROM_BYTESTREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
         struct = self.message
         struct_name = struct.Name
 
@@ -472,7 +472,7 @@ class LanguageCPP:
 
     # White space
     def WhiteSpace(self, indentationlevels):
-        return (indentationlevels+1)*'\t'
+        return (indentationlevels+1)*'    '
 
     '''USED'''
     def ByteStreamTypeSharedPtr(self):
@@ -614,7 +614,7 @@ class LanguageCPP:
                 # result.append(instance_accessor + self.InstantiateType("",array.Count(),array.Count()))
                 result.append(instance_accessor + self.InstantiateArray(array.type, array.Name, array.Count()) + ";")
                 result.append(whitespace + "if(nullptr != " + array.Name + ")")
-                result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t", '') + array.Name + ',(void*) ' + array.Name + ',sizeof(' + array.type + ")*" + array.Count() + ");")
+                result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t", '').replace("    ","") + array.Name + ',(void*) ' + array.Name + ',sizeof(' + array.type + ")*" + array.Count() + ");")
             else:
                 print("WTF : InstantiateStructMembers")
 
@@ -749,7 +749,7 @@ class LanguageCPP:
                 result.append(whitespace + access_member + ' = FromByteStream_' + mem[0] + '('+streamname+', streamsize, '+cntname+');')
                 result.append(whitespace + 'allowed_streamsize-=sizeof('+mem[0]+');')
             elif isType:
-                if mem[1].find(Array.PREFIX) == -1:  # Ignore the array count memember here! deal with it in the array...
+                if mem[1].find(Array.PREFIX) == -1:  # Ignore the array count member here! deal with it in the array...
                     if has_allowed_stream_size:
                         result.append(whitespace + "if((" + cntname + " + sizeof(" + mem[0] + ") <= streamsize) && (sizeof(" + mem[0] + ") <= allowed_streamsize))")
                         result.append(whitespace + "{")
@@ -965,25 +965,25 @@ class LanguageCPP:
         result = []
         result.append("--------------------------------------------------------------------------------")
         result.append("")
-        result.append('\t' + "This file is part of " + product_name + ".")
+        result.append('    ' + "This file is part of " + product_name + ".")
         result.append("")
-        result.append('\t' + product_name + " is free software: you can redistribute it and/or modify")
-        result.append('\t' + "it under the terms of the GNU General Public License as published by")
-        result.append('\t' + "the Free Software Foundation, either version 3 of the License, or")
-        result.append('\t' + "(at your option) any later version.")
+        result.append('    ' + product_name + " is free software: you can redistribute it and/or modify")
+        result.append('    ' + "it under the terms of the GNU General Public License as published by")
+        result.append('    ' + "the Free Software Foundation, either version 3 of the License, or")
+        result.append('    ' + "(at your option) any later version.")
         result.append("")
-        result.append('\t' + product_name + " is distributed in the hope that it will be useful,")
-        result.append('\t' + "but WITHOUT ANY WARRANTY; without even the implied warranty of")
-        result.append('\t' + "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
-        result.append('\t' + "GNU General Public License for more details.")
+        result.append('    ' + product_name + " is distributed in the hope that it will be useful,")
+        result.append('    ' + "but WITHOUT ANY WARRANTY; without even the implied warranty of")
+        result.append('    ' + "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
+        result.append('    ' + "GNU General Public License for more details.")
         result.append("")
-        result.append('\t' + "You should have received a copy of the GNU General Public License")
-        result.append('\t' + "along with " + product_name + ".  If not, see <http://www.gnu.org/licenses/>.")
-        result.append('\t' + "For any queries please contact : koh.jaen@yahoo.de.")
+        result.append('    ' + "You should have received a copy of the GNU General Public License")
+        result.append('    ' + "along with " + product_name + ".  If not, see <http://www.gnu.org/licenses/>.")
+        result.append('    ' + "For any queries please contact : koh.jaen@yahoo.de.")
         result.append("\n")
-        result.append('\t\t' + "This file was generated on    : " + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + ".")
-        result.append('\t\t' + "This file was generated using : " + sys.platform + ".")
-        result.append('\t\t' + "This file was generated by a machine. Do not modify it by hand.")
+        result.append('        ' + "This file was generated on    : " + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + ".")
+        result.append('        ' + "This file was generated using : " + sys.platform + ".")
+        result.append('        ' + "This file was generated by a machine. Do not modify it by hand.")
         result.append("")
         result.append("--------------------------------------------------------------------------------")
         return result
@@ -1111,7 +1111,7 @@ class LanguageCPP:
             for _namespace, _classes in namespace_to_classes.items():
                 result = result + _getFormatNestedNamespaceBegin(_namespace) + "\n"
                 for _class in _classes:
-                    result = result + "\tclass " + _class + ";\n"
+                    result = result + "    class " + _class + ";\n"
                 result = result + _getFormatNestedNamespaceEnd(_namespace) + "\n"
 
             if result:
@@ -1292,8 +1292,8 @@ class LanguageCPP:
                 else:
                     result = result + "\n"
                     result = result + "{\n"
-                    result = result + "\t/// {{{USER_" + ("CONSTRUCTOR" if is_constructor else CleanName(operation.RETURN_TYPE)) + "_" + classname + "_" + operation.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
-                    result = result + "\t/// {{{USER_" + ("CONSTRUCTOR" if is_constructor else CleanName(operation.RETURN_TYPE)) + "_" + classname + "_" + operation.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
+                    result = result + "    /// {{{USER_" + ("CONSTRUCTOR" if is_constructor else CleanName(operation.RETURN_TYPE)) + "_" + classname + "_" + operation.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
+                    result = result + "    /// {{{USER_" + ("CONSTRUCTOR" if is_constructor else CleanName(operation.RETURN_TYPE)) + "_" + classname + "_" + operation.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
                     result = result + "}\n"
 
         if result.replace('\n',"").strip():
@@ -1329,8 +1329,8 @@ class LanguageCPP:
                 result = result.rstrip(", ")
                 result = result + "\n"
                 result = result + "{\n"
-                result = result + "\t/// {{{USER_CONSTRUCTOR_" + classObj.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
-                result = result + "\t/// {{{USER_CONSTRUCTOR_" + classObj.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
+                result = result + "    /// {{{USER_CONSTRUCTOR_" + classObj.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
+                result = result + "    /// {{{USER_CONSTRUCTOR_" + classObj.NAME + "_" + str(len(params)) + "_PARAMS}}}\n"
                 result = result + "}\n"
         return result.rstrip("\n")
 
@@ -1346,14 +1346,14 @@ class LanguageCPP:
                     result = result + self.DeclareFunction(a_type, classObj.NAME, type_and_name[1].replace("m_", "Get"), is_impl) + ("\n" if is_impl else ";\n")
                     if is_impl:
                         result = result + "{\n"
-                        result = result + "\treturn " + type_and_name[1] + ";\n"
+                        result = result + "    return " + type_and_name[1] + ";\n"
                         result = result + "}\n"
                 if attr.HAS_SETTER and not attr.IS_CONST:  # Cant set a const attribute!
                     inputvarName = type_and_name[1].replace("m_", "__new")
                     result = result + self.DeclareFunction("void", classObj.NAME, type_and_name[1].replace("m_", "Set"), is_impl, [(a_type, inputvarName)]) + ("\n" if is_impl else ";\n")
                     if is_impl:
                         result = result + "{\n"
-                        result = result + "\t" + type_and_name[1] + " = " + inputvarName + ";\n"
+                        result = result + "    " + type_and_name[1] + " = " + inputvarName + ";\n"
                         result = result + "}\n"
 
         if result:
@@ -1393,14 +1393,14 @@ class LanguageCPP:
         if classObj.IS_STRUCT_PACKED:
             if is_begin:
                 result = result + "#if defined(_MSC_VER)\n"
-                result = result + "\t#define __attribute__(x)\n"
-                result = result + "\t#pragma pack(push,1)\n"
+                result = result + "    #define __attribute__(x)\n"
+                result = result + "    #pragma pack(push,1)\n"
                 result = result + "#elif defined(__GNUC__)\n"
                 result = result + "#elif defined(__clang__)\n"
                 result = result + "#endif\n"
             else:
                 result = result + "#if defined(_MSC_VER)\n"
-                result = result + "\t#pragma pack(pop)\n"
+                result = result + "    #pragma pack(pop)\n"
                 result = result + "#elif defined(__GNUC__) || defined(__clang__)\n"
                 result = result + "#endif\n"
         return result

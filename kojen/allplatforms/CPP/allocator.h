@@ -10,11 +10,11 @@ public:
     /// Constructor
     /// @param[in]  size - size of the fixed blocks
     /// @param[in]  objects - maximum number of object. If 0, new blocks are
-	///		created off the heap as necessary.
-	/// @param[in]	memory - pointer to a block of static memory for allocator or NULL 
-	///		to obtain memory from global heap. If not NULL, the objects argument 
-	///		defines the size of the memory block (size x objects = memory size in bytes).
-	///	@param[in]	name - optional allocator name string.
+    ///		created off the heap as necessary.
+    /// @param[in]	memory - pointer to a block of static memory for allocator or NULL
+    ///		to obtain memory from global heap. If not NULL, the objects argument
+    ///		defines the size of the memory block (size x objects = memory size in bytes).
+    ///	@param[in]	name - optional allocator name string.
     Allocator(size_t size, uint32 objects=0, char* memory = NULL, const char* name=NULL);
 
     /// Destructor
@@ -52,7 +52,7 @@ public:
     /// Gets the total number of deallocations for this allocator instance.
     /// @return		The total number of deallocations.
     uint32 GetDeallocations() { return m_deallocations; }
-	
+
 private:
     /// Push a memory block onto head of free-list.
     /// @param[in]  pMemory - block of memory to push onto free-list
@@ -67,12 +67,12 @@ private:
         Block* pNext;
     };
 
-	enum AllocatorMode { HEAP_BLOCKS, HEAP_POOL, STATIC_POOL };
+    enum AllocatorMode { HEAP_BLOCKS, HEAP_POOL, STATIC_POOL };
 
     const size_t m_blockSize;
     const size_t m_objectSize;
     const uint32 m_maxObjects;
-	AllocatorMode m_allocatorMode;
+    AllocatorMode m_allocatorMode;
     Block* m_pHead;
     char* m_pPool;
     uint32 m_poolIndex;
@@ -88,11 +88,11 @@ template <class T, uint32 Objects>
 class AllocatorPool : public Allocator
 {
 public:
-	AllocatorPool() : Allocator(sizeof(T), Objects, m_memory)
-	{
-	}
+    AllocatorPool() : Allocator(sizeof(T), Objects, m_memory)
+    {
+    }
 private:
-	char m_memory[sizeof(T) * Objects];
+    char m_memory[sizeof(T) * Objects];
 };
 
 // macro to provide header file interface
@@ -104,15 +104,15 @@ private:
         void operator delete(void* pObject) { \
             _allocator.Deallocate(pObject); \
         } \
-		static uint32 GetBlocksInUse() { return _allocator.GetBlocksInUse(); }\
-		static uint32 GetAllocations() { return _allocator.GetAllocations(); }\
-		static uint32 GetDeallocations() { return _allocator.GetDeallocations(); }\
+        static uint32 GetBlocksInUse() { return _allocator.GetBlocksInUse(); }\
+        static uint32 GetAllocations() { return _allocator.GetAllocations(); }\
+        static uint32 GetDeallocations() { return _allocator.GetDeallocations(); }\
     private: \
         static Allocator _allocator; 
 
 // macro to provide source file interface
 #define IMPLEMENT_ALLOCATOR(class, objects, memory) \
-	Allocator class::_allocator(sizeof(class), objects, memory, #class);
+    Allocator class::_allocator(sizeof(class), objects, memory, #class);
 
 
 

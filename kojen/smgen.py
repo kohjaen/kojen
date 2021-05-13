@@ -107,6 +107,8 @@ and the following replacement tags will be correctly set
 # END EMBEDDED SM SUPPORT.
 '''
 __TAG_AUTHOR__              = '<<<AUTHOR>>>'
+__TAG_GROUP__               = '<<<GROUP>>>'
+__TAG_BRIEF__               = '<<<BRIEF>>>'
 __TAG_NAMESPACE__           = '<<<NAMESPACE>>>'
 __TAG_SM_NAME__             = '<<<STATEMACHINENAME>>>'
 __TAG_CLASS_NAME__          = '<<<CLASSNAME>>>'
@@ -287,8 +289,8 @@ class CTransitionTableModel(CStateMachineModel):
 
 class CStateMachineGenerator(CBASEGenerator):
 
-	def __init__(self, inputfiledir, outputfiledir, events_interface=None, language=None, author='Anonymous'):
-		CBASEGenerator.__init__(self,inputfiledir,outputfiledir,language, author)
+	def __init__(self, inputfiledir, outputfiledir, events_interface=None, language=None, author='Anonymous', group='', brief=''):
+		CBASEGenerator.__init__(self,inputfiledir,outputfiledir,language, author, group, brief)
 		self.events_interface = events_interface
 
 	def __loadtemplates_firstfiltering__(self, smmodel):
@@ -304,8 +306,12 @@ class CStateMachineGenerator(CBASEGenerator):
 		dict_to_replace_lines[__TAG_SM_NAME__] = smmodel.statemachinename
 		dict_to_replace_lines[__TAG_CLASS_NAME__] =smmodel.statemachinename
 		dict_to_replace_lines[__TAG_PyIFGen_NAME__] = smmodel.pythoninterfacegeneratorfilename.replace('.py', '')  # hack : for tcpgen simple templates,
+		if not dict_to_replace_lines[__TAG_PyIFGen_NAME__]:
+			dict_to_replace_lines[__TAG_PyIFGen_NAME__] = self.vpp_filename
 		dict_to_replace_lines[__TAG_NAMESPACE__] = smmodel.namespacename
 		dict_to_replace_lines[__TAG_AUTHOR__] = self.author
+		dict_to_replace_lines[__TAG_GROUP__] = self.group
+		dict_to_replace_lines[__TAG_BRIEF__] = self.brief
 		dict_to_replace_lines[__TAG_DECLSPEC_DLL_EXPORT__] = smmodel.declspecdllexport
 
 		dict_to_replace_filenames = {}
@@ -335,7 +341,7 @@ class CStateMachineGenerator(CBASEGenerator):
 				result = ''
 				cnt = 0
 				for g in guts:
-					result = result + (whitespace_cnt*'\t' if cnt > 0 else '') + g + '\n'
+					result = result + (whitespace_cnt*'    ' if cnt > 0 else '') + g + '\n'
 					cnt = cnt + 1
 				return result
 		return ""
@@ -350,7 +356,7 @@ class CStateMachineGenerator(CBASEGenerator):
 				result = ''
 				cnt = 0
 				for g in guts:
-					result = result + ((whitespace_cnt+1)*'\t' if cnt > 0 else '\t') + g + '\n'
+					result = result + ((whitespace_cnt+1)*'    ' if cnt > 0 else '    ') + g + '\n'
 					cnt = cnt + 1
 				# remove last '\n'
 				result = result[:-1]
@@ -375,7 +381,7 @@ class CStateMachineGenerator(CBASEGenerator):
 				newline = newline.replace(__TAG_EVENT_CURNEX_ST_BEG__, __TAG_EVENT_CURNEX_ST_BEG__ + '<<<' + name + '>>>')  # put a marker (event name) for mapping
 				newline = newline.replace(__TAG_PSAE_BEGIN__, __TAG_PSAE_BEGIN__ + '<<<' + name + '>>>')  # put a marker (state name) for mapping
 				# END EMBEDDED SM SUPPORT.
-				tabcnt = newline.count('\t')
+				tabcnt = newline.count('    ')
 				newline = newline.replace(__TAG_EVENT_SIGNATURE__, self.__get_event_signature__(name))
 				newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, True))        # PTR
 				newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
@@ -485,29 +491,29 @@ class CStateMachineGenerator(CBASEGenerator):
 					ex_guard = False
 				if ex_tt and line.find(__TAG_TTT_END___) > -1:
 					len_tt = len(smmodel.transition_table)
-					tt_out = "\t\t// " + len("msmf::Row < ") * ' ' + even_space("Start") + even_space("Event") + even_space("Next") + even_space("Action") + even_space("Guard") + '\n'
+					tt_out = "        // " + len("msmf::Row < ") * ' ' + even_space("Start") + even_space("Event") + even_space("Next") + even_space("Action") + even_space("Guard") + '\n'
 					for i, ttline in enumerate(smmodel.transition_table):
-						tt_out += '\t\tmsmf::Row < '
+						tt_out += '        msmf::Row < '
 						tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + ','
 						tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]      )) + ','
 						tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.NEXT_STATE] )) + ','
 						tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.ACTION]     )) + ','
-						tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.GUARD]      )) + '>\t'
+						tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.GUARD]      )) + '>    '
 						if i != len_tt-1:
 							tt_out += ","
-						tt_out += "\t// " + str(i) + '\n'
+						tt_out += "    // " + str(i) + '\n'
 						alllinesexpanded.append(tt_out)
 						tt_out = ""
 					ex_tt = False
 
 				if ex_tt_lite and line.find(__TAG_TTT_LITE_END__) > -1:
-					tt_out = "\t\t\t\t// " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
+					tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
 					startStateHasEntryExit = {}
 					for i, ttline in enumerate(smmodel.transition_table):
 						if i == 0:  # initial state
-							tt_out += "\t\t\t\t *"
+							tt_out += "                 *"
 						else:
-							tt_out += "\t\t\t\t, "
+							tt_out += "                , "
 						tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + '+'
 						tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + ">") + ' '
 						tt_out += even_space('['+self.__transitiontableLITE_guard_replace_NONE__('__'+ttline[smmodel.GUARD])+']') + ' / '
@@ -520,21 +526,21 @@ class CStateMachineGenerator(CBASEGenerator):
 						# State entry/exit, once only
 						if not (ttline[smmodel.START_STATE] in startStateHasEntryExit):
 							startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-							tt_out += "\t\t\t\t, "+ttline[smmodel.START_STATE]+" + msm::on_entry / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
-							tt_out += "\t\t\t\t, "+ttline[smmodel.START_STATE]+" + msm::on_exit / __" + ttline[smmodel.START_STATE] + 'OnExit'
+							tt_out += "                , "+ttline[smmodel.START_STATE]+" + msm::on_entry / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
+							tt_out += "                , "+ttline[smmodel.START_STATE]+" + msm::on_exit / __" + ttline[smmodel.START_STATE] + 'OnExit'
 							tt_out += '\n'
 							alllinesexpanded.append(tt_out)
 							tt_out = ""
 					ex_tt_lite = False
 
 				if ex_tt_lite_sml and line.find(__TAG_TTT_LITE_SML_END__) > -1:
-					tt_out = "\t\t\t\t// " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action", 100) + even_space(" = Next") + '\n'
+					tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action", 100) + even_space(" = Next") + '\n'
 					startStateHasEntryExit = {}
 					for i, ttline in enumerate(smmodel.transition_table):
 						if i == 0:  # initial state
-							tt_out += "\t\t\t\t *"
+							tt_out += "                 *"
 						else:
-							tt_out += "\t\t\t\t, "
+							tt_out += "                , "
 						tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + '+'
 						tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + ">") + ' '
 						tt_out += even_space('['+self.__transitiontableLITE_guard_replace_NONE__('__'+ttline[smmodel.GUARD])+']') + ' / '
@@ -547,8 +553,8 @@ class CStateMachineGenerator(CBASEGenerator):
 						# State entry/exit, once only
 						if not (ttline[smmodel.START_STATE] in startStateHasEntryExit):
 							startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-							tt_out += "\t\t\t\t, "+ttline[smmodel.START_STATE]+" + msm::on_entry<_> / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
-							tt_out += "\t\t\t\t, "+ttline[smmodel.START_STATE]+" + msm::on_exit<_> / __" + ttline[smmodel.START_STATE] + 'OnExit'
+							tt_out += "                , "+ttline[smmodel.START_STATE]+" + msm::on_entry<_> / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
+							tt_out += "                , "+ttline[smmodel.START_STATE]+" + msm::on_exit<_> / __" + ttline[smmodel.START_STATE] + 'OnExit'
 							tt_out += '\n'
 							alllinesexpanded.append(tt_out)
 							tt_out = ""
@@ -605,8 +611,8 @@ class CStateMachineGenerator(CBASEGenerator):
 			for line in cmmodel.filenames_to_lines[file]:
 				begin = line.find(__TAG_EVENT_CURNEX_ST_BEG__) > -1 or line.find(__TAG_PSAE_BEGIN__) > -1  #or line.find(__TAG_PA_BEGIN__) > -1 or line.find(__TAG_PG_BEGIN__) > -1
 				if begin:
-					event_map        = line.replace(__TAG_EVENT_CURNEX_ST_BEG__, '').replace('<<<', '').replace('>>>', '').replace('\t', '').replace('\n', '')
-					state_action_map = line.replace(__TAG_PSAE_BEGIN__, '').replace('<<<', '').replace('>>>', '').replace('\t', '').replace('\n', '')
+					event_map        = line.replace(__TAG_EVENT_CURNEX_ST_BEG__, '').replace('<<<', '').replace('>>>', '').replace('\t', '').replace('\n', '').replace("    ","")
+					state_action_map = line.replace(__TAG_PSAE_BEGIN__, '').replace('<<<', '').replace('>>>', '').replace('\t', '').replace('\n', '').replace("    ","")
 
 				end_event = (line.find(__TAG_EVENT_CURNEX_ST_END__) > -1)
 				end_state = (line.find(__TAG_PSAE_END__) > -1)
@@ -663,9 +669,13 @@ class CStateMachineGenerator(CBASEGenerator):
 		self.__expand_thirdfiltering__(sm, cm)
 		# END EMBEDDED SM SUPPORT.
 
+		# Preserve user tags.
+		self.__preserve_usertags_in_files__(cm)
+		'''
 		# Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
 		preservation = Preservative(self.output_gen_file_dir)
 		preservation.Emplace(cm.filenames_to_lines)
+		'''
 		# Write output to file.
 		self.__createoutput__(cm.filenames_to_lines)
 
@@ -734,7 +744,6 @@ class CStateMachineGenerator(CBASEGenerator):
 
 	''' Used for Protocol Generation
 	'''
-
 	def GenerateProtocol(self, pythoninterfacegeneratorfilename, namespacenname, classname, dclspc="", preserve_dir=""):
 		sm = CTransitionTableModel([], namespacenname, classname, dclspc)
 		sm.pythoninterfacegeneratorfilename = pythoninterfacegeneratorfilename

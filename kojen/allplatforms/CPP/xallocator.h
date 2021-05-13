@@ -29,10 +29,10 @@
 class XallocInitDestroy
 {
 public:
-	XallocInitDestroy();
-	~XallocInitDestroy();
+    XallocInitDestroy();
+    ~XallocInitDestroy();
 private:
-	static int refCount;
+    static int refCount;
 };
 static XallocInitDestroy xallocInitDestroy;
 #endif	// AUTOMATIC_XALLOCATOR_INIT_DESTROY
@@ -83,7 +83,7 @@ void xalloc_stats();
         void operator delete(void* pObject) { \
             xfree(pObject); \
         } 
-		
+
 
 #ifdef __cplusplus 
 }

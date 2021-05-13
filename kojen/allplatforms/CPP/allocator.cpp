@@ -21,22 +21,22 @@ extern "C" {
 
 void * operator new( size_t size )
 {
-	return pvPortMalloc( size );
+    return pvPortMalloc( size );
 }
 
 void * operator new[]( size_t size )
 {
-	return pvPortMalloc(size);
+    return pvPortMalloc(size);
 }
 
 void operator delete( void * ptr )
 {
-	vPortFree ( ptr );
+    vPortFree ( ptr );
 }
 
 void operator delete[]( void * ptr )
 {
-	vPortFree ( ptr );
+    vPortFree ( ptr );
 }
 #else
 #include <assert.h>
@@ -58,22 +58,22 @@ Allocator::Allocator(size_t size, uint32 objects, char* memory, const char* name
     m_name(name)
 {
     // If using a fixed memory pool 
-	if (m_maxObjects)
-	{
-		// If caller provided an external memory pool
-		if (memory)
-		{
-			m_pPool = memory;
-			m_allocatorMode = STATIC_POOL;
-		}
-		else 
-		{
-			m_pPool = (char*)new char[m_blockSize * m_maxObjects];
-			m_allocatorMode = HEAP_POOL;
-		}
-	}
-	else
-		m_allocatorMode = HEAP_BLOCKS;
+    if (m_maxObjects)
+    {
+        // If caller provided an external memory pool
+        if (memory)
+        {
+            m_pPool = memory;
+            m_allocatorMode = STATIC_POOL;
+        }
+        else
+        {
+            m_pPool = (char*)new char[m_blockSize * m_maxObjects];
+            m_allocatorMode = HEAP_POOL;
+        }
+    }
+    else
+        m_allocatorMode = HEAP_BLOCKS;
 }
 
 //------------------------------------------------------------------------------
@@ -81,15 +81,15 @@ Allocator::Allocator(size_t size, uint32 objects, char* memory, const char* name
 //------------------------------------------------------------------------------
 Allocator::~Allocator()
 {
-	// If using pool then destroy it, otherwise traverse free-list and 
-	// destroy each individual block
-	if (m_allocatorMode == HEAP_POOL)
-		delete [] m_pPool;
-	else if (m_allocatorMode == HEAP_BLOCKS)
-	{
-		while(m_pHead)
-			delete [] (char*)Pop();
-	}
+    // If using pool then destroy it, otherwise traverse free-list and
+    // destroy each individual block
+    if (m_allocatorMode == HEAP_POOL)
+        delete [] m_pPool;
+    else if (m_allocatorMode == HEAP_BLOCKS)
+    {
+        while(m_pHead)
+            delete [] (char*)Pop();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -98,11 +98,11 @@ Allocator::~Allocator()
 void* Allocator::Allocate(size_t size)
 {
 #ifdef __FREERTOS__
-	configASSERT(size <= m_objectSize);
+    configASSERT(size <= m_objectSize);
 #else	
     assert(size <= m_objectSize);
 #endif
-	
+
     // If can't obtain existing block then get a new one
     void* pBlock = Pop();
     if (!pBlock)
@@ -127,7 +127,7 @@ void* Allocator::Allocate(size_t size)
                     (*handler)();
                 else
 #ifdef __FREERTOS__
-					configASSERT(0);
+                    configASSERT(0);
 #else				
                     assert(0);
 #endif
@@ -135,14 +135,14 @@ void* Allocator::Allocate(size_t size)
         }
         else
         {
-        	m_blockCnt++;
+            m_blockCnt++;
             pBlock = (void*)new char[m_blockSize];
         }
     }
 
     m_blocksInUse++;
     m_allocations++;
-	
+
     return pBlock;
 }
 
@@ -152,8 +152,8 @@ void* Allocator::Allocate(size_t size)
 void Allocator::Deallocate(void* pBlock)
 {
     Push(pBlock);
-	m_blocksInUse--;
-	m_deallocations++;
+    m_blocksInUse--;
+    m_deallocations++;
 }
 
 //------------------------------------------------------------------------------

@@ -6,11 +6,11 @@
 #include <list>
 
 template<class _Tp,
-	class _Sequence = std::list<_Tp, stl_allocator<_Tp> > >
-	class xqueue
-		: public std::queue<_Tp, _Sequence>
-	{
-	};
+    class _Sequence = std::list<_Tp, stl_allocator<_Tp> > >
+    class xqueue
+        : public std::queue<_Tp, _Sequence>
+    {
+    };
 
 #endif
 

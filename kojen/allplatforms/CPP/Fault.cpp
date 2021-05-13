@@ -16,12 +16,12 @@
 void FaultHandler(const char* file, unsigned short line)
 {
 #if WIN32
-	// If you hit this line, it means one of the ASSERT macros failed.
+    // If you hit this line, it means one of the ASSERT macros failed.
     DebugBreak();	
 #endif
 #ifdef __FREERTOS__
-	configASSERT(0);
+    configASSERT(0);
 #else
-	assert(0);
+    assert(0);
 #endif
 }
