@@ -110,6 +110,20 @@ class CBASEGenerator:
             file = file.replace(tag, desired_text)
         return file
 
+    ''' This will remove multiple newlines directly after each, leaving only 1'''
+    def __filter_multiple_newlines(self,list_of_lines_in_file):
+        last = ''
+        for i in range(len(list_of_lines_in_file)):
+            was_filtered = False
+            current = list_of_lines_in_file[i].replace(" ", "")
+            if i > 0:
+                if current == last and last == '\n':
+                    list_of_lines_in_file[i] = ''
+                    was_filtered = True
+            if not was_filtered:
+                last = current
+        return list_of_lines_in_file
+
     def __loadtemplates_firstfiltering_FILE__(self, filepath, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
         result = CCodeModel()
         if os.path.exists(filepath):
@@ -131,6 +145,8 @@ class CBASEGenerator:
                 # Replace the key:value pairs per filename...
                 for tag, desired_text in dict_to_replace_filenames.items():
                     file_without_path = file_without_path.replace(tag, desired_text)
+                # Remove multiple newlines
+                lines = self.__filter_multiple_newlines(lines)
                 result.filenames_to_lines[file_without_path] = lines
         return result
 

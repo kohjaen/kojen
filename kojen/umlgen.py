@@ -134,7 +134,7 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_lines["<<<NESTED_NAMESPACE_BEGIN>>>"] = self.language.GetFormatNestedNamespaceBegin(classobj)
                     dict_to_replace_lines["<<<NESTED_NAMESPACE_END>>>"] = self.language.GetFormatNestedNamespaceEnd(classobj)
                     dict_to_replace_lines["<<<DLL_EXPORT>>>"] = declspc
-                    dict_to_replace_lines["<<<CLASS_DOCUMENTATION>>>"] = self.language.FormatLongComment(classobj.USER_COMMENTS)
+                    dict_to_replace_lines["<<<CLASS_DOCUMENTATION>>>"] = self.language.FormatLongComment(classobj.USER_COMMENTS.strip())
                     dict_to_replace_lines["<<<CLASS_INHERITENCE_HIERARCHY>>>"] = self.language.GetFormatClassInheritence(classobj, classdiagram.inheritence)
                     dict_to_replace_lines["<<<NOT_FORWARD_DECLARABLE_HEADER_INCLUDES>>>"] = self.language.GetNotForwardDeclarableHeaderIncludes(classobj, self.NAMESPACE_TO_GO_TO_OWN_FOLDER, True, True)
                     dict_to_replace_lines["<<<FORWARD_DECLARABLE_HEADER_INCLUDES>>>"] = self.language.GetForwardDeclarableHeaderIncludes(classobj, self.NAMESPACE_TO_GO_TO_OWN_FOLDER, True)
