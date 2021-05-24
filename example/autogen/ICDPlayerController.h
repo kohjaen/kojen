@@ -47,6 +47,10 @@ namespace CDPlayerSM
         Event& operator=(Event& other) = delete;
         Event(Event&& other) = default;
         Event& operator=(Event&& other) = default;
+
+    protected:
+        friend class CCDPlayerStateMachineImpl;
+        virtual void Dispatch() = 0;
     };
     typedef std::unique_ptr<Event> Event_ptr;
 
@@ -60,9 +64,11 @@ namespace CDPlayerSM
         EventOpen(){};
 
     
-#ifdef __arm__    
+#ifdef __arm__
     DECLARE_ALLOCATOR
-#endif //__arm__    
+#endif //__arm__
+    protected:
+        virtual void Dispatch() override;
     };
     typedef std::unique_ptr<EventOpen> EventOpen_ptr;
 
@@ -76,9 +82,11 @@ namespace CDPlayerSM
         EventPlay(){};
 
         uint16_t m_track_no;
-#ifdef __arm__    
+#ifdef __arm__
     DECLARE_ALLOCATOR
-#endif //__arm__    
+#endif //__arm__
+    protected:
+        virtual void Dispatch() override;
     };
     typedef std::unique_ptr<EventPlay> EventPlay_ptr;
 
@@ -92,9 +100,11 @@ namespace CDPlayerSM
         EventEndOfTrack(){};
 
     
-#ifdef __arm__    
+#ifdef __arm__
     DECLARE_ALLOCATOR
-#endif //__arm__    
+#endif //__arm__
+    protected:
+        virtual void Dispatch() override;
     };
     typedef std::unique_ptr<EventEndOfTrack> EventEndOfTrack_ptr;
 
@@ -108,9 +118,11 @@ namespace CDPlayerSM
         EventSkipNextTrack(){};
 
     
-#ifdef __arm__    
+#ifdef __arm__
     DECLARE_ALLOCATOR
-#endif //__arm__    
+#endif //__arm__
+    protected:
+        virtual void Dispatch() override;
     };
     typedef std::unique_ptr<EventSkipNextTrack> EventSkipNextTrack_ptr;
 
@@ -124,9 +136,11 @@ namespace CDPlayerSM
         EventSkipPreviousTrack(){};
 
     
-#ifdef __arm__    
+#ifdef __arm__
     DECLARE_ALLOCATOR
-#endif //__arm__    
+#endif //__arm__
+    protected:
+        virtual void Dispatch() override;
     };
     typedef std::unique_ptr<EventSkipPreviousTrack> EventSkipPreviousTrack_ptr;
 
@@ -140,9 +154,11 @@ namespace CDPlayerSM
         EventStop(){};
 
     
-#ifdef __arm__    
+#ifdef __arm__
     DECLARE_ALLOCATOR
-#endif //__arm__    
+#endif //__arm__
+    protected:
+        virtual void Dispatch() override;
     };
     typedef std::unique_ptr<EventStop> EventStop_ptr;
 
@@ -156,9 +172,11 @@ namespace CDPlayerSM
         EventAfter10Minutes(){};
 
     
-#ifdef __arm__    
+#ifdef __arm__
     DECLARE_ALLOCATOR
-#endif //__arm__    
+#endif //__arm__
+    protected:
+        virtual void Dispatch() override;
     };
     typedef std::unique_ptr<EventAfter10Minutes> EventAfter10Minutes_ptr;
 

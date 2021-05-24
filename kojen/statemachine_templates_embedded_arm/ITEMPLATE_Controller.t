@@ -46,6 +46,10 @@ namespace <<<NAMESPACE>>>
         Event& operator=(Event& other) = delete;
         Event(Event&& other) = default;
         Event& operator=(Event&& other) = default;
+
+    protected:
+        friend class C<<<STATEMACHINENAME>>>StateMachineImpl;
+        virtual void Dispatch() = 0;
     };
     typedef std::unique_ptr<Event> Event_ptr;
 
@@ -60,9 +64,11 @@ namespace <<<NAMESPACE>>>
         <<<EVENTNAME>>>(){};
 
     <<<EVENTMEMBERSDECLARE>>>
-#ifdef __arm__    
+#ifdef __arm__
     DECLARE_ALLOCATOR
-#endif //__arm__    
+#endif //__arm__
+    protected:
+        virtual void Dispatch() override;
     };
     typedef std::unique_ptr<<<<EVENTNAME>>>> <<<EVENTNAME>>>_ptr;
 

@@ -45,13 +45,14 @@ namespace <<<NAMESPACE>>>
         <<<PER_STATE_END>>>
 
         // Event triggering
-        virtual void TriggerEvent(std::unique_ptr<Event> data) = 0;
+        <<<PER_EVENT_BEGIN>>>
+        virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) = 0;
+        <<<PER_EVENT_END>>>
 
         /// {{{USER_PUBLIC_MEMBERS}}}
         /// {{{USER_PUBLIC_MEMBERS}}}
     protected:
-        I<<<STATEMACHINENAME>>>StateMachine():m_controller(nullptr){};
-        I<<<STATEMACHINENAME>>>Controller* m_controller;
+        I<<<STATEMACHINENAME>>>StateMachine(){};
 
         /// {{{USER_PROTECTED_MEMBERS}}}
         /// {{{USER_PROTECTED_MEMBERS}}}

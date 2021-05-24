@@ -556,11 +556,12 @@ class LanguageCPP:
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
                 ptr = "*" if isArray else ""
-                ref = "&" if isStruct or isMessage else ""
+                #ref = "&" if isStruct or isMessage else ""
+                ref = "" if isArray else "&"
                 if (mem[0] in interface) and not isArray:
-                    factoryparams.append(("/*const*/ "+(self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref, mem[1]))
+                    factoryparams.append(("const "+(self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref, mem[1]))
                 else:
-                    factoryparams.append(("/*const*/ "+mem[0] + ptr + ref, mem[1]))
+                    factoryparams.append(("const "+mem[0] + ptr + ref, mem[1]))
         return factoryparams
 
     '''USED

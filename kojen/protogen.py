@@ -79,7 +79,6 @@ def Generate(output_dir, pythonfile, namespacename, classname, declspec="", auth
 
     # Customize the templates with your interface file, namespace names, classnames, declspecs
     smgen = CStateMachineGenerator(template_dir, intermediate_dir, None, None, author, group, brief)
-    #filenames = smgen.GenerateProtocol(pythonfile, namespacename, classname, declspec, output_dir)
     filenames = smgen.GenerateProtocol(Tmp_py, namespacename, classname, declspec, output_dir)
 
     if not os.path.exists(output_dir):
@@ -97,15 +96,6 @@ def Generate(output_dir, pythonfile, namespacename, classname, declspec="", auth
 
     c = Cog()
     c.callableMain(['cog', '-d', '@' + os.path.join(intermediate_dir, "files.txt")])
-
-    '''
-    # Copy all files (except files.txt) to output dir
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    for f in filenames:
-        os.rename(os.path.join(intermediate_dir,f),os.path.join(output_dir,f))
-    '''
 
     # Delete all files from intermediate dir
     os.remove(os.path.join(intermediate_dir, "files.txt"))

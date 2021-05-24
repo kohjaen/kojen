@@ -236,11 +236,11 @@ MU_TEST(TestCDPlayer_States)
     mu_check(fixture.sm->IsStateStop());
     mu_check(!fixture.controller.GuardCDInside());
     // Open the CD player
-    fixture.sm->TriggerEvent(std::make_unique<EventOpen>(EventOpen()));
+    fixture.sm->TriggerEventOpen();
     sleep_ms(50);
     mu_check(fixture.sm->IsStateOpen());
     // Insert a CD and close the CD player
-    fixture.sm->TriggerEvent(std::make_unique<EventOpen>(EventOpen()));
+    fixture.sm->TriggerEventOpen();
     sleep_ms(50);
     // CD player motor closes the drive...an interrupt triggers that is close
     fixture.controller.SetHasCD(true);
@@ -256,49 +256,43 @@ MU_TEST(TestCDPlayer_States)
     /// Test : Skipping forward and backward, pause and resume, then stopping somewhere in the middle.
     /// 
     // Play the first track...
-    auto pl = std::make_unique<EventPlay>(EventPlay());
-    pl->m_track_no = 1;
     fixture.controller.m_expected_track_number = 1;
-    fixture.sm->TriggerEvent(std::move(pl));
-    mu_check(!pl);
+    fixture.sm->TriggerEventPlay(1);
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 0);
     // end of track.
-    fixture.sm->TriggerEvent(std::make_unique<EventEndOfTrack>(EventEndOfTrack()));
+    fixture.sm->TriggerEventEndOfTrack();
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 1);
     // end of track.
-    fixture.sm->TriggerEvent(std::make_unique<EventEndOfTrack>(EventEndOfTrack()));
+    fixture.sm->TriggerEventEndOfTrack();
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 2);
     // skip next track
-    fixture.sm->TriggerEvent(std::make_unique<EventSkipNextTrack>(EventSkipNextTrack()));
+    fixture.sm->TriggerEventSkipNextTrack();
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 3);
     // skip previous track
-    fixture.sm->TriggerEvent(std::make_unique<EventSkipPreviousTrack>(EventSkipPreviousTrack()));
+    fixture.sm->TriggerEventSkipPreviousTrack();
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 2);
-    // Pause.
-    fixture.sm->TriggerEvent(std::make_unique<EventPlay>(EventPlay()));
+    // Pause. Shouldn't matter what track is passed...
+    fixture.sm->TriggerEventPlay(99);
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePause());
     // Resume
-    pl = std::make_unique<EventPlay>(EventPlay());
-    pl->m_track_no = 5;
+    fixture.sm->TriggerEventPlay(5);
     fixture.controller.m_expected_track_number = 5;
-    fixture.sm->TriggerEvent(std::move(pl));
-    mu_check(!pl);
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 2);
     // Stop
-    fixture.sm->TriggerEvent(std::make_unique<EventStop>(EventStop()));
+    fixture.sm->TriggerEventStop();
     sleep_ms(50);
     mu_check(fixture.sm->IsStateStop());
     // When stopping we cleared the current track...
@@ -306,25 +300,22 @@ MU_TEST(TestCDPlayer_States)
     ///
     /// Test : pause and automatic stop after 10 minutes.
     /// 
-    pl = std::make_unique<EventPlay>(EventPlay());
-    pl->m_track_no = 25;
     fixture.controller.m_expected_track_number = 25;
-    fixture.sm->TriggerEvent(std::move(pl));
-    mu_check(!pl);
+    fixture.sm->TriggerEventPlay(25);
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 0);
     // next track.
-    fixture.sm->TriggerEvent(std::make_unique<EventEndOfTrack>(EventEndOfTrack()));
+    fixture.sm->TriggerEventEndOfTrack();
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 1);
-    // pause
-    fixture.sm->TriggerEvent(std::make_unique<EventPlay>(EventPlay()));
+    // pause. Shouldn't matter what track is played
+    fixture.sm->TriggerEventPlay(99);
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePause());
     // 10 minutes go by, and a timer interrupt signals this...
-    fixture.sm->TriggerEvent(std::make_unique<EventAfter10Minutes>(EventAfter10Minutes()));
+    fixture.sm->TriggerEventAfter10Minutes();
     sleep_ms(50);
     mu_check(fixture.sm->IsStateStop());
     // When stopping we cleared the current track...
@@ -332,11 +323,8 @@ MU_TEST(TestCDPlayer_States)
     ///
     /// Test : playing a whole CD goes to 'stop'.
     /// 
-    pl = std::make_unique<EventPlay>(EventPlay());
-    pl->m_track_no = 15;
     fixture.controller.m_expected_track_number = 15;
-    fixture.sm->TriggerEvent(std::move(pl));
-    mu_check(!pl);
+    fixture.sm->TriggerEventPlay(15);
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     for (uint8_t i = 0; i <= NO_TRACKS; i++)
@@ -346,7 +334,7 @@ MU_TEST(TestCDPlayer_States)
         else
             mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 0);
         // end of track.
-        fixture.sm->TriggerEvent(std::make_unique<EventEndOfTrack>(EventEndOfTrack()));
+        fixture.sm->TriggerEventEndOfTrack();
         sleep_ms(50);
     }
     mu_check(fixture.sm->IsStateStop());
@@ -359,16 +347,16 @@ MU_TEST(TestCDPlayer_States)
     return;
     
     // Open the CD player
-    fixture.sm->TriggerEvent(std::make_unique<EventOpen>(EventOpen()));
+    fixture.sm->TriggerEventOpen();
     mu_check(fixture.sm->IsStateOpen());
     // Take out the CD
     fixture.controller.SetHasCD(false);
     // Insert a CD and close the CD player
     int t = sizeof(EventPlay);
-    fixture.sm->TriggerEvent(std::make_unique<EventPlay>(EventPlay()));
+    fixture.sm->TriggerEventPlay(99);
     // CD player motor closes the drive...an interrupt triggers that is close
     fixture.controller.SetHasCD(true);
-    fixture.sm->TriggerEvent(std::make_unique<EventOpen>(EventOpen()));
+    fixture.sm->TriggerEventOpen();
     mu_check(fixture.sm->IsStatePlay());
 
     /// {{{USER_UNIT_TEST_STATES}}}

@@ -803,8 +803,8 @@ def ExtractTransitionTable(statemachinediagramname, path_to_vpp):
     vppdiagrams = VPPDiagrams(path_to_vpp)
     vppdiagramelements = VPPDiagramElements(path_to_vpp)
     vppmodelelements = VPPModelElements(path_to_vpp)
-    elements = vppdiagramelements.GetDiagramElements(vppdiagrams.GetIDFromStateDiagramName(statemachinediagramname))
-    statediagram = StateDiagram(statemachinediagramname ,vppdiagrams.GetIDFromStateDiagramName(statemachinediagramname), elements, vppmodelelements)
+    elements = vppdiagramelements.GetDiagramElements(vppdiagrams.GetIDFromStateDiagramName(statemachinediagramname.strip()))
+    statediagram = StateDiagram(statemachinediagramname.strip() ,vppdiagrams.GetIDFromStateDiagramName(statemachinediagramname.strip()), elements, vppmodelelements)
     return statediagram.GetTransitionTable()
 
 

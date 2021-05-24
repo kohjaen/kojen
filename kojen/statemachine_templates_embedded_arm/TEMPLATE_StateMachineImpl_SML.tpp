@@ -36,33 +36,11 @@ namespace boost{
     }
 }
 
-namespace {
-    template <class R, class... Ts>
-    auto call_impl(R(*f)(Ts...)) {
-        return [f](Ts... args) { return f(args...); };
-    }
-    template <class T, class R, class... Ts>
-    auto call_impl(T* self, R(T::*f)(Ts...)) {
-        return [self, f](Ts... args) { return (self->*f)(args...); };
-    }
-    template <class T, class R, class... Ts>
-    auto call_impl(const T* self, R(T::*f)(Ts...) const) {
-        return [self, f](Ts... args) { return (self->*f)(args...); };
-    }
-    template <class T, class R, class... Ts>
-    auto call_impl(const T* self, R(T::*f)(Ts...)) {
-        return [self, f](Ts... args) { return (self->*f)(args...); };
-    }
-    /**
-    * Simple wrapper to call free/member functions
-    * @param args function, [optional] this
-    * @return function(args...)
-    */
-    auto call = [](auto... args) { return call_impl(args...); };
-}
-
 namespace <<<NAMESPACE>>>
 {
+    // Static instance of the controller.
+    static I<<<STATEMACHINENAME>>>Controller* _controller;
+
     /// {{{USER_LOCALS}}}
     /// {{{USER_LOCALS}}}
 
@@ -83,17 +61,16 @@ namespace <<<NAMESPACE>>>
     ////////////////////////////////////////////////////////////
     // C<<<STATEMACHINENAME>>>StateMachine
     ////////////////////////////////////////////////////////////
-    #define CONCRETE C<<<STATEMACHINENAME>>>StateMachine
     struct C<<<STATEMACHINENAME>>>StateMachine
     {
         /// @{ Guards
         <<<PER_GUARD_BEGIN>>>
         struct <<<GUARDNAME>>>
         {
-            bool operator() (I<<<STATEMACHINENAME>>>Controller*& controller)
+            bool operator()()
             {
-                if (controller)
-                    return controller-><<<GUARDNAME>>>();
+                if (_controller)
+                    return _controller-><<<GUARDNAME>>>();
                 return false;
             }
         };
@@ -103,28 +80,31 @@ namespace <<<NAMESPACE>>>
         /// @{ States
         <<<PER_STATE_BEGIN>>>
         struct <<<STATENAME>>>OnEntry{
-            void operator()(I<<<STATEMACHINENAME>>>Controller*& controller)
+            void operator()()
             {
-                if (controller)
-                    controller-><<<STATENAME>>>_on_entry();
+                if (_controller)
+                    _controller-><<<STATENAME>>>_on_entry();
             }
         };
         struct <<<STATENAME>>>OnExit{
-            void operator()(I<<<STATEMACHINENAME>>>Controller*& controller)
+            void operator()()
             {
-                if (controller)
-                    controller-><<<STATENAME>>>_on_exit();
+                if (_controller)
+                    _controller-><<<STATENAME>>>_on_exit();
             }
         };
         <<<PER_STATE_END>>>
         /// @{ Actions
         <<<PER_ACTION_BEGIN>>>
-        template <class Event>
-        void <<<ACTIONNAME>>>(I<<<STATEMACHINENAME>>>Controller*& controller, const Event & e) const
+        struct <<<ACTIONNAME>>>
         {
-            if (controller)
-                controller-><<<ACTIONNAME>>>(e);
-        }
+            template <class Event>
+            void operator()(const Event & e) const
+            {
+                if (_controller)
+                    _controller-><<<ACTIONNAME>>>(e);
+            }
+        };
         <<<PER_ACTION_END>>>
         /// @}
 
@@ -136,6 +116,10 @@ namespace <<<NAMESPACE>>>
             <<<STATENAME>>>OnEntry	__<<<STATENAME>>>OnEntry;
             <<<STATENAME>>>OnExit	__<<<STATENAME>>>OnExit;
             <<<PER_STATE_END>>>
+            // Actions
+            <<<PER_ACTION_BEGIN>>>
+            <<<ACTIONNAME>>>		__<<<ACTIONNAME>>>;
+            <<<PER_ACTION_END>>>
             // Guards
             <<<PER_GUARD_BEGIN>>>
             <<<GUARDNAME>>>			__<<<GUARDNAME>>>;
@@ -147,6 +131,15 @@ namespace <<<NAMESPACE>>>
             );
         }
     };
+    // static single instance of the sm
+    msm::sm<C<<<STATEMACHINENAME>>>StateMachine> _sm;
+
+    // Double dispatch mechanism per event (no rtti)
+    <<<PER_EVENT_BEGIN>>>
+    void <<<EVENTNAME>>>::Dispatch(){
+        _sm.process_event(*this);
+    }
+    <<<PER_EVENT_END>>>
 
     ////////////////////////////////////////////////////////////
     // C<<<STATEMACHINENAME>>>StateMachineImpl
@@ -166,7 +159,6 @@ namespace <<<NAMESPACE>>>
 
         virtual ~C<<<STATEMACHINENAME>>>StateMachineImpl()
         {
-            delete m_sm;
         };
 
 #ifdef THREADED
@@ -181,46 +173,47 @@ namespace <<<NAMESPACE>>>
         explicit C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller)
 #endif //THREADED
         {
-            m_sm = new msm::sm<C<<<STATEMACHINENAME>>>StateMachine>(&(*controller));
+            _controller = controller;
         }
 
+        // State Query
         <<<PER_STATE_BEGIN>>>
         virtual bool Is<<<STATENAME>>>() const override
         {
-            return m_sm->is(<<<STATENAME>>>);
+            return _sm.is(<<<STATENAME>>>);
         }
         <<<PER_STATE_END>>>
 
         // Event triggering
-
-        virtual void TriggerEvent(std::unique_ptr<Event> event) override
+        void TriggerEvent(std::unique_ptr<Event> event)
         {
 #ifdef THREADED
             dispatch(event);
 #else
-            handle_dispatch(std::move(event));
+            event->Dispatch();
 #endif
         }
+        <<<PER_EVENT_BEGIN>>>
+        virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override
+        {
+            auto data = std::make_unique<<<<EVENTNAME>>>>(<<<EVENTNAME>>>());
+            <<<EVENTMEMBERSINSTANTIATE>>>
+            TriggerEvent(std::move(data));
+        }
+        <<<PER_EVENT_END>>>
 
         /// {{{USER_SMIMPL_PUBLIC_MEMBERS}}}
         /// {{{USER_SMIMPL_PUBLIC_MEMBERS}}}
     protected:
-        msm::sm<C<<<STATEMACHINENAME>>>StateMachine> * m_sm;
-
 #ifdef THREADED
-        virtual void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type item) override
+        virtual void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type event) override
 #else
-        void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type item)
+        void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type event)
 #endif
         {
             /// {{{USER_DISPATCH_EVENT_PROCESSING}}}
             /// {{{USER_DISPATCH_EVENT_PROCESSING}}}
-            <<<PER_EVENT_BEGIN>>>
-            if (<<<EVENTNAME>>>* data = dynamic_cast<<<<EVENTNAME>>>*>(item.get())){
-                m_sm->process_event(*data);
-                return;
-            }
-            <<<PER_EVENT_END>>>
+            event->Dispatch();
         }
     };
 
