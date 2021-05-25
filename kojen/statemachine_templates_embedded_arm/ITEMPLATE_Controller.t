@@ -49,7 +49,8 @@ namespace <<<NAMESPACE>>>
 
     protected:
         friend class C<<<STATEMACHINENAME>>>StateMachineImpl;
-        virtual void Dispatch() = 0;
+        //virtual void Dispatch() = 0; -> Fails on Linx (but not Mac/Win)
+        virtual void Dispatch() {};
     };
     typedef std::unique_ptr<Event> Event_ptr;
 
