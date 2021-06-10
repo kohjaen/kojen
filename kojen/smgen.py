@@ -106,48 +106,50 @@ and the following replacement tags will be correctly set
 
 # END EMBEDDED SM SUPPORT.
 '''
-__TAG_AUTHOR__              = '<<<AUTHOR>>>'
-__TAG_GROUP__               = '<<<GROUP>>>'
-__TAG_BRIEF__               = '<<<BRIEF>>>'
-__TAG_NAMESPACE__           = '<<<NAMESPACE>>>'
-__TAG_SM_NAME__             = '<<<STATEMACHINENAME>>>'
-__TAG_CLASS_NAME__          = '<<<CLASSNAME>>>'
-__TAG_PyIFGen_NAME__        = '<<<PYIFGENNAME>>>'
+__TAG_AUTHOR__                  = '<<<AUTHOR>>>'
+__TAG_GROUP__                   = '<<<GROUP>>>'
+__TAG_BRIEF__                   = '<<<BRIEF>>>'
+__TAG_NAMESPACE__               = '<<<NAMESPACE>>>'
+__TAG_SM_NAME__                 = '<<<STATEMACHINENAME>>>'
+__TAG_SM_NAME_UPPER__           = '<<<STATEMACHINENAMEUPPER>>>'
+__TAG_CLASS_NAME__              = '<<<CLASSNAME>>>'
+__TAG_PyIFGen_NAME__            = '<<<PYIFGENNAME>>>'
 
-__TAG_PS_BEGIN__            = "<<<PER_STATE_BEGIN>>>"
-__TAG_PS_END__              = "<<<PER_STATE_END>>>"
+__TAG_PS_BEGIN__                = "<<<PER_STATE_BEGIN>>>"
+__TAG_PS_END__                  = "<<<PER_STATE_END>>>"
 
-__TAG_PE_BEGIN__            = "<<<PER_EVENT_BEGIN>>>"
-__TAG_PE_END__              = "<<<PER_EVENT_END>>>"
+__TAG_PE_BEGIN__                = "<<<PER_EVENT_BEGIN>>>"
+__TAG_PE_END__                  = "<<<PER_EVENT_END>>>"
 
-__TAG_PA_BEGIN__            = "<<<PER_ACTION_BEGIN>>>"
-__TAG_PA_END__              = "<<<PER_ACTION_END>>>"
+__TAG_PA_BEGIN__                = "<<<PER_ACTION_BEGIN>>>"
+__TAG_PA_END__                  = "<<<PER_ACTION_END>>>"
 
-__TAG_PASIG_BEGIN__         = "<<<PER_ACTION_SIGNATURE_BEGIN>>>"
-__TAG_PASIG_END__           = "<<<PER_ACTION_SIGNATURE_END>>>"
+__TAG_PASIG_BEGIN__             = "<<<PER_ACTION_SIGNATURE_BEGIN>>>"
+__TAG_PASIG_END__               = "<<<PER_ACTION_SIGNATURE_END>>>"
 
-__TAG_PG_BEGIN__            = "<<<PER_GUARD_BEGIN>>>"
-__TAG_PG_END__              = "<<<PER_GUARD_END>>>"
+__TAG_PG_BEGIN__                = "<<<PER_GUARD_BEGIN>>>"
+__TAG_PG_END__                  = "<<<PER_GUARD_END>>>"
 
-__TAG_EVENT_SIGNATURE__     = "<<<EVENTSIGNATURE>>>"
-__TAG_EVENT_MEMBERINST__    = "<<<EVENTMEMBERSINSTANTIATE>>>"
-__TAG_LITE_EVENT_MEMBERINST__    = "<<<EVENTMEMBERSLITEINSTANTIATE>>>"
-__TAG_EVENT_MEMBERDECL__    = "<<<EVENTMEMBERSDECLARE>>>"
+__TAG_EVENT_SIGNATURE__         = "<<<EVENTSIGNATURE>>>"
+__TAG_EVENT_MEMBERINST__        = "<<<EVENTMEMBERSINSTANTIATE>>>"
+__TAG_LITE_EVENT_MEMBERINST__   = "<<<EVENTMEMBERSLITEINSTANTIATE>>>"
+__TAG_EVENT_MEMBERDECL__        = "<<<EVENTMEMBERSDECLARE>>>"
 
-__TAG_STATENAME__           = '<<<STATENAME>>>'
-__TAG_EVENTNAME__           = '<<<EVENTNAME>>>'
-__TAG_ACTIONNAME__          = '<<<ACTIONNAME>>>'
-__TAG_GUARDNAME__           = '<<<GUARDNAME>>>'
+__TAG_STATENAME__               = '<<<STATENAME>>>'
+__TAG_EVENTNAME__               = '<<<EVENTNAME>>>'
+__TAG_EVENTNAME_SMALL_CAMEL__   = '<<<EVENTNAMESMALLCAMEL>>>'
+__TAG_ACTIONNAME__              = '<<<ACTIONNAME>>>'
+__TAG_GUARDNAME__               = '<<<GUARDNAME>>>'
 
-__TAG_ABC__                 = '<<<ALPH>>>'
-__TAG_123__                 = '<<<NUM>>>'
-__TAG_INIT_STATE__          = '<<<STATE_0>>>'
+__TAG_ABC__                     = '<<<ALPH>>>'
+__TAG_123__                     = '<<<NUM>>>'
+__TAG_INIT_STATE__              = '<<<STATE_0>>>'
 
-__TAG_TTT_BEGIN__           = '<<<TTT_BEGIN>>>'
-__TAG_TTT_END___            = '<<<TTT_END>>>'
+__TAG_TTT_BEGIN__               = '<<<TTT_BEGIN>>>'
+__TAG_TTT_END___                = '<<<TTT_END>>>'
 
-__TAG_TTT_LITE_BEGIN__      = '<<<TTT_LITE_BEGIN>>>'
-__TAG_TTT_LITE_END__        = '<<<TTT_LITE_END>>>'
+__TAG_TTT_LITE_BEGIN__          = '<<<TTT_LITE_BEGIN>>>'
+__TAG_TTT_LITE_END__            = '<<<TTT_LITE_END>>>'
 
 __TAG_TTT_LITE_SML_BEGIN__      = '<<<TTT_LITE_SML_BEGIN>>>'
 __TAG_TTT_LITE_SML_END__        = '<<<TTT_LITE_SML_END>>>'
@@ -178,9 +180,9 @@ except (ModuleNotFoundError, ImportError) as e:
     from preservative import *
 
 try:
-    from .cgen import CBASEGenerator, CCodeModel, alpha, __getnextalphabet__, __resetalphabet__, even_space, FileCopyUtil
+    from .cgen import CBASEGenerator, CCodeModel, alpha, __getnextalphabet__, __resetalphabet__, even_space, FileCopyUtil, caps, camel_case_small, camel_case
 except (ModuleNotFoundError, ImportError) as e:
-    from cgen import CBASEGenerator, CCodeModel, alpha, __getnextalphabet__, __resetalphabet__, even_space, FileCopyUtil
+    from cgen import CBASEGenerator, CCodeModel, alpha, __getnextalphabet__, __resetalphabet__, even_space, FileCopyUtil, caps, camel_case_small, camel_case
 
 try:
     from LanguageCPP import LanguageCPP
@@ -303,8 +305,9 @@ class CStateMachineGenerator(CBASEGenerator):
         """
 
         dict_to_replace_lines = {}
+        dict_to_replace_lines[__TAG_SM_NAME_UPPER__] = caps(smmodel.statemachinename)
         dict_to_replace_lines[__TAG_SM_NAME__] = smmodel.statemachinename
-        dict_to_replace_lines[__TAG_CLASS_NAME__] =smmodel.statemachinename
+        dict_to_replace_lines[__TAG_CLASS_NAME__] = smmodel.statemachinename
         dict_to_replace_lines[__TAG_PyIFGen_NAME__] = smmodel.pythoninterfacegeneratorfilename.replace('.py', '')  # hack : for tcpgen simple templates,
         if not dict_to_replace_lines[__TAG_PyIFGen_NAME__]:
             dict_to_replace_lines[__TAG_PyIFGen_NAME__] = self.vpp_filename
@@ -316,10 +319,10 @@ class CStateMachineGenerator(CBASEGenerator):
 
         dict_to_replace_filenames = {}
         dict_to_replace_filenames["TEMPLATE_"] = smmodel.statemachinename
-        dict_to_replace_filenames['.ty'] = '.py'
-        dict_to_replace_filenames['.t'] = '.h'
-        dict_to_replace_filenames['.t#'] = '.cs'
-        dict_to_replace_filenames['.hpp'] = '.cpp'     # there are no '.hpp' templates...but search and replace will apply '.t -> .h' first so '.tpp' becomes '.hpp'...grrr
+        #dict_to_replace_filenames['.ty'] = '.py'
+        #dict_to_replace_filenames['.t#'] = '.cs'
+        #dict_to_replace_filenames['.t'] = '.h'
+        #dict_to_replace_filenames['.hpp'] = '.cpp'     # there are no '.hpp' templates...but search and replace will apply '.t -> .h' first so '.tpp' becomes '.hpp'...grrr
 
         return CBASEGenerator.__loadtemplates_firstfiltering__(self,dict_to_replace_lines,dict_to_replace_filenames)
 
@@ -332,12 +335,12 @@ class CStateMachineGenerator(CBASEGenerator):
 
         return ""
 
-    def __instantiate_event_struct_member(self, name, whitespace_cnt, is_ptr=True):
+    def __instantiate_event_struct_member(self, name, whitespace_cnt, is_ptr=True, instancename="data"):
         if self.events_interface is None or self.language is None:
             return ""
         for s in self.events_interface.Structs():
             if s.Name == name:
-                guts = self.language.InstantiateStructMembers(s, self.events_interface, '', "data", self.language.Accessor(is_ptr))
+                guts = self.language.InstantiateStructMembers(s, self.events_interface, '', instancename, self.language.Accessor(is_ptr))
                 result = ''
                 cnt = 0
                 for g in guts:
@@ -363,6 +366,16 @@ class CStateMachineGenerator(CBASEGenerator):
                 return result
         return ""
 
+    def hasTag(self, line, tag):
+        return line.find(tag.replace("<<<", "").replace(">>>", "")) > 0
+
+    def hasMemberName(self, a):
+        return a.find("::") > 0
+
+    def extractMemberNameAndTag(self, a):
+        member = a[a.find("::"):a.find(">>>")].replace("::", "")
+        tag = a.strip()
+        return [tag, member]
 
     def __innerexpand__secondfiltering__(self, names2x, lines2x, puthere):
         global alpha
@@ -372,6 +385,7 @@ class CStateMachineGenerator(CBASEGenerator):
             for line in lines2x:
                 newline = line
                 newline = newline.replace(__TAG_STATENAME__, name)
+                newline = newline.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_EVENTNAME__, name)
                 newline = newline.replace(__TAG_ACTIONNAME__, name)
                 newline = newline.replace(__TAG_GUARDNAME__, name)
@@ -383,9 +397,20 @@ class CStateMachineGenerator(CBASEGenerator):
                 # END EMBEDDED SM SUPPORT.
                 tabcnt = newline.count('    ')
                 newline = newline.replace(__TAG_EVENT_SIGNATURE__, self.__get_event_signature__(name))
-                newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, True))        # PTR
-                newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
+                # __TAG_EVENT_MEMBERINST__ -> PTR
+                if self.hasTag(newline,__TAG_EVENT_MEMBERINST__) and self.hasMemberName(newline):
+                    line_member = self.extractMemberNameAndTag(newline)
+                    newline = newline.replace(line_member[0],self.__instantiate_event_struct_member(name, tabcnt, True, line_member[1]))
+                else:
+                    newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, True))        # PTR
+                # __TAG_LITE_EVENT_MEMBERINST__ -> NO PTR
+                if self.hasTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and self.hasMemberName(newline):
+                    line_member = self.extractMemberNameAndTag(newline)
+                    newline = newline.replace(line_member[0],self.__instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
+                else:
+                    newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
                 newline = newline.replace(__TAG_EVENT_MEMBERDECL__, self.__declare_event_struct_members(name, tabcnt))
+                # END EMBEDDED SUPPORT
                 puthere.append(newline)
             cnt = cnt + 1
             __getnextalphabet__()
@@ -402,6 +427,7 @@ class CStateMachineGenerator(CBASEGenerator):
             for line in lines2x:
                 puthere.append(line
                             .replace(__TAG_ACTIONNAME__, actionname)
+                            .replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventname))
                             .replace(__TAG_EVENTNAME__, eventname)
                             .replace(__TAG_ABC__, chr(alpha))
                             .replace(__TAG_123__, str(cnt)))

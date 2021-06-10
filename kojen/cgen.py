@@ -78,6 +78,18 @@ def even_space(str, nospaces=35):
     return str + (nospaces - len(str)) * " "
 
 
+def camel_case(str):
+    return str.title()
+
+
+def camel_case_small(str):
+    return str[0].lower() + str[1:]
+
+
+def caps(str):
+    return str.upper()
+
+
 '''------------------------------------------------------------------------------------------------------'''
 
 
