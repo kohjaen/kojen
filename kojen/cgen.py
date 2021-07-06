@@ -226,7 +226,8 @@ class CBASEGenerator:
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
         # TCP gen might have a different output directory (typically COG will put files into an intermediate dir, and them copy them elsewhere
         ## Preserve only files...
-        for filename_nopath in codemodel.filenames_to_lines:
+        copy_filename_to_lines = codemodel.filenames_to_lines.copy() # prevent mutation whilst iteration.
+        for filename_nopath in copy_filename_to_lines:
             file_to_preserve = ""
             if preserve_dir == "":
                 file_to_preserve = os.path.join(self.output_gen_file_dir, filename_nopath)

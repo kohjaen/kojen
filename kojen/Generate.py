@@ -22,7 +22,7 @@ def Protocol(output_dir, pythoninterfacegeneratorfilename, namespacename, classn
 '''
 
 
-def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal=""):
+def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True):
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_embedded_arm")
 
@@ -32,12 +32,12 @@ def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, s
         smgenerator.vpp_filename = "Transition Table"
     else:
         smgenerator.vpp_filename = __internal
-    smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc)
+    smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
 
-def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir=""):
+def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __copy_other_files=True):
     transition_table = vppfs.ExtractTransitionTable(vp_statemachinename, vp_project_path)
-    StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc, author, group, brief, templatedir, os.path.basename(vp_project_path))
+    StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc, author, group, brief, templatedir, os.path.basename(vp_project_path),__copy_other_files)
 
 
 ''' Generate Entry function for Class Diagrams
