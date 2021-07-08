@@ -28,29 +28,24 @@ For any feedback please contact the original author : koh.jaen@yahoo.de.
 #include "threadsafe_queue_FreeRTOS.h"
 #include "threaded_dispatcher_FreeRTOS.h"
 
+#define MOVE_ONLY(name)                     \
+    name(const name& other) = delete;       \
+    name& operator=(name& other) = delete;  \
+    name(name&& other) = default;           \
+    name& operator=(name&& other) = default;
+
 namespace {
     struct Event
     {
     public:
         virtual ~Event() {}
         Event() {};
-
-        /** Move-only
-        */
-        Event(const Event& other) = delete;
-        Event& operator=(Event& other) = delete;
-        Event(Event&& other) = default;
-        Event& operator=(Event&& other) = default;
+        MOVE_ONLY(Event)
     };
     struct EventPlay : public Event {
-        /** Move-only
-        */
-        EventPlay(const EventPlay& other) = delete;
-        EventPlay& operator=(EventPlay& other) = delete;
-        EventPlay(EventPlay&& other) = default;
-        EventPlay& operator=(EventPlay&& other) = default;
+        virtual ~EventPlay() {}
         EventPlay() {};
-
+        MOVE_ONLY(EventPlay)
         uint16_t m_track_no;
         DECLARE_ALLOCATOR
     };

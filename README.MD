@@ -2,11 +2,11 @@
 
 # Description
 
-Kojen is a C++ protocol, C++ state-machine and C++/C# Class Diagram (from UML Code Model) code-generation tool written in Python and existing within the Python Package Index (PyPi). 
+Kojen is a C++ protocol, C++ state-machine and C++/C# Class Diagram (from UML Code Model) code-generation tool written in Python and existing within the Python Package Index (PyPi). Python 3 is supported. Python 2 was supported, but there are no guarantees as I have not tried since deprecation. To install run ```python -m pip install kojen```.  
 
 The default generated state-machine uses the fast and lightweight single-header-file-only [boost sml](https://boost-ext.github.io/sml/). It is linked to the repository as a git sub-module for an out-the-box solution. This is suitable for both embedded and PC applications using C++14 and higher.
 
-For state-machines and software-architecture-from-UML-model : user-code is preserved within special comment tags. The main concept is that code-generation is a manually-initiated process and exists within a hand-crafted source-repository. The intention is to be able to manually program in all auto-generated state-machine / Class Diagram output source files, and preserve hand-crafted code within those files when system requirements change. Its not intended to disassociate the programmer from the code (like most CASE tools). Typically after the Design phase code-generation is done first in the initial implementation phase (and maybe a few more times until things are as they should be) and then development is done the usual way. Naturally in time further changes/additions can be done in the model (Updating the 'diagrams' first) and their changes propagated to code by generation : this also allows for updates to the design (from Model -> Code) in a non-intrusive manner. Protocols and their unit tests are the only files which require no hand-coding.
+For state-machines and software-architecture-from-UML-model : user-code is preserved within special comment tags. Should you change the name of tags that had code within them, on the next generation a new text file prepended with ```.Lostcode``` will be output next to the original source file with all the code that was lost. The main concept is that code-generation is a manually-initiated process and exists within a hand-crafted source-repository. The intention is to be able to manually program in all auto-generated state-machine / Class Diagram output source files, and preserve hand-crafted code within those files when system requirements change. Its not intended to disassociate the programmer from the code (like most CASE tools). Typically after the Design phase code-generation is done first in the initial implementation phase (and maybe a few more times until things are as they should be) and then development is done the usual way. Naturally in time further changes/additions can be done in the model (Updating the 'diagrams' first) and their changes propagated to code by generation : this also allows for updates to the design (from Model -> Code) in a non-intrusive manner. Protocols and their unit tests are the only files which require no hand-coding.
 
 Unit testing : Tests for protocols are generated, and tests for state-machines too (but those require some hand-coding, code preservation applies). The included testing framework is extremely light-weight and great for embedded (and PC) applications : [minunit](https://github.com/kohjaen/minunit) is used for this and it is also linked to the repository as a git sub-module. The original fork of minunit is a C-based single header file, but some improvements have been made (not possible with C) so it now consists of a single header and a single cpp file. It contains a test-runner which will run all registered test-suites.
 
@@ -230,7 +230,7 @@ Execute `Generate.py` using python. Your C++ code should be generated to the con
 
 There will be several files in the output folder.
 
-* allplatforms *(folder containing required framework files)*
+* allplatforms *(folder containing framework files for standalone solution)*
 * CDPlayerStateMachine.h
 * CDPlayerStateMachineImpl_SML.cpp *(all state machine code generated for boost-sml)*  
 * ICDPlayerController.h
@@ -250,7 +250,7 @@ As the state-machine-implementation uses the controller base class, the followin
 
 ```cplusplus
   CTestCDPlayerController controller;
-  auto sm = ICDPlayerStateMachine::Create(&controller);
+  auto* sm = ICDPlayerStateMachine::Create(controller);
 ```
 
 All state queries and event triggering are done using the ```sm``` instance.

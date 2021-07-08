@@ -14,8 +14,8 @@
 #include <allplatforms/allocator.h>
 #endif //__arm__
 #include <memory>
-/// {{{USER_HEADER_INCLUDES}}}
-/// {{{USER_HEADER_INCLUDES}}}
+/// {{{USER_HEADER}}}
+/// {{{USER_HEADER}}}
 
 // For printouts.
 //#define _OUT_<<<STATEMACHINENAME>>>_DISP_
@@ -24,59 +24,54 @@
     add '#undef THREADED' in the 'USER_FORWARD_DECLARATIONS' preservation tags.
 */
 #define THREADED
-/// {{{USER_FORWARD_DECLARATIONS}}}
-/// {{{USER_FORWARD_DECLARATIONS}}}
+/// {{{USER_FORWARD_DECL}}}
+/// {{{USER_FORWARD_DECL}}}
+
+#define MOVE_ONLY(name)                     \
+    name(const name& other) = delete;       \
+    name& operator=(name& other) = delete;  \
+    name(name&& other) = default;           \
+    name& operator=(name&& other) = default;
 
 namespace <<<NAMESPACE>>>
 {
     /// {{{USER_LOCALS}}}
     /// {{{USER_LOCALS}}}
 
-    //// Events //////////////////////////////
     /// @{ Events
     struct Event
     {
     public:
         virtual ~Event(){}
         Event(){};
-
-        /** Move-only
-        */
-        Event(const Event& other) = delete;
-        Event& operator=(Event& other) = delete;
-        Event(Event&& other) = default;
-        Event& operator=(Event&& other) = default;
-
+        MOVE_ONLY(Event)
     protected:
         friend class C<<<STATEMACHINENAME>>>StateMachineImpl;
-        //virtual void Dispatch() = 0; -> Fails on Linx (but not Mac/Win)
-        virtual void Dispatch() {};
+        //virtual void Dispatch(void* sm) = 0; -> Fails on Linx (but not Mac/Win)
+        virtual void Dispatch(void* sm) {};
     };
     typedef std::unique_ptr<Event> Event_ptr;
 
     <<<PER_EVENT_BEGIN>>>
-    struct <<<EVENTNAME>>> : public Event{
-        /** Move-only
-        */
-        <<<EVENTNAME>>>(const <<<EVENTNAME>>>& other) = delete;
-        <<<EVENTNAME>>>& operator=(<<<EVENTNAME>>>& other) = delete;
-        <<<EVENTNAME>>>(<<<EVENTNAME>>>&& other) = default;
-        <<<EVENTNAME>>>& operator=(<<<EVENTNAME>>>&& other) = default;
+    struct <<<EVENTNAME>>> : public Event
+    {
         <<<EVENTNAME>>>(){};
-
+        MOVE_ONLY(<<<EVENTNAME>>>)
     <<<EVENTMEMBERSDECLARE>>>
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
     protected:
-        virtual void Dispatch() override;
+        virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<<<<EVENTNAME>>>> <<<EVENTNAME>>>_ptr;
 
     <<<PER_EVENT_END>>>
     /// @}
 
-    ////Controller Interface //////////////////
+    /**
+     * Controller interface.
+     */
     class <<<DLL_EXPORT>>> I<<<STATEMACHINENAME>>>Controller
     {
     public:

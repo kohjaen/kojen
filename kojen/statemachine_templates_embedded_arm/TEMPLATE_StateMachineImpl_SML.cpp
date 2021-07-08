@@ -20,11 +20,8 @@
 
 #include <boost/sml.hpp>
 
-/// {{{USER_HEADER_INCLUDES}}}
-/// {{{USER_HEADER_INCLUDES}}}
-
-/// {{{USER_FORWARD_DECLARATIONS}}}
-/// {{{USER_FORWARD_DECLARATIONS}}}
+/// {{{USER_INCLUDES}}}
+/// {{{USER_INCLUDES}}}
 
 // this namespace is masqueraded as 'msm' due to the SML sharing parts of codegeneration with MSM. Makes for less messy scripts. Sorry.
 namespace msm = boost::sml;
@@ -38,40 +35,28 @@ namespace boost{
 
 namespace <<<NAMESPACE>>>
 {
-    // Static instance of the controller.
-    static I<<<STATEMACHINENAME>>>Controller* _controller;
+    using controllertype = I<<<STATEMACHINENAME>>>Controller;
 
     /// {{{USER_LOCALS}}}
     /// {{{USER_LOCALS}}}
-
-#ifdef __arm__
-    //// Event custom allocators //////////////////////////////
-    /// @{ Events (defined in I<<<STATEMACHINENAME>>>Controller.h
-    <<<PER_EVENT_BEGIN>>>
-    IMPLEMENT_ALLOCATOR(<<<EVENTNAME>>>, 0, 0)
-    <<<PER_EVENT_END>>>
-    /// @}
-#endif //__arm__
 
     /// @{ States
     <<<PER_STATE_BEGIN>>>
     auto <<<STATENAME>>> = msm::state<class <<<STATENAME>>>>;
     <<<PER_STATE_END>>>
+    /// @}
 
-    ////////////////////////////////////////////////////////////
-    // C<<<STATEMACHINENAME>>>StateMachine
-    ////////////////////////////////////////////////////////////
-    struct C<<<STATEMACHINENAME>>>StateMachine
+    /**
+     * s<<<STATEMACHINENAME>>>StateMachine
+     */
+    struct s<<<STATEMACHINENAME>>>StateMachine
     {
         /// @{ Guards
         <<<PER_GUARD_BEGIN>>>
         struct <<<GUARDNAME>>>
         {
-            bool operator()()
-            {
-                if (_controller)
-                    return _controller-><<<GUARDNAME>>>();
-                return false;
+            bool operator()(controllertype& ctrl) {
+                return ctrl.<<<GUARDNAME>>>();
             }
         };
         <<<PER_GUARD_END>>>
@@ -80,17 +65,13 @@ namespace <<<NAMESPACE>>>
         /// @{ States
         <<<PER_STATE_BEGIN>>>
         struct <<<STATENAME>>>OnEntry{
-            void operator()()
-            {
-                if (_controller)
-                    _controller-><<<STATENAME>>>_on_entry();
+            void operator()(controllertype& ctrl) {
+                ctrl.<<<STATENAME>>>_on_entry();
             }
         };
         struct <<<STATENAME>>>OnExit{
-            void operator()()
-            {
-                if (_controller)
-                    _controller-><<<STATENAME>>>_on_exit();
+            void operator()(controllertype& ctrl) {
+                ctrl.<<<STATENAME>>>_on_exit();
             }
         };
         <<<PER_STATE_END>>>
@@ -99,10 +80,8 @@ namespace <<<NAMESPACE>>>
         struct <<<ACTIONNAME>>>
         {
             template <class Event>
-            void operator()(const Event & e) const
-            {
-                if (_controller)
-                    _controller-><<<ACTIONNAME>>>(e);
+            void operator()(const Event & e, controllertype& ctrl) const {
+                ctrl.<<<ACTIONNAME>>>(e);
             }
         };
         <<<PER_ACTION_END>>>
@@ -131,105 +110,110 @@ namespace <<<NAMESPACE>>>
             );
         }
     };
-    // static single instance of the sm
-    msm::sm<C<<<STATEMACHINENAME>>>StateMachine> _sm;
 
-    // Double dispatch mechanism per event (no rtti)
+    using statemachinetype = msm::sm<s<<<STATEMACHINENAME>>>StateMachine>;
+
+    /// @{ Events (defined in I<<<STATEMACHINENAME>>>Controller.h
+#ifdef __arm__
+    /**
+     * Event custom allocators
+     */
     <<<PER_EVENT_BEGIN>>>
-    void <<<EVENTNAME>>>::Dispatch(){
-        _sm.process_event(*this);
+    IMPLEMENT_ALLOCATOR(<<<EVENTNAME>>>, 0, 0)
+    <<<PER_EVENT_END>>>
+#endif //__arm__
+    /**
+     * Double dispatch (no rtti)
+     */
+    <<<PER_EVENT_BEGIN>>>
+    void <<<EVENTNAME>>>::Dispatch(void* sm){
+        if(auto* _sm = (statemachinetype*) sm)
+            _sm->process_event(*this);
     }
     <<<PER_EVENT_END>>>
+    /// @}
 
-    ////////////////////////////////////////////////////////////
-    // C<<<STATEMACHINENAME>>>StateMachineImpl
-    ////////////////////////////////////////////////////////////
-
+    /**
+     * C<<<STATEMACHINENAME>>>StateMachineImpl
+     */
     class C<<<STATEMACHINENAME>>>StateMachineImpl
         : public I<<<STATEMACHINENAME>>>StateMachine
 #ifdef THREADED
-          ,public XKoJen::threaded_dispatcher<Event>
+        , public XKoJen::threaded_dispatcher<Event>
 #endif // THREADED
     {
     public:
-
 #if !defined(THREADED)
         typedef std::unique_ptr<Event> ptr_type;
 #endif
-
-        virtual ~C<<<STATEMACHINENAME>>>StateMachineImpl()
-        {
-        };
+        virtual ~C<<<STATEMACHINENAME>>>StateMachineImpl(){};
 
 #ifdef THREADED
     #ifdef __FREERTOS__
-        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth)
+        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(controllertype& controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth)
             : XKoJen::threaded_dispatcher<Event>("<<<STATEMACHINENAME>>> Dispatcher", priority, stackDepth)
+            , _sm{controller}
     #else
-        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller)
+        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(controllertype& controller)
             : XKoJen::threaded_dispatcher<Event>("<<<STATEMACHINENAME>>> Dispatcher")
+            , _sm{controller}
     #endif // __FREERTOS__
 #else
-        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(I<<<STATEMACHINENAME>>>Controller* controller)
+        explicit C<<<STATEMACHINENAME>>>StateMachineImpl(controllertype& controller)
+        : _sm{controller}
 #endif //THREADED
-        {
-            _controller = controller;
-        }
+        {}
 
         // State Query
         <<<PER_STATE_BEGIN>>>
-        virtual bool Is<<<STATENAME>>>() const override
-        {
+        virtual bool Is<<<STATENAME>>>() const override {
             return _sm.is(<<<STATENAME>>>);
         }
         <<<PER_STATE_END>>>
 
         // Event triggering
-        void TriggerEvent(std::unique_ptr<Event> event)
-        {
+        void TriggerEvent(std::unique_ptr<Event> event) {
 #ifdef THREADED
             dispatch(event);
 #else
-            event->Dispatch();
+            event->Dispatch((void*)&_sm);
 #endif
         }
         <<<PER_EVENT_BEGIN>>>
-        virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override
-        {
+        virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override {
             auto data = std::make_unique<<<<EVENTNAME>>>>(<<<EVENTNAME>>>());
             <<<EVENTMEMBERSINSTANTIATE>>>
             TriggerEvent(std::move(data));
         }
         <<<PER_EVENT_END>>>
 
-        /// {{{USER_SMIMPL_PUBLIC_MEMBERS}}}
-        /// {{{USER_SMIMPL_PUBLIC_MEMBERS}}}
+        /// {{{USER_IMPL_PUBLIC}}}
+        /// {{{USER_IMPL_PUBLIC}}}
     protected:
+        statemachinetype _sm;
+
 #ifdef THREADED
-        virtual void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type event) override
+        virtual void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type event) override {
 #else
-        void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type event)
+        void handle_dispatch(C<<<STATEMACHINENAME>>>StateMachineImpl::ptr_type event) {
 #endif
-        {
-            /// {{{USER_DISPATCH_EVENT_PROCESSING}}}
-            /// {{{USER_DISPATCH_EVENT_PROCESSING}}}
-            event->Dispatch();
+            /// {{{USER_DISPATCH}}}
+            /// {{{USER_DISPATCH}}}
+            event->Dispatch((void*)&_sm);
         }
     };
 
-    ////////////////////////////////////////////////////////////
-    // I<<<STATEMACHINENAME>>>StateMachine
-    ////////////////////////////////////////////////////////////
+    /**
+     * I<<<STATEMACHINENAME>>>StateMachine
+     */
 #if defined(__FREERTOS__) && defined(THREADED)
-    I<<<STATEMACHINENAME>>>StateMachine* I<<<STATEMACHINENAME>>>StateMachine::Create(I<<<STATEMACHINENAME>>>Controller* controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth)
-    {
+    I<<<STATEMACHINENAME>>>StateMachine* I<<<STATEMACHINENAME>>>StateMachine::Create(controllertype& controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth) {
         auto res = new C<<<STATEMACHINENAME>>>StateMachineImpl(controller, priority, stackDepth);
         res->Start();
         return res;
     }
 #else
-    I<<<STATEMACHINENAME>>>StateMachine* I<<<STATEMACHINENAME>>>StateMachine::Create(I<<<STATEMACHINENAME>>>Controller* controller)
-    {
+    I<<<STATEMACHINENAME>>>StateMachine* I<<<STATEMACHINENAME>>>StateMachine::Create(controllertype& controller) {
         return new C<<<STATEMACHINENAME>>>StateMachineImpl(controller);
     }
 #endif // #ifdef __FREERTOS__

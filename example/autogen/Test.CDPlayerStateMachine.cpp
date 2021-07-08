@@ -212,9 +212,9 @@ struct sCDPlayer_Test_Suite_Fixture
     sCDPlayer_Test_Suite_Fixture(){
         /// {{{USER_TEST_SUITE_FIXTURE_SETUP}}}
 #if defined(__FREERTOS__) && defined(THREADED)
-        sm = CDPlayerSM::ICDPlayerStateMachine::Create(&controller, SM_THREAD_PRIORITY, SM_THREAD_STACK);
+        sm = CDPlayerSM::ICDPlayerStateMachine::Create(controller, SM_THREAD_PRIORITY, SM_THREAD_STACK);
 #else
-        sm = CDPlayerSM::ICDPlayerStateMachine::Create(&controller);
+        sm = CDPlayerSM::ICDPlayerStateMachine::Create(controller);
 #endif
         /// {{{USER_TEST_SUITE_FIXTURE_SETUP}}}
     }
@@ -286,8 +286,8 @@ MU_TEST(TestCDPlayer_States)
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePause());
     // Resume
-    fixture.sm->TriggerEventPlay(5);
     fixture.controller.m_expected_track_number = 5;
+    fixture.sm->TriggerEventPlay(5);
     sleep_ms(50);
     mu_check(fixture.sm->IsStatePlay());
     mu_assert_int_eq(fixture.controller.GetCurrentTrack(), 2);

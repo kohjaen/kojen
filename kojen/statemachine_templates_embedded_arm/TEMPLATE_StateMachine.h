@@ -33,9 +33,9 @@ namespace <<<NAMESPACE>>>
         // The memory of what is returned is NEW'd. This means that you are responsible for it.
         // Luckily a SM is created once, and lives throughout the application lifetime, so 'free' should not be necessary.
 #if defined(__FREERTOS__) && defined(THREADED)
-        static I<<<STATEMACHINENAME>>>StateMachine* Create(I<<<STATEMACHINENAME>>>Controller* controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth=configMINIMAL_STACK_SIZE);
+        static I<<<STATEMACHINENAME>>>StateMachine* Create(I<<<STATEMACHINENAME>>>Controller& controller, unsigned portBASE_TYPE priority, unsigned portSHORT stackDepth=configMINIMAL_STACK_SIZE);
 #else
-        static I<<<STATEMACHINENAME>>>StateMachine* Create(I<<<STATEMACHINENAME>>>Controller* controller);
+        static I<<<STATEMACHINENAME>>>StateMachine* Create(I<<<STATEMACHINENAME>>>Controller& controller);
 #endif // __FREERTOS__
         virtual ~I<<<STATEMACHINENAME>>>StateMachine(){};
 

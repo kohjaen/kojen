@@ -14,8 +14,8 @@
 #include <allplatforms/allocator.h>
 #endif //__arm__
 #include <memory>
-/// {{{USER_HEADER_INCLUDES}}}
-/// {{{USER_HEADER_INCLUDES}}}
+/// {{{USER_HEADER}}}
+/// {{{USER_HEADER}}}
 
 // For printouts.
 //#define _OUT_CDPlayer_DISP_
@@ -24,165 +24,131 @@
     add '#undef THREADED' in the 'USER_FORWARD_DECLARATIONS' preservation tags.
 */
 #define THREADED
-/// {{{USER_FORWARD_DECLARATIONS}}}
+/// {{{USER_FORWARD_DECL}}}
 //#undef THREADED
-/// {{{USER_FORWARD_DECLARATIONS}}}
+/// {{{USER_FORWARD_DECL}}}
+
+#define MOVE_ONLY(name)                     \
+    name(const name& other) = delete;       \
+    name& operator=(name& other) = delete;  \
+    name(name&& other) = default;           \
+    name& operator=(name&& other) = default;
 
 namespace CDPlayerSM
 {
     /// {{{USER_LOCALS}}}
     /// {{{USER_LOCALS}}}
 
-    //// Events //////////////////////////////
     /// @{ Events
     struct Event
     {
     public:
         virtual ~Event(){}
         Event(){};
-
-        /** Move-only
-        */
-        Event(const Event& other) = delete;
-        Event& operator=(Event& other) = delete;
-        Event(Event&& other) = default;
-        Event& operator=(Event&& other) = default;
-
+        MOVE_ONLY(Event)
     protected:
         friend class CCDPlayerStateMachineImpl;
-        virtual void Dispatch() = 0;
+        //virtual void Dispatch(void* sm) = 0; -> Fails on Linx (but not Mac/Win)
+        virtual void Dispatch(void* sm) {};
     };
     typedef std::unique_ptr<Event> Event_ptr;
 
-    struct EventOpen : public Event{
-        /** Move-only
-        */
-        EventOpen(const EventOpen& other) = delete;
-        EventOpen& operator=(EventOpen& other) = delete;
-        EventOpen(EventOpen&& other) = default;
-        EventOpen& operator=(EventOpen&& other) = default;
+    struct EventOpen : public Event
+    {
         EventOpen(){};
-
+        MOVE_ONLY(EventOpen)
     
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
     protected:
-        virtual void Dispatch() override;
+        virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventOpen> EventOpen_ptr;
 
-    struct EventPlay : public Event{
-        /** Move-only
-        */
-        EventPlay(const EventPlay& other) = delete;
-        EventPlay& operator=(EventPlay& other) = delete;
-        EventPlay(EventPlay&& other) = default;
-        EventPlay& operator=(EventPlay&& other) = default;
+    struct EventPlay : public Event
+    {
         EventPlay(){};
-
+        MOVE_ONLY(EventPlay)
         uint16_t m_track_no;
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
     protected:
-        virtual void Dispatch() override;
+        virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventPlay> EventPlay_ptr;
 
-    struct EventEndOfTrack : public Event{
-        /** Move-only
-        */
-        EventEndOfTrack(const EventEndOfTrack& other) = delete;
-        EventEndOfTrack& operator=(EventEndOfTrack& other) = delete;
-        EventEndOfTrack(EventEndOfTrack&& other) = default;
-        EventEndOfTrack& operator=(EventEndOfTrack&& other) = default;
+    struct EventEndOfTrack : public Event
+    {
         EventEndOfTrack(){};
-
+        MOVE_ONLY(EventEndOfTrack)
     
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
     protected:
-        virtual void Dispatch() override;
+        virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventEndOfTrack> EventEndOfTrack_ptr;
 
-    struct EventSkipNextTrack : public Event{
-        /** Move-only
-        */
-        EventSkipNextTrack(const EventSkipNextTrack& other) = delete;
-        EventSkipNextTrack& operator=(EventSkipNextTrack& other) = delete;
-        EventSkipNextTrack(EventSkipNextTrack&& other) = default;
-        EventSkipNextTrack& operator=(EventSkipNextTrack&& other) = default;
+    struct EventSkipNextTrack : public Event
+    {
         EventSkipNextTrack(){};
-
+        MOVE_ONLY(EventSkipNextTrack)
     
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
     protected:
-        virtual void Dispatch() override;
+        virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventSkipNextTrack> EventSkipNextTrack_ptr;
 
-    struct EventSkipPreviousTrack : public Event{
-        /** Move-only
-        */
-        EventSkipPreviousTrack(const EventSkipPreviousTrack& other) = delete;
-        EventSkipPreviousTrack& operator=(EventSkipPreviousTrack& other) = delete;
-        EventSkipPreviousTrack(EventSkipPreviousTrack&& other) = default;
-        EventSkipPreviousTrack& operator=(EventSkipPreviousTrack&& other) = default;
+    struct EventSkipPreviousTrack : public Event
+    {
         EventSkipPreviousTrack(){};
-
+        MOVE_ONLY(EventSkipPreviousTrack)
     
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
     protected:
-        virtual void Dispatch() override;
+        virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventSkipPreviousTrack> EventSkipPreviousTrack_ptr;
 
-    struct EventStop : public Event{
-        /** Move-only
-        */
-        EventStop(const EventStop& other) = delete;
-        EventStop& operator=(EventStop& other) = delete;
-        EventStop(EventStop&& other) = default;
-        EventStop& operator=(EventStop&& other) = default;
+    struct EventStop : public Event
+    {
         EventStop(){};
-
+        MOVE_ONLY(EventStop)
     
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
     protected:
-        virtual void Dispatch() override;
+        virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventStop> EventStop_ptr;
 
-    struct EventAfter10Minutes : public Event{
-        /** Move-only
-        */
-        EventAfter10Minutes(const EventAfter10Minutes& other) = delete;
-        EventAfter10Minutes& operator=(EventAfter10Minutes& other) = delete;
-        EventAfter10Minutes(EventAfter10Minutes&& other) = default;
-        EventAfter10Minutes& operator=(EventAfter10Minutes&& other) = default;
+    struct EventAfter10Minutes : public Event
+    {
         EventAfter10Minutes(){};
-
+        MOVE_ONLY(EventAfter10Minutes)
     
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
     protected:
-        virtual void Dispatch() override;
+        virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventAfter10Minutes> EventAfter10Minutes_ptr;
 
     /// @}
 
-    ////Controller Interface //////////////////
+    /**
+     * Controller interface.
+     */
     class  ICDPlayerController
     {
     public:
