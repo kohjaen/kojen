@@ -26,6 +26,10 @@ def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, s
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_embedded_arm")
 
+    if not os.path.isdir(templatedir):
+        print("Error : dir '" + templatedir + "' does not exist. Aborting.")
+        return
+
     language = LanguageCPP.LanguageCPP()
     smgenerator = smgen.CStateMachineGenerator(templatedir, outputdir, eventsinterface, language, author, group, brief)
     if not __internal:

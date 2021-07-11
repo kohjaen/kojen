@@ -315,6 +315,11 @@ def GenerateUML(umlgenerator, classdiagram, dclspc=""):
     umlgenerator.__createoutput__(cm.filenames_to_lines)
 
 def Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc="", templatefiledir = ""):
+
+    if not os.path.isfile(vp_project_path):
+        print("Error : file '" + vp_project_path + "' does not exist. Aborting.")
+        return
+
     print("*************************************")
     print("******* UMLGen **********************")
     print("*************************************")

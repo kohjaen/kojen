@@ -62,9 +62,9 @@ class CCogGenerator(CBASEGenerator):
         CBASEGenerator.__init__(self, inputfiledir, outputfiledir, language, author, group, brief)
         self.dict_to_replace_filenames = {}
         self.dict_to_replace_filenames["TEMPLATE_"] = classname
-        self.dict_to_replace_filenames['.ty'] = '.py'
-        self.dict_to_replace_filenames['.t#'] = '.cs'
-        self.dict_to_replace_filenames['.tpp'] = '.cpp'  # there are no '.hpp' templates...but search and replace will apply '.t -> .h' first so '.tpp' becomes '.hpp'...grrr
+        #self.dict_to_replace_filenames['.ty'] = '.py'
+        #self.dict_to_replace_filenames['.t#'] = '.cs'
+        #self.dict_to_replace_filenames['.tpp'] = '.cpp'  # there are no '.hpp' templates...but search and replace will apply '.t -> .h' first so '.tpp' becomes '.hpp'...grrr
 
     def __loadtemplates_firstfiltering__(self, ccmodel):
         """
@@ -124,6 +124,9 @@ def GenerateFile(output_dir, pythonfile, cog_template_file, author, namespacenam
     if os.path.isdir(cog_template_file):
         GenerateDirectory(output_dir, pythonfile, cog_template_file, author, namespacename, classname, group, brief, dclspc)
         return
+    if not os.path.isfile(cog_template_file):
+        print("Error : file '" + cog_template_file + "' does not exist. Aborting.")
+        return
 
     print("*************************************")
     print("******* CogGen (file)****************")
@@ -164,6 +167,9 @@ def GenerateDirectory(output_dir, pythonfile, cog_template_dir, author, namespac
     cog_template_dir = cog_template_dir.strip()
     if os.path.isfile(cog_template_dir):
         GenerateDirectory(output_dir, pythonfile, cog_template_dir, author, namespacename, classname, group, brief, dclspc)
+        return
+    if not os.path.isdir(cog_template_dir):
+        print("Error : dir '" + cog_template_dir + "' does not exist. Aborting.")
         return
 
     print("*************************************")

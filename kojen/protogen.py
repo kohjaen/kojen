@@ -60,6 +60,10 @@ def Generate(output_dir, pythonfile, namespacename, classname, declspec="", auth
     if not template_dir.strip():
         template_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("protocol_templates", "CPP"))
 
+    if not os.path.isdir(template_dir):
+        print("Error : dir '" + template_dir + "' does not exist. Aborting.")
+        return
+
     print("*************************************")
     print("******* Protogen ********************")
     print("*************************************")
