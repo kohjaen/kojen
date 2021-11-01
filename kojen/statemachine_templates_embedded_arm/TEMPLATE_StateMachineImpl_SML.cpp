@@ -42,7 +42,7 @@ namespace <<<NAMESPACE>>>
 
     /// @{ States
     <<<PER_STATE_BEGIN>>>
-    auto <<<STATENAME>>> = msm::state<class <<<STATENAME>>>>;
+    struct <<<STATENAME>>>;
     <<<PER_STATE_END>>>
     /// @}
 
@@ -92,16 +92,16 @@ namespace <<<NAMESPACE>>>
             using namespace msm;
             // State Entry/Exit Actions
             <<<PER_STATE_BEGIN>>>
-            <<<STATENAME>>>OnEntry	__<<<STATENAME>>>OnEntry;
-            <<<STATENAME>>>OnExit	__<<<STATENAME>>>OnExit;
+            <<<STATENAME>>>OnEntry	<<<stateName>>>OnEntry;
+            <<<STATENAME>>>OnExit	<<<stateName>>>OnExit;
             <<<PER_STATE_END>>>
             // Actions
             <<<PER_ACTION_BEGIN>>>
-            <<<ACTIONNAME>>>		__<<<ACTIONNAME>>>;
+            <<<ACTIONNAME>>>		<<<actionName>>>;
             <<<PER_ACTION_END>>>
             // Guards
             <<<PER_GUARD_BEGIN>>>
-            <<<GUARDNAME>>>			__<<<GUARDNAME>>>;
+            <<<GUARDNAME>>>			<<<guardName>>>;
             <<<PER_GUARD_END>>>
             /// Transition table
             return make_transition_table(
@@ -167,7 +167,7 @@ namespace <<<NAMESPACE>>>
         // State Query
         <<<PER_STATE_BEGIN>>>
         virtual bool Is<<<STATENAME>>>() const override {
-            return _sm.is(<<<STATENAME>>>);
+            return _sm.is(msm::state<<<<STATENAME>>>>);
         }
         <<<PER_STATE_END>>>
 

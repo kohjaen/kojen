@@ -110,8 +110,9 @@ __TAG_AUTHOR__                  = '<<<AUTHOR>>>'
 __TAG_GROUP__                   = '<<<GROUP>>>'
 __TAG_BRIEF__                   = '<<<BRIEF>>>'
 __TAG_NAMESPACE__               = '<<<NAMESPACE>>>'
-__TAG_SM_NAME__                 = '<<<STATEMACHINENAME>>>'
-__TAG_SM_NAME_UPPER__           = '<<<STATEMACHINENAMEUPPER>>>'
+__TAG_SM_NAME__                 = '<<<STATEMACHINENAME>>>'       # As given
+__TAG_SM_NAME_SMALL_CAMEL__     = '<<<stateMachineName>>>'       # camelCaps
+__TAG_SM_NAME_UPPER__           = '<<<STATEMACHINENAMEUPPER>>>'  # ALL UPPER
 __TAG_CLASS_NAME__              = '<<<CLASSNAME>>>'
 __TAG_PyIFGen_NAME__            = '<<<PYIFGENNAME>>>'
 
@@ -135,11 +136,14 @@ __TAG_EVENT_MEMBERINST__        = "<<<EVENTMEMBERSINSTANTIATE>>>"
 __TAG_LITE_EVENT_MEMBERINST__   = "<<<EVENTMEMBERSLITEINSTANTIATE>>>"
 __TAG_EVENT_MEMBERDECL__        = "<<<EVENTMEMBERSDECLARE>>>"
 
-__TAG_STATENAME__               = '<<<STATENAME>>>'
-__TAG_EVENTNAME__               = '<<<EVENTNAME>>>'
-__TAG_EVENTNAME_SMALL_CAMEL__   = '<<<EVENTNAMESMALLCAMEL>>>'
-__TAG_ACTIONNAME__              = '<<<ACTIONNAME>>>'
-__TAG_GUARDNAME__               = '<<<GUARDNAME>>>'
+__TAG_STATENAME__               = '<<<STATENAME>>>'    # As given
+__TAG_STATENAME_SMALL_CAMEL__   = '<<<stateName>>>'    # camelCaps
+__TAG_EVENTNAME__               = '<<<EVENTNAME>>>'    # As given
+__TAG_EVENTNAME_SMALL_CAMEL__   = '<<<eventName>>>'    # camelCaps
+__TAG_ACTIONNAME__              = '<<<ACTIONNAME>>>'   # As given
+__TAG_ACTIONNAME_SMALL_CAMEL__  = '<<<actionName>>>'   # camelCaps
+__TAG_GUARDNAME__               = '<<<GUARDNAME>>>'    # As given
+__TAG_GUARDNAME_SMALL_CAMEL__   = '<<<guardName>>>'    # camelCaps
 
 __TAG_ABC__                     = '<<<ALPH>>>'
 __TAG_123__                     = '<<<NUM>>>'
@@ -306,6 +310,7 @@ class CStateMachineGenerator(CBASEGenerator):
 
         dict_to_replace_lines = {}
         dict_to_replace_lines[__TAG_SM_NAME_UPPER__] = caps(smmodel.statemachinename)
+        dict_to_replace_lines[__TAG_SM_NAME_SMALL_CAMEL__] = camel_case_small(smmodel.statemachinename)
         dict_to_replace_lines[__TAG_SM_NAME__] = smmodel.statemachinename
         dict_to_replace_lines[__TAG_CLASS_NAME__] = smmodel.statemachinename
         dict_to_replace_lines[__TAG_PyIFGen_NAME__] = smmodel.pythoninterfacegeneratorfilename.replace('.py', '')  # hack : for tcpgen simple templates,
@@ -319,10 +324,6 @@ class CStateMachineGenerator(CBASEGenerator):
 
         dict_to_replace_filenames = {}
         dict_to_replace_filenames["TEMPLATE_"] = smmodel.statemachinename
-        #dict_to_replace_filenames['.ty'] = '.py'
-        #dict_to_replace_filenames['.t#'] = '.cs'
-        #dict_to_replace_filenames['.t'] = '.h'
-        #dict_to_replace_filenames['.hpp'] = '.cpp'     # there are no '.hpp' templates...but search and replace will apply '.t -> .h' first so '.tpp' becomes '.hpp'...grrr
 
         return CBASEGenerator.__loadtemplates_firstfiltering__(self,dict_to_replace_lines,dict_to_replace_filenames)
 
@@ -384,11 +385,14 @@ class CStateMachineGenerator(CBASEGenerator):
         for name in names2x:
             for line in lines2x:
                 newline = line
+                newline = newline.replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_STATENAME__, name)
                 newline = newline.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_EVENTNAME__, name)
                 newline = newline.replace(__TAG_ACTIONNAME__, name)
+                newline = newline.replace(__TAG_ACTIONNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_GUARDNAME__, name)
+                newline = newline.replace(__TAG_GUARDNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_ABC__, chr(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 # EMBEDDED SM SUPPORT.
@@ -426,6 +430,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 eventname = "ANY"
             for line in lines2x:
                 puthere.append(line
+                            .replace(__TAG_ACTIONNAME_SMALL_CAMEL__, camel_case_small(actionname))
                             .replace(__TAG_ACTIONNAME__, actionname)
                             .replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventname))
                             .replace(__TAG_EVENTNAME__, eventname)
@@ -560,28 +565,28 @@ class CStateMachineGenerator(CBASEGenerator):
                     ex_tt_lite = False
 
                 if ex_tt_lite_sml and line.find(__TAG_TTT_LITE_SML_END__) > -1:
-                    tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action", 100) + even_space(" = Next") + '\n'
+                    tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
                     startStateHasEntryExit = {}
                     for i, ttline in enumerate(smmodel.transition_table):
                         if i == 0:  # initial state
                             tt_out += "                 *"
                         else:
                             tt_out += "                , "
-                        tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + '+'
-                        tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + ">") + ' '
-                        tt_out += even_space('['+self.__transitiontableLITE_guard_replace_NONE__('__'+ttline[smmodel.GUARD])+']') + ' / '
-                        #tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__('call(this,&CONCRETE::' + ttline[smmodel.ACTION] + '<' + ttline[smmodel.EVENT] + ">)"), 100)
-                        tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__('__' + ttline[smmodel.ACTION]), 100)
+                        tt_out += even_space('state<' + self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE]) + '>') + '+'
+                        tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + '>') + ' '
+                        tt_out += even_space('['+self.__transitiontableLITE_guard_replace_NONE__( camel_case_small(ttline[smmodel.GUARD]))+']') + ' / '
+                        #tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__('__' + ttline[smmodel.ACTION]))
+                        tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__( camel_case_small(ttline[smmodel.ACTION])) )
                         if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
-                            tt_out += ' = ' + even_space(self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]))
+                            tt_out += ' = ' + even_space('state<' + self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]) + '>')
                         tt_out += '\n'
                         alllinesexpanded.append(tt_out)
                         tt_out = ""
                         # State entry/exit, once only
                         if not (ttline[smmodel.START_STATE] in startStateHasEntryExit):
                             startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-                            tt_out += "                , "+ttline[smmodel.START_STATE]+" + msm::on_entry<_> / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
-                            tt_out += "                , "+ttline[smmodel.START_STATE]+" + msm::on_exit<_> / __" + ttline[smmodel.START_STATE] + 'OnExit'
+                            tt_out += "                , state<"+ttline[smmodel.START_STATE]+"> + msm::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
+                            tt_out += "                , state<"+ttline[smmodel.START_STATE]+"> + msm::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
                             tt_out += '\n'
                             alllinesexpanded.append(tt_out)
                             tt_out = ""
