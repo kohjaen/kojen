@@ -136,7 +136,8 @@ There will be several files in the output folder.
 
 The following class diagram explains roughly where focus should be when implementing for actual integration into the real system.
 
-![Image of necessary classes](kojen/docs/images/ProtocolClassDiagram.PNG)
+<!---![Image of necessary classes](kojen/docs/images/ProtocolClassDiagram.PNG) ... doesnt work on PyPi!--->
+![Image of necessary classes](https://raw.githubusercontent.com/kohjaen/kojen/master/kojen/docs/images/ProtocolClassDiagram.PNG)
 
 *IConnection* is the interface to derive from for your actual physical layer for an embedded platform. If you use boost on x86/x64, in the 'allplatforms' directory exist classes for substituting this with a TCPConnection, UDPConnection and SerialPort.
 Have a good look at the unit tests, this shows roughly how to derive from it and connect everything up, albeit creating a loopback connection, and implementing uncessary routing as the interface for the tests have a special requirement.
@@ -154,7 +155,9 @@ A summary to link it up:
 ### Input
 The following diagram defines (roughly) a state machine for a CD player.
 
-![Image of CD Player](kojen/docs/images/StateMachine.PNG)
+<!---![Image of CD Player](kojen/docs/images/StateMachine.PNG)--->
+
+![Image of necessary classes](https://raw.githubusercontent.com/kohjaen/kojen/master/kojen/docs/images/StateMachine.PNG)
 
 This state machine can be represented by the following transition table in python (format : 'startstate', 'event', 'nextstate', 'action', 'guard'):
 
@@ -238,7 +241,8 @@ There will be several files in the output folder.
   
 The following class diagram explains roughly where focus should be when implementing for test-driven development as well as for actual integration into the real system.
 
-![Image of necessary classes](kojen/docs/images/StateMachineClassDiagram.PNG)
+<!---![Image of necessary classes](kojen/docs/images/StateMachineClassDiagram.PNG)--->
+![Image of necessary classes](https://raw.githubusercontent.com/kohjaen/kojen/master/kojen/docs/images/StateMachineClassDiagram.PNG)
 
 White classes are auto-generated, and have code-preservation features. Grey is what you have to manually create, and implement for integration into your real system.
 
