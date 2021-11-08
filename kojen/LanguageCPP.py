@@ -606,7 +606,7 @@ class LanguageCPP:
                 result.append(instance_accessor + self.InstantiateType("", mem[1], "Create_" + mem[0] + "(" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + ");"))
             elif isArray and not isProtocol and not isStruct:
                 if not IsMessageStruct(interface, struct.Name):
-                    raise RuntimeError("Only mesage structs are allowed arrays.")
+                    raise RuntimeError("Only message structs are allowed arrays.")
                 result.append(whitespace + "// cant transmit ptr's across the world, but well data.")
                 s = Template("${payload} ${op} ${bytes}")
                 array = struct[mem[1]]
@@ -618,7 +618,6 @@ class LanguageCPP:
                 result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t", '').replace("    ","") + array.Name + ',(void*) ' + array.Name + ',sizeof(' + array.type + ")*" + array.Count() + ");")
             else:
                 print("WTF : InstantiateStructMembers")
-
         return result
     '''USED
     All custom structs, protocol structs and message structs.
@@ -780,11 +779,8 @@ class LanguageCPP:
         return result
 
     '''USED'''
-    def InstantiatePtrToType(self, typename, instancename):
-        return self.PtrToTypeName(typename) + ' ' + instancename + '(new ' + typename + ')'
-
-    def InstantiatePtrToType2(self, typepointername, instancename, typename):
-        return typepointername + ' ' + instancename + '(new ' + typename + ')'
+    def InstantiatePtrToType(self, typename, instancename, typepointername=""):
+        return (typepointername if typepointername else self.PtrToTypeName(typename)) + ' ' + instancename + '(new ' + typename + ')'
 
     '''USED'''
     def InstantiateArray(self, typename, instancename, noelements):

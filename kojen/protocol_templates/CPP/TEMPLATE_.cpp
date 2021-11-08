@@ -77,7 +77,6 @@ namespace <<<NAMESPACE>>>
         cog.outl("#ifdef __arm__")
         cog.outl(language.DeclareFunction("size_t", classname, "ToByteStream_"+s.Name,is_impl,[("const " + (s.Name if "."==accessor else language.PtrToTypeName(s.Name)) + "&","_to"),(language.ByteStreamTypeRawPtr(), 'result')]))
         cog.outl("{")
-        ##cog.outl(language.WhiteSpace(0)+language.InstantiatePtrToType2(language.ByteStreamTypeSharedPtr(), 'result',language.ByteStreamType())+";")
         is_arm = True
         guts = language.SerializeStructToByteStream(s,interface,language.WhiteSpace(0),"result","_to",accessor, is_arm)
         for g in guts:
@@ -87,7 +86,7 @@ namespace <<<NAMESPACE>>>
         cog.outl('#else')
         cog.outl(language.DeclareFunction(language.ByteStreamTypeSharedPtr(), classname, "ToByteStream_"+s.Name,is_impl,[("const " + (s.Name if "."==accessor else language.PtrToTypeName(s.Name)) + "&","_to")]))
         cog.outl("{")
-        cog.outl(language.WhiteSpace(0)+language.InstantiatePtrToType2(language.ByteStreamTypeSharedPtr(), 'result',language.ByteStreamType())+";")
+        cog.outl(language.WhiteSpace(0)+language.InstantiatePtrToType(language.ByteStreamType(), 'result',language.ByteStreamTypeSharedPtr())+";")
         guts = language.SerializeStructToByteStream(s,interface,language.WhiteSpace(0),"result","_to",accessor)
         for g in guts:
             cog.outl(g)

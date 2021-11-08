@@ -767,11 +767,9 @@ class LanguageCsharp:
         return result
 
     '''USED'''
-    def InstantiatePtrToType(self, typename, instancename):
-        return self.PtrToTypeName(typename) + ' ' + instancename + '(new ' + typename + ')'
 
-    def InstantiatePtrToType2(self, typepointername, instancename, typename):
-        return typepointername + ' ' + instancename + '(new ' + typename + ')'
+    def InstantiatePtrToType(self, typename, instancename, typepointername=""):
+        return (typepointername if typepointername else self.PtrToTypeName(typename)) + ' ' + instancename + '(new ' + typename + ')'
 
     '''USED'''
     def InstantiateArray(self, typename, instancename, noelements):
