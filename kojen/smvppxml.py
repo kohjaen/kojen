@@ -85,5 +85,5 @@ class VisualParadigmStateMachineXMLParser:
         return transition_table
 
 if __name__ == "__main__":
-    parser = VisualParadigmStateMachineXMLParser(r"C:\Work\ICEy\trunk\ICESY\Documentation\Architecture\XML\project.xml")
+    parser = VisualParadigmStateMachineXMLParser(r"C:\Work\Documentation\Architecture\XML\project.xml")
     tt = parser.GetTransitionTable()

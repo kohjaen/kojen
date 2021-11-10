@@ -868,27 +868,5 @@ class TestDBFormat(unittest.TestCase):
 # Development Tests
 #########################################################
 
-
-def Test_MS():
-    tt = ExtractTransitionTable("MotionSystemStateMachine", r"/Users/eugenegrobbelaar/HomeProjects/Z43/Z43/ICEy/ICEMotionSystem/vpproject/ICEMotionSystem.vpp")
-    for row in tt:
-        print(equal_space(row[0])+',', equal_space(row[1])+',', equal_space(row[2])+',', equal_space(row[3])+',', equal_space(row[4]))
-
-
-def Test_VSAScan():
-    tt = ExtractTransitionTable("VSAScanStateMachine", r"/Users/eugenegrobbelaar/HomeProjects/Z43/Z43/ICEy/ICESY/vpproject/XIcesy.vpp")
-    for row in tt:
-        print(equal_space(row[0])+',', equal_space(row[1])+',', equal_space(row[2])+',', equal_space(row[3])+',', equal_space(row[4]))
-
-
-def Test_VSAScanDispatcher():
-    tt = ExtractTransitionTable("VSAScanDispatcherStateMachine", r"/Users/eugenegrobbelaar/HomeProjects/Z43/Z43/ICEy/XIcesy/vpproject/XIcesy.vpp")
-    for row in tt:
-        print(equal_space(row[0])+',', equal_space(row[1])+',', equal_space(row[2])+',', equal_space(row[3])+',', equal_space(row[4]))
-
-
 if __name__ == "__main__":
     unittest.main()
-    #Test_MS()
-    #Test_VSAScan()
-    #Test_VSAScanDispatcher()

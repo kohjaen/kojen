@@ -23,14 +23,9 @@
 /// {{{USER_INCLUDES}}}
 /// {{{USER_INCLUDES}}}
 
-// this namespace is masqueraded as 'msm' due to the SML sharing parts of codegeneration with MSM. Makes for less messy scripts. Sorry.
-namespace msm = boost::sml;
-
-namespace boost{
-    namespace msm {
-        auto none = [] {};
-        auto gnone = []{return true;};
-    }
+namespace {
+    auto none = [] {};
+    auto gnone = []{return true;};
 }
 
 namespace <<<NAMESPACE>>>
@@ -89,7 +84,7 @@ namespace <<<NAMESPACE>>>
 
         auto operator()() const noexcept
         {
-            using namespace msm;
+            using namespace boost::sml;
             // State Entry/Exit Actions
             <<<PER_STATE_BEGIN>>>
             <<<STATENAME>>>OnEntry	<<<stateName>>>OnEntry;
@@ -105,13 +100,13 @@ namespace <<<NAMESPACE>>>
             <<<PER_GUARD_END>>>
             /// Transition table
             return make_transition_table(
-                <<<TTT_LITE_SML_BEGIN>>>
-                <<<TTT_LITE_SML_END>>>
+                <<<TTT_SML_BEGIN_ENTRYEXIT>>>
+                <<<TTT_SML_END>>>
             );
         }
     };
 
-    using statemachinetype = msm::sm<s<<<STATEMACHINENAME>>>StateMachine>;
+    using statemachinetype = boost::sml::sm<s<<<STATEMACHINENAME>>>StateMachine>;
 
     /// @{ Events (defined in I<<<STATEMACHINENAME>>>Controller.h
 #ifdef __arm__
@@ -167,7 +162,7 @@ namespace <<<NAMESPACE>>>
         // State Query
         <<<PER_STATE_BEGIN>>>
         virtual bool Is<<<STATENAME>>>() const override {
-            return _sm.is(msm::state<<<<STATENAME>>>>);
+            return _sm.is(boost::sml::state<<<<STATENAME>>>>);
         }
         <<<PER_STATE_END>>>
 

@@ -132,10 +132,11 @@ __TAG_TTT_END___                = '<<<TTT_END>>>'
 __TAG_TTT_LITE_BEGIN__          = '<<<TTT_LITE_BEGIN>>>'
 __TAG_TTT_LITE_END__            = '<<<TTT_LITE_END>>>'
 
-__TAG_TTT_LITE_SML_BEGIN__      = '<<<TTT_LITE_SML_BEGIN>>>'
-__TAG_TTT_LITE_SML_END__        = '<<<TTT_LITE_SML_END>>>'
+__TAG_TTT_SML_BEGIN__           = '<<<TTT_SML_BEGIN>>>'
+__TAG_TTT_SML_BEGIN_ENTRYEXIT__ = '<<<TTT_SML_BEGIN_ENTRYEXIT>>>'
+__TAG_TTT_SML_END__             = '<<<TTT_SML_END>>>'
 
-__TAG_DECLSPEC_DLL_EXPORT__ = "<<<DLL_EXPORT>>>"
+__TAG_DECLSPEC_DLL_EXPORT__       = "<<<DLL_EXPORT>>>"
 
 # Python2 -> 3 shennanigans...try support both
 try:
@@ -369,13 +370,13 @@ class CStateMachineGenerator(CBASEGenerator):
     def __transitiontableLITE_guard_replace_NONE__(self, val):
         tmp_val = val.replace('__', '')
         if tmp_val == "" or tmp_val.lower() == 'none':
-            val = "boost::msm::gnone"
+            val = "gnone"
         return val
 
     def __transitiontableLITE_action_replace_NONE__(self, val):
         tmp_val = val.replace('__', '')
         if tmp_val == "" or tmp_val.lower() == 'none' or tmp_val.lower().find('::none<') > -1:
-            val = "boost::msm::none"
+            val = "none"
         return val
 
     ''' This SM doesnt seem to allow 'none' transitions -> make it transition to the source state'''
@@ -398,6 +399,7 @@ class CStateMachineGenerator(CBASEGenerator):
             ex_tt        = False
             ex_tt_lite   = False
             ex_tt_lite_sml = False
+            sml_entry_exit = False
 
             snipped_to_expand = []
             alllinesexpanded = []
@@ -409,7 +411,7 @@ class CStateMachineGenerator(CBASEGenerator):
                                 line.find(__TAG_PG_BEGIN__) > -1 or \
                                 line.find(__TAG_TTT_BEGIN__) > -1 or \
                                 line.find(__TAG_TTT_LITE_BEGIN__) > -1 or \
-                                line.find(__TAG_TTT_LITE_SML_BEGIN__) > -1
+                                line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1
 
                 ex_state     = line.find(__TAG_PS_BEGIN__) > -1 or ex_state
                 ex_event     = line.find(__TAG_PE_BEGIN__) > -1 or ex_event
@@ -418,7 +420,8 @@ class CStateMachineGenerator(CBASEGenerator):
                 ex_guard     = line.find(__TAG_PG_BEGIN__) > -1 or ex_guard
                 ex_tt        = line.find(__TAG_TTT_BEGIN__) > -1 or ex_tt
                 ex_tt_lite   = line.find(__TAG_TTT_LITE_BEGIN__) > -1 or ex_tt_lite
-                ex_tt_lite_sml = line.find(__TAG_TTT_LITE_SML_BEGIN__) > -1 or ex_tt_lite_sml
+                ex_tt_lite_sml = line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1 or ex_tt_lite_sml
+                sml_entry_exit = line.find(__TAG_TTT_SML_BEGIN_ENTRYEXIT__) > -1 or sml_entry_exit
                 if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_guard and not ex_tt and not ex_tt_lite and not ex_tt_lite_sml:
                     alllinesexpanded.append(line.replace(__TAG_INIT_STATE__, smmodel.__getfirststate__()))
 
@@ -486,7 +489,7 @@ class CStateMachineGenerator(CBASEGenerator):
                             tt_out = ""
                     ex_tt_lite = False
 
-                if ex_tt_lite_sml and line.find(__TAG_TTT_LITE_SML_END__) > -1:
+                if ex_tt_lite_sml and line.find(__TAG_TTT_SML_END__) > -1:
                     tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
                     startStateHasEntryExit = {}
                     for i, ttline in enumerate(smmodel.transition_table):
@@ -497,7 +500,6 @@ class CStateMachineGenerator(CBASEGenerator):
                         tt_out += even_space('state<' + self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE]) + '>') + '+'
                         tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + '>') + ' '
                         tt_out += even_space('['+self.__transitiontableLITE_guard_replace_NONE__( camel_case_small(ttline[smmodel.GUARD]))+']') + ' / '
-                        #tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__('__' + ttline[smmodel.ACTION]))
                         tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__( camel_case_small(ttline[smmodel.ACTION])) )
                         if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
                             tt_out += ' = ' + even_space('state<' + self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]) + '>')
@@ -505,10 +507,10 @@ class CStateMachineGenerator(CBASEGenerator):
                         alllinesexpanded.append(tt_out)
                         tt_out = ""
                         # State entry/exit, once only
-                        if not (ttline[smmodel.START_STATE] in startStateHasEntryExit):
+                        if not (ttline[smmodel.START_STATE] in startStateHasEntryExit) and sml_entry_exit:
                             startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-                            tt_out += "                , state<"+ttline[smmodel.START_STATE]+"> + msm::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
-                            tt_out += "                , state<"+ttline[smmodel.START_STATE]+"> + msm::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
+                            tt_out += "                , state<"+ttline[smmodel.START_STATE]+"> + boost::sml::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
+                            tt_out += "                , state<"+ttline[smmodel.START_STATE]+"> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
                             tt_out += '\n'
                             alllinesexpanded.append(tt_out)
                             tt_out = ""

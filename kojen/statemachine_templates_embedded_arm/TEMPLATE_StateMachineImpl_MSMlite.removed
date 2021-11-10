@@ -23,11 +23,9 @@
 
 namespace msm = boost::msm::lite;
 
-namespace boost{
-    namespace msm {
-        auto none = [] {};
-        auto gnone = []{return true;};
-    }
+namespace {
+    auto none = [] {};
+    auto gnone = []{return true;};
 }
 
 namespace <<<NAMESPACE>>>
