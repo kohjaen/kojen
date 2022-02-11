@@ -57,7 +57,6 @@ namespace CDPlayerSM
     {
         EventOpen(){};
         MOVE_ONLY(EventOpen)
-    
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
@@ -65,7 +64,6 @@ namespace CDPlayerSM
         virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventOpen> EventOpen_ptr;
-
     struct EventPlay : public Event
     {
         EventPlay(){};
@@ -78,12 +76,10 @@ namespace CDPlayerSM
         virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventPlay> EventPlay_ptr;
-
     struct EventEndOfTrack : public Event
     {
         EventEndOfTrack(){};
         MOVE_ONLY(EventEndOfTrack)
-    
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
@@ -91,12 +87,10 @@ namespace CDPlayerSM
         virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventEndOfTrack> EventEndOfTrack_ptr;
-
     struct EventSkipNextTrack : public Event
     {
         EventSkipNextTrack(){};
         MOVE_ONLY(EventSkipNextTrack)
-    
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
@@ -104,12 +98,10 @@ namespace CDPlayerSM
         virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventSkipNextTrack> EventSkipNextTrack_ptr;
-
     struct EventSkipPreviousTrack : public Event
     {
         EventSkipPreviousTrack(){};
         MOVE_ONLY(EventSkipPreviousTrack)
-    
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
@@ -117,12 +109,10 @@ namespace CDPlayerSM
         virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventSkipPreviousTrack> EventSkipPreviousTrack_ptr;
-
     struct EventStop : public Event
     {
         EventStop(){};
         MOVE_ONLY(EventStop)
-    
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
@@ -130,12 +120,10 @@ namespace CDPlayerSM
         virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventStop> EventStop_ptr;
-
     struct EventAfter10Minutes : public Event
     {
         EventAfter10Minutes(){};
         MOVE_ONLY(EventAfter10Minutes)
-    
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__
@@ -143,7 +131,6 @@ namespace CDPlayerSM
         virtual void Dispatch(void* sm) override;
     };
     typedef std::unique_ptr<EventAfter10Minutes> EventAfter10Minutes_ptr;
-
     /// @}
 
     /**
@@ -205,7 +192,6 @@ namespace CDPlayerSM
             printf("ICDPlayerController : State Enter >> StateStop ...\r\n");
 #endif
         }
-
         virtual void StateStop_on_exit()
         {
             /// {{{USER_StateStop_on_exit}}}
@@ -222,7 +208,6 @@ namespace CDPlayerSM
             printf("ICDPlayerController : State Enter >> StateOpen ...\r\n");
 #endif
         }
-
         virtual void StateOpen_on_exit()
         {
             /// {{{USER_StateOpen_on_exit}}}
@@ -239,7 +224,6 @@ namespace CDPlayerSM
             printf("ICDPlayerController : State Enter >> StatePlay ...\r\n");
 #endif
         }
-
         virtual void StatePlay_on_exit()
         {
             /// {{{USER_StatePlay_on_exit}}}
@@ -256,7 +240,6 @@ namespace CDPlayerSM
             printf("ICDPlayerController : State Enter >> StatePause ...\r\n");
 #endif
         }
-
         virtual void StatePause_on_exit()
         {
             /// {{{USER_StatePause_on_exit}}}

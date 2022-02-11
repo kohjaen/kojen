@@ -83,60 +83,69 @@ or
 <<<TTT_LITE_SML_BEGIN>>>
 <<<TTT_LITE_SML_END>>>
 '''
-__TAG_AUTHOR__                  = '<<<AUTHOR>>>'
-__TAG_GROUP__                   = '<<<GROUP>>>'
-__TAG_BRIEF__                   = '<<<BRIEF>>>'
-__TAG_NAMESPACE__               = '<<<NAMESPACE>>>'
-__TAG_SM_NAME__                 = '<<<STATEMACHINENAME>>>'       # As given
-__TAG_SM_NAME_SMALL_CAMEL__     = '<<<stateMachineName>>>'       # camelCaps
-__TAG_SM_NAME_UPPER__           = '<<<STATEMACHINENAMEUPPER>>>'  # ALL UPPER
-__TAG_CLASS_NAME__              = '<<<CLASSNAME>>>'
-__TAG_PyIFGen_NAME__            = '<<<PYIFGENNAME>>>'
+__TAG_AUTHOR__                      = '<<<AUTHOR>>>'
+__TAG_GROUP__                       = '<<<GROUP>>>'
+__TAG_BRIEF__                       = '<<<BRIEF>>>'
+__TAG_NAMESPACE__                   = '<<<NAMESPACE>>>'
+__TAG_SM_NAME__                     = '<<<STATEMACHINENAME>>>'       # As given
+__TAG_SM_NAME_SMALL_CAMEL__         = '<<<stateMachineName>>>'       # camelCaps
+__TAG_SM_NAME_UPPER__               = '<<<STATEMACHINENAMEUPPER>>>'  # ALL UPPER
+__TAG_CLASS_NAME__                  = '<<<CLASSNAME>>>'
+__TAG_PyIFGen_NAME__                = '<<<PYIFGENNAME>>>'
 
-__TAG_PS_BEGIN__                = "<<<PER_STATE_BEGIN>>>"
-__TAG_PS_END__                  = "<<<PER_STATE_END>>>"
+__TAG_PS_BEGIN__                    = "<<<PER_STATE_BEGIN>>>"
+__TAG_PS_END__                      = "<<<PER_STATE_END>>>"
 
-__TAG_PE_BEGIN__                = "<<<PER_EVENT_BEGIN>>>"
-__TAG_PE_END__                  = "<<<PER_EVENT_END>>>"
+__TAG_PST_BEGIN__                   = "<<<PER_STATETRANSITION_BEGIN>>>"
+__TAG_PST_END__                     = "<<<PER_STATETRANSITION_END>>>"
+__TAG_PET_BEGIN__                   = "<<<PER_EVENTTRANSITION_BEGIN>>>"
+__TAG_PET_END__                     = "<<<PER_EVENTTRANSITION_END>>>"
+__TAG_PGT_BEGIN__                   = "<<<PER_GUARDTRANSITION_BEGIN>>>"
+__TAG_PGT_END__                     = "<<<PER_GUARDTRANSITION_END>>>"
 
-__TAG_PA_BEGIN__                = "<<<PER_ACTION_BEGIN>>>"
-__TAG_PA_END__                  = "<<<PER_ACTION_END>>>"
+__TAG_PE_BEGIN__                    = "<<<PER_EVENT_BEGIN>>>"
+__TAG_PE_END__                      = "<<<PER_EVENT_END>>>"
 
-__TAG_PASIG_BEGIN__             = "<<<PER_ACTION_SIGNATURE_BEGIN>>>"
-__TAG_PASIG_END__               = "<<<PER_ACTION_SIGNATURE_END>>>"
+__TAG_PA_BEGIN__                    = "<<<PER_ACTION_BEGIN>>>"
+__TAG_PA_END__                      = "<<<PER_ACTION_END>>>"
 
-__TAG_PG_BEGIN__                = "<<<PER_GUARD_BEGIN>>>"
-__TAG_PG_END__                  = "<<<PER_GUARD_END>>>"
+__TAG_PASIG_BEGIN__                 = "<<<PER_ACTION_SIGNATURE_BEGIN>>>"
+__TAG_PASIG_END__                   = "<<<PER_ACTION_SIGNATURE_END>>>"
 
-__TAG_EVENT_SIGNATURE__         = "<<<EVENTSIGNATURE>>>"
-__TAG_EVENT_MEMBERINST__        = "<<<EVENTMEMBERSINSTANTIATE>>>"
-__TAG_LITE_EVENT_MEMBERINST__   = "<<<EVENTMEMBERSLITEINSTANTIATE>>>"
-__TAG_EVENT_MEMBERDECL__        = "<<<EVENTMEMBERSDECLARE>>>"
+__TAG_PG_BEGIN__                    = "<<<PER_GUARD_BEGIN>>>"
+__TAG_PG_END__                      = "<<<PER_GUARD_END>>>"
 
-__TAG_STATENAME__               = '<<<STATENAME>>>'    # As given
-__TAG_STATENAME_SMALL_CAMEL__   = '<<<stateName>>>'    # camelCaps
-__TAG_EVENTNAME__               = '<<<EVENTNAME>>>'    # As given
-__TAG_EVENTNAME_SMALL_CAMEL__   = '<<<eventName>>>'    # camelCaps
-__TAG_ACTIONNAME__              = '<<<ACTIONNAME>>>'   # As given
-__TAG_ACTIONNAME_SMALL_CAMEL__  = '<<<actionName>>>'   # camelCaps
-__TAG_GUARDNAME__               = '<<<GUARDNAME>>>'    # As given
-__TAG_GUARDNAME_SMALL_CAMEL__   = '<<<guardName>>>'    # camelCaps
+__TAG_EVENT_SIGNATURE__             = "<<<EVENTSIGNATURE>>>"
+__TAG_EVENT_MEMBERINST__            = "<<<EVENTMEMBERSINSTANTIATE>>>"
+__TAG_LITE_EVENT_MEMBERINST__       = "<<<EVENTMEMBERSLITEINSTANTIATE>>>"
+__TAG_EVENT_MEMBERDECL__            = "<<<EVENTMEMBERSDECLARE>>>"
 
-__TAG_ABC__                     = '<<<ALPH>>>'
-__TAG_123__                     = '<<<NUM>>>'
-__TAG_INIT_STATE__              = '<<<STATE_0>>>'
+__TAG_STATENAME__                   = '<<<STATENAME>>>'        # As given
+__TAG_STATENAME_SMALL_CAMEL__       = '<<<stateName>>>'        # camelCaps
+__TAG_NEXTSTATENAME__               = '<<<NEXTSTATENAME>>>'    # As given
+__TAG_NEXTSTATENAME_SMALL_CAMEL__   = '<<<nextStateName>>>'    # camelCaps
+__TAG_EVENTNAME__                   = '<<<EVENTNAME>>>'        # As given
+__TAG_EVENTNAME_SMALL_CAMEL__       = '<<<eventName>>>'        # camelCaps
+__TAG_ACTIONNAME__                  = '<<<ACTIONNAME>>>'       # As given
+__TAG_ACTIONNAME_SMALL_CAMEL__      = '<<<actionName>>>'       # camelCaps
+__TAG_GUARDNAME__                   = '<<<GUARDNAME>>>'        # As given
+__TAG_GUARDNAME_SMALL_CAMEL__       = '<<<guardName>>>'        # camelCaps
 
-__TAG_TTT_BEGIN__               = '<<<TTT_BEGIN>>>'
-__TAG_TTT_END___                = '<<<TTT_END>>>'
+__TAG_ABC__                         = '<<<ALPH>>>'
+__TAG_123__                         = '<<<NUM>>>'
+__TAG_INIT_STATE__                  = '<<<STATE_0>>>'
 
-__TAG_TTT_LITE_BEGIN__          = '<<<TTT_LITE_BEGIN>>>'
-__TAG_TTT_LITE_END__            = '<<<TTT_LITE_END>>>'
+__TAG_TTT_BEGIN__                   = '<<<TTT_BEGIN>>>'
+__TAG_TTT_END___                    = '<<<TTT_END>>>'
 
-__TAG_TTT_SML_BEGIN__           = '<<<TTT_SML_BEGIN>>>'
-__TAG_TTT_SML_BEGIN_ENTRYEXIT__ = '<<<TTT_SML_BEGIN_ENTRYEXIT>>>'
-__TAG_TTT_SML_END__             = '<<<TTT_SML_END>>>'
+__TAG_TTT_LITE_BEGIN__              = '<<<TTT_LITE_BEGIN>>>'
+__TAG_TTT_LITE_END__                = '<<<TTT_LITE_END>>>'
 
-__TAG_DECLSPEC_DLL_EXPORT__       = "<<<DLL_EXPORT>>>"
+__TAG_TTT_SML_BEGIN__               = '<<<TTT_SML_BEGIN>>>'
+__TAG_TTT_SML_BEGIN_ENTRYEXIT__     = '<<<TTT_SML_BEGIN_ENTRYEXIT>>>'
+__TAG_TTT_SML_END__                 = '<<<TTT_SML_END>>>'
+
+__TAG_DECLSPEC_DLL_EXPORT__         = "<<<DLL_EXPORT>>>"
 
 # Python2 -> 3 shennanigans...try support both
 try:
@@ -171,6 +180,7 @@ class CStateMachineModel:
         self.events           = []
         self.guards           = []
         self.actionsignatures = OrderedDict()
+        self.transitionsperstate = OrderedDict()
 
 # Transition Table Model uses State Machine Model to generate all code required for a working state machine.
 class CTransitionTableModel(CStateMachineModel):
@@ -190,21 +200,38 @@ class CTransitionTableModel(CStateMachineModel):
         taction = OrderedDict()
         tevent  = OrderedDict()
         tguard  = OrderedDict()
+        self.maxlenSTART_STATE = 0
+        self.maxlenEVENT = 0
+        self.maxlenACTION = 0
+        self.maxlenGUARD = 0
 
+        length = 0
         # Filter
         for tableline in self.transition_table:
             if tableline[self.START_STATE] != "" and tableline[self.START_STATE].lower() != "none":
                 tstate[tableline[self.START_STATE]] = 0
+                length = len(tableline[self.START_STATE])
+                if self.maxlenSTART_STATE < length:
+                    self.maxlenSTART_STATE = length
             if tableline[self.NEXT_STATE] != "" and tableline[self.NEXT_STATE].lower() != "none":
                 tstate[tableline[self.NEXT_STATE]] = 0
             if tableline[self.EVENT] != "" and tableline[self.EVENT].lower() != "none":
                 tevent[tableline[self.EVENT]] = 0
+                length = len(tableline[self.EVENT])
+                if self.maxlenEVENT < length:
+                    self.maxlenEVENT = length
             if tableline[self.ACTION] != "" and tableline[self.ACTION].lower() != "none":
                 taction[tableline[self.ACTION]] = 0
+                length = len(tableline[self.ACTION])
+                if self.maxlenACTION < length:
+                    self.maxlenACTION = length
                 if not ((tableline[self.ACTION] + tableline[self.EVENT]) in self.actionsignatures):
                     self.actionsignatures[tableline[self.ACTION] + tableline[self.EVENT]] = (tableline[self.ACTION], tableline[self.EVENT])  #, tableline[self.START_STATE],tableline[self.NEXT_STATE]))
             if tableline[self.GUARD] != "" and tableline[self.GUARD].lower() != "none":
                 tguard[tableline[self.GUARD]] = 0
+                length = len(tableline[self.GUARD])
+                if self.maxlenGUARD < length:
+                    self.maxlenGUARD = length
         # Populate CStateMachineModel
         for s in tstate:
             self.states.append(s)
@@ -214,6 +241,37 @@ class CTransitionTableModel(CStateMachineModel):
             self.actions.append(a)
         for g in tguard:
             self.guards.append(g)
+        self.__set_transitions_per_state()
+
+    ''' Returns a dictionary of dictionaries of lists of dictionaries.
+    
+        {'StateName': {'EventName',[{'GuardName':'', 'ActionName':'val'},{}...]}}
+        First dictionary key is the 'state'.
+        Second dictionary is the 'event' name.
+        These contain a list of dictionaries, as multiple of the same events can
+        cause different transitions based on guards.
+    '''
+    def __set_transitions_per_state(self):
+        for tableline in self.transition_table:
+            transition = OrderedDict()
+            if tableline[self.ACTION] != "" and tableline[self.ACTION].lower() != "none":
+                transition[__TAG_ACTIONNAME__] = tableline[self.ACTION]
+                transition[__TAG_ACTIONNAME_SMALL_CAMEL__] = camel_case_small(tableline[self.ACTION])
+            if tableline[self.GUARD] != "" and tableline[self.GUARD].lower() != "none":
+                transition[__TAG_GUARDNAME__] = tableline[self.GUARD]
+                transition[__TAG_GUARDNAME_SMALL_CAMEL__] = camel_case_small(tableline[self.GUARD])
+            if tableline[self.NEXT_STATE] != "" and tableline[self.NEXT_STATE].lower() != "none":
+                transition[__TAG_NEXTSTATENAME__] = tableline[self.NEXT_STATE]
+                transition[__TAG_NEXTSTATENAME_SMALL_CAMEL__] = camel_case_small(tableline[self.NEXT_STATE])
+
+            if tableline[self.START_STATE] != "" and tableline[self.START_STATE].lower() != "none":
+                if not tableline[self.START_STATE] in self.transitionsperstate:
+                    self.transitionsperstate[tableline[self.START_STATE]] = OrderedDict()
+
+            if tableline[self.EVENT] != "" and tableline[self.EVENT].lower() != "none":
+                if not tableline[self.EVENT] in self.transitionsperstate[tableline[self.START_STATE]]:
+                    self.transitionsperstate[tableline[self.START_STATE]][tableline[self.EVENT]] = []
+                self.transitionsperstate[tableline[self.START_STATE]][tableline[self.EVENT]].append(transition)
 
     def __getfirststate__(self):
         if not self.transition_table:
@@ -275,7 +333,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 for g in guts:
                     result = result + (whitespace_cnt*'    ' if cnt > 0 else '') + g + '\n'
                     cnt = cnt + 1
-                return result
+                return result.rsplit('\n', 1)[0]
         return ""
 
     def __declare_event_struct_members(self, name, whitespace_cnt):
@@ -290,9 +348,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 for g in guts:
                     result = result + ((whitespace_cnt+1)*'    ' if cnt > 0 else '    ') + g + '\n'
                     cnt = cnt + 1
-                # remove last '\n'
-                result = result[:-1]
-                return result
+                return result.rsplit('\n', 1)[0]
         return ""
 
     def hasTag(self, line, tag):
@@ -338,6 +394,8 @@ class CStateMachineGenerator(CBASEGenerator):
                 else:
                     newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
                 newline = newline.replace(__TAG_EVENT_MEMBERDECL__, self.__declare_event_struct_members(name, tabcnt))
+                if newline == '\n' or newline == '' or newline == '\r\n' or newline.replace(' ','') == "" or newline.replace(' ','').replace('\n','').replace('\r','') == "":
+                    continue
                 puthere.append(newline)
             cnt = cnt + 1
             __getnextalphabet__()
@@ -361,6 +419,122 @@ class CStateMachineGenerator(CBASEGenerator):
                             .replace(__TAG_123__, str(cnt)))
             cnt = cnt + 1
             __getnextalphabet__()
+
+    def __innerexpand_msm__(self, smmodel, puthere):
+        len_tt = len(smmodel.transition_table)
+        tt_out = "        // " + len("msmf::Row < ") * ' ' + even_space("Start") + even_space("Event") + even_space("Next") + even_space("Action") + even_space("Guard") + '\n'
+        for i, ttline in enumerate(smmodel.transition_table):
+            tt_out += '        msmf::Row < '
+            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + ','
+            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT])) + ','
+            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.NEXT_STATE])) + ','
+            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.ACTION])) + ','
+            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.GUARD])) + '>    '
+            if i != len_tt - 1:
+                tt_out += ","
+            tt_out += "    // " + str(i) + '\n'
+            puthere.append(tt_out)
+            tt_out = ""
+
+    def __innerexpand_msmlite__(self, smmodel, puthere):
+        tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
+        startStateHasEntryExit = {}
+        for i, ttline in enumerate(smmodel.transition_table):
+            if i == 0:  # initial state
+                tt_out += "                 *"
+            else:
+                tt_out += "                , "
+            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + '+'
+            tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + ">") + ' '
+            tt_out += even_space('[' + self.__transitiontableLITE_guard_replace_NONE__('__' + ttline[smmodel.GUARD]) + ']') + ' / '
+            tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__('__' + ttline[smmodel.ACTION]))
+            if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
+                tt_out += ' = ' + even_space(self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]))
+            tt_out += '\n'
+            puthere.append(tt_out)
+            tt_out = ""
+            # State entry/exit, once only
+            if not (ttline[smmodel.START_STATE] in startStateHasEntryExit):
+                startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
+                tt_out += "                , " + ttline[smmodel.START_STATE] + " + msm::on_entry / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
+                tt_out += "                , " + ttline[smmodel.START_STATE] + " + msm::on_exit / __" + ttline[smmodel.START_STATE] + 'OnExit'
+                tt_out += '\n'
+                puthere.append(tt_out)
+                tt_out = ""
+
+    def __innerexpand_sml__(self, smmodel, sml_entry_exit, puthere):
+        tt_out = "                // " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
+        startStateHasEntryExit = {}
+        for i, ttline in enumerate(smmodel.transition_table):
+            if i == 0:  # initial state
+                tt_out += "                 *"
+            else:
+                tt_out += "                , "
+            tt_out += even_space('state<' + self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE]) + '>', smmodel.maxlenSTART_STATE + 9) + '+'
+            tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + '>', smmodel.maxlenEVENT + 9) + ' '
+            tt_out += even_space('[' + self.__transitiontableLITE_guard_replace_NONE__(camel_case_small(ttline[smmodel.GUARD])) + ']', smmodel.maxlenGUARD + 4) + ' / '
+            tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__(camel_case_small(ttline[smmodel.ACTION])), smmodel.maxlenACTION + 2)
+            if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
+                tt_out += ' = ' + even_space('state<' + self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]) + '>', 0)
+            tt_out += '\n'
+            puthere.append(tt_out)
+            tt_out = ""
+            # State entry/exit, once only
+            if not (ttline[smmodel.START_STATE] in startStateHasEntryExit) and sml_entry_exit:
+                startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
+                tt_out += "                , state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
+                tt_out += "                , state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
+                tt_out += '\n'
+                puthere.append(tt_out)
+                tt_out = ""
+
+    def __innerexpand_transitionsperstate__(self, transitionperstate, lines2x, puthere):
+        for state, dict in transitionperstate.items():
+            ex_transition = False
+            snipped_to_expand = []
+            for line in lines2x:
+                begin = line.find(__TAG_PET_BEGIN__) > -1
+                ex_transition = begin  or ex_transition
+
+                if ex_transition and line.find(__TAG_PET_END__) > -1:
+                    # ----
+                    # Should now have all the Event repeats.
+                    for ev, transitionList in dict.items():
+                        # guard/action/next state repeats
+                        self.__innerexpand_transitionsperguard(ev, transitionList, snipped_to_expand, puthere)
+                    # ----
+                    ex_transition = False
+
+                if ex_transition:
+                    if not begin:
+                        snipped_to_expand.append(line)
+                else:
+                    if line.find(__TAG_PET_END__) == -1:
+                        puthere.append(line.replace(__TAG_STATENAME__, state).replace(__TAG_STATENAME_SMALL_CAMEL__, state))
+
+    def __innerexpand_transitionsperguard(self, eventName, transitionList,lines2x, puthere):
+        ex_transition = False
+        snipped_to_expand = []
+        for line in lines2x:
+            begin = line.find(__TAG_PGT_BEGIN__) > -1
+            ex_transition = begin or ex_transition
+            if ex_transition and line.find(__TAG_PGT_END__) > -1:
+                # Should now have all the guard/action/next repeats.
+                #----
+                for transitionDict in transitionList:
+                    for l in snipped_to_expand:
+                        for k, v in transitionDict.items():
+                            l = l.replace(k, v).replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
+                        if (l.find(__TAG_GUARDNAME__) == -1):  # If there is no guard, no hanging 'if'. Just remove it.
+                            puthere.append(l)
+                #----
+                ex_transition = False
+            if ex_transition:
+                if not begin:
+                    snipped_to_expand.append(line)
+            else:
+                if line.find(__TAG_PGT_END__) == -1:
+                    puthere.append(line.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName)))
 
     def __transitiontable_replace_NONE__(self, val):
         if val == "" or val.lower() == 'none':
@@ -391,38 +565,42 @@ class CStateMachineGenerator(CBASEGenerator):
     def __expand_secondfiltering__(self, smmodel, cmmodel):
         for file in cmmodel.filenames_to_lines:
 
-            ex_state     = False
-            ex_event     = False
-            ex_action    = False
-            ex_actionsig = False
-            ex_guard     = False
-            ex_tt        = False
-            ex_tt_lite   = False
+            ex_state       = False
+            ex_event       = False
+            ex_action      = False
+            ex_actionsig   = False
+            ex_transition  = False
+            ex_guard       = False
+            ex_tt          = False
+            ex_tt_lite     = False
             ex_tt_lite_sml = False
             sml_entry_exit = False
 
             snipped_to_expand = []
             alllinesexpanded = []
             for line in cmmodel.filenames_to_lines[file]:
-                begin		= line.find(__TAG_PS_BEGIN__) > -1 or \
-                                line.find(__TAG_PE_BEGIN__) > -1 or \
-                                line.find(__TAG_PA_BEGIN__) > -1 or \
-                                line.find(__TAG_PASIG_BEGIN__) > -1 or \
-                                line.find(__TAG_PG_BEGIN__) > -1 or \
-                                line.find(__TAG_TTT_BEGIN__) > -1 or \
-                                line.find(__TAG_TTT_LITE_BEGIN__) > -1 or \
-                                line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1
+                begin          = line.find(__TAG_PS_BEGIN__) > -1 or \
+                                 line.find(__TAG_PE_BEGIN__) > -1 or \
+                                 line.find(__TAG_PA_BEGIN__) > -1 or \
+                                 line.find(__TAG_PASIG_BEGIN__) > -1 or \
+                                 line.find(__TAG_PST_BEGIN__) > -1 or \
+                                 line.find(__TAG_PG_BEGIN__) > -1 or \
+                                 line.find(__TAG_TTT_BEGIN__) > -1 or \
+                                 line.find(__TAG_TTT_LITE_BEGIN__) > -1 or \
+                                 line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1
 
-                ex_state     = line.find(__TAG_PS_BEGIN__) > -1 or ex_state
-                ex_event     = line.find(__TAG_PE_BEGIN__) > -1 or ex_event
-                ex_action    = line.find(__TAG_PA_BEGIN__) > -1 or ex_action
-                ex_actionsig = line.find(__TAG_PASIG_BEGIN__) > -1 or ex_actionsig
-                ex_guard     = line.find(__TAG_PG_BEGIN__) > -1 or ex_guard
-                ex_tt        = line.find(__TAG_TTT_BEGIN__) > -1 or ex_tt
-                ex_tt_lite   = line.find(__TAG_TTT_LITE_BEGIN__) > -1 or ex_tt_lite
+                ex_state       = line.find(__TAG_PS_BEGIN__) > -1 or ex_state
+                ex_event       = line.find(__TAG_PE_BEGIN__) > -1 or ex_event
+                ex_action      = line.find(__TAG_PA_BEGIN__) > -1 or ex_action
+                ex_actionsig   = line.find(__TAG_PASIG_BEGIN__) > -1 or ex_actionsig
+                ex_transition  = line.find(__TAG_PST_BEGIN__) > -1 or ex_transition
+                ex_guard       = line.find(__TAG_PG_BEGIN__) > -1 or ex_guard
+                ex_tt          = line.find(__TAG_TTT_BEGIN__) > -1 or ex_tt
+                ex_tt_lite     = line.find(__TAG_TTT_LITE_BEGIN__) > -1 or ex_tt_lite
                 ex_tt_lite_sml = line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1 or ex_tt_lite_sml
                 sml_entry_exit = line.find(__TAG_TTT_SML_BEGIN_ENTRYEXIT__) > -1 or sml_entry_exit
-                if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_guard and not ex_tt and not ex_tt_lite and not ex_tt_lite_sml:
+
+                if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_transition and not ex_guard and not ex_tt and not ex_tt_lite and not ex_tt_lite_sml:
                     alllinesexpanded.append(line.replace(__TAG_INIT_STATE__, smmodel.__getfirststate__()))
 
                 if ex_state and line.find(__TAG_PS_END__) > -1:
@@ -441,82 +619,25 @@ class CStateMachineGenerator(CBASEGenerator):
                     self.__innerexpand_actionsignatures__(smmodel.actionsignatures, snipped_to_expand, alllinesexpanded)
                     snipped_to_expand = []
                     ex_actionsig = False
+                if ex_transition and line.find(__TAG_PST_END__) > -1:
+                    self.__innerexpand_transitionsperstate__(smmodel.transitionsperstate, snipped_to_expand, alllinesexpanded)
+                    snipped_to_expand = []
+                    ex_transition = False
                 if ex_guard and line.find(__TAG_PG_END__) > -1:
                     self.__innerexpand__secondfiltering__(smmodel.guards, snipped_to_expand, alllinesexpanded)
                     snipped_to_expand = []
                     ex_guard = False
                 if ex_tt and line.find(__TAG_TTT_END___) > -1:
-                    len_tt = len(smmodel.transition_table)
-                    tt_out = "        // " + len("msmf::Row < ") * ' ' + even_space("Start") + even_space("Event") + even_space("Next") + even_space("Action") + even_space("Guard") + '\n'
-                    for i, ttline in enumerate(smmodel.transition_table):
-                        tt_out += '        msmf::Row < '
-                        tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + ','
-                        tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]      )) + ','
-                        tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.NEXT_STATE] )) + ','
-                        tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.ACTION]     )) + ','
-                        tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.GUARD]      )) + '>    '
-                        if i != len_tt-1:
-                            tt_out += ","
-                        tt_out += "    // " + str(i) + '\n'
-                        alllinesexpanded.append(tt_out)
-                        tt_out = ""
+                    self.__innerexpand_msm__(smmodel, alllinesexpanded)
                     ex_tt = False
-
                 if ex_tt_lite and line.find(__TAG_TTT_LITE_END__) > -1:
-                    tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
-                    startStateHasEntryExit = {}
-                    for i, ttline in enumerate(smmodel.transition_table):
-                        if i == 0:  # initial state
-                            tt_out += "                 *"
-                        else:
-                            tt_out += "                , "
-                        tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + '+'
-                        tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + ">") + ' '
-                        tt_out += even_space('['+self.__transitiontableLITE_guard_replace_NONE__('__'+ttline[smmodel.GUARD])+']') + ' / '
-                        tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__('__'+ttline[smmodel.ACTION]))
-                        if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
-                            tt_out += ' = ' + even_space(self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]))
-                        tt_out += '\n'
-                        alllinesexpanded.append(tt_out)
-                        tt_out = ""
-                        # State entry/exit, once only
-                        if not (ttline[smmodel.START_STATE] in startStateHasEntryExit):
-                            startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-                            tt_out += "                , "+ttline[smmodel.START_STATE]+" + msm::on_entry / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
-                            tt_out += "                , "+ttline[smmodel.START_STATE]+" + msm::on_exit / __" + ttline[smmodel.START_STATE] + 'OnExit'
-                            tt_out += '\n'
-                            alllinesexpanded.append(tt_out)
-                            tt_out = ""
+                    self.__innerexpand_msmlite__(smmodel, alllinesexpanded)
                     ex_tt_lite = False
-
                 if ex_tt_lite_sml and line.find(__TAG_TTT_SML_END__) > -1:
-                    tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
-                    startStateHasEntryExit = {}
-                    for i, ttline in enumerate(smmodel.transition_table):
-                        if i == 0:  # initial state
-                            tt_out += "                 *"
-                        else:
-                            tt_out += "                , "
-                        tt_out += even_space('state<' + self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE]) + '>') + '+'
-                        tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + '>') + ' '
-                        tt_out += even_space('['+self.__transitiontableLITE_guard_replace_NONE__( camel_case_small(ttline[smmodel.GUARD]))+']') + ' / '
-                        tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__( camel_case_small(ttline[smmodel.ACTION])) )
-                        if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
-                            tt_out += ' = ' + even_space('state<' + self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]) + '>')
-                        tt_out += '\n'
-                        alllinesexpanded.append(tt_out)
-                        tt_out = ""
-                        # State entry/exit, once only
-                        if not (ttline[smmodel.START_STATE] in startStateHasEntryExit) and sml_entry_exit:
-                            startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-                            tt_out += "                , state<"+ttline[smmodel.START_STATE]+"> + boost::sml::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
-                            tt_out += "                , state<"+ttline[smmodel.START_STATE]+"> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
-                            tt_out += '\n'
-                            alllinesexpanded.append(tt_out)
-                            tt_out = ""
+                    self.__innerexpand_sml__(smmodel, sml_entry_exit, alllinesexpanded)
                     ex_tt_lite_sml = False
 
-                if (ex_state or ex_event or ex_action or ex_actionsig or ex_guard or ex_tt or ex_tt_lite or ex_tt_lite_sml) and not begin:
+                if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard or ex_tt or ex_tt_lite or ex_tt_lite_sml) and not begin:
                     snipped_to_expand.append(line)
 
             cmmodel.filenames_to_lines[file] = alllinesexpanded
