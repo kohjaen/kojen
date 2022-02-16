@@ -70,6 +70,7 @@ namespace <<<NAMESPACE>>>
             }
         };
         <<<PER_STATE_END>>>
+        /// @}
         /// @{ Actions
         <<<PER_ACTION_BEGIN>>>
         struct <<<ACTIONNAME>>>

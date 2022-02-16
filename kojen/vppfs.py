@@ -46,10 +46,10 @@ class VPPSQLiteParser:
         information from our favourite UML tool SQLite
         project file.
     '''
-    con = None
 
     def __init__(self, pathtoDB):
         self.path = pathtoDB
+        self.con = None
 
     def SQLVersion(self):
         self.con = lite.connect(self.path)
@@ -152,21 +152,20 @@ class VPPDiagrams:
         and uuids from our favourite UML tool SQLite
         project file. It uses VPPSQLiteParser.
     '''
-    vpp = None
-    # identifiers for the tables used to extract UML diagram info
-    tableid = u"DIAGRAM"
-    tableid_DIAGRAM_ELEMENT = u"DIAGRAM_ELEMENT"
-    # metadata indexes for DIAGRAM table data
-    index_ID = -1
-    index_DIAGRAM_TYPE = -1
-    index_NAME = -1
-    # Diagram types {'ID':'Name' , ...}
-    state_diagrams = {}
-    class_diagrams = {}
 
     def __init__(self, pathtoDB):
         self.has_diagrams = False
         self.tables = None
+        # identifiers for the tables used to extract UML diagram info
+        self.tableid = u"DIAGRAM"
+        self.tableid_DIAGRAM_ELEMENT = u"DIAGRAM_ELEMENT"
+        # metadata indexes for DIAGRAM table data
+        self.index_ID = -1
+        self.index_DIAGRAM_TYPE = -1
+        self.index_NAME = -1
+        # Diagram types {'ID':'Name' , ...}
+        self.state_diagrams = {}
+        self.class_diagrams = {}
         self.vpp = VPPSQLiteParser(pathtoDB)
         self.LoadAndTest()
 
@@ -267,10 +266,11 @@ class VPPDiagramElement:
         Further information on this model element can be
         extracted with this.
     '''
-    ID = ""
-    SHAPE_TYPE = ""
-    MODEL_ELEMENT_ID = ""
-    BLOB_STRING = ""
+    def __init__(self):
+        self.ID = ""
+        self.SHAPE_TYPE = ""
+        self.MODEL_ELEMENT_ID = ""
+        self.BLOB_STRING = ""
 
 
 #########################################################
@@ -281,19 +281,18 @@ class VPPDiagramElements:
         for all diagrams in our favourite UML tool SQLite
         project file. It uses VPPSQLiteParser.
     '''
-    vpp = None
-    # identifiers for the tables used to extract UML data
-    tableid = u"DIAGRAM_ELEMENT"
-    # metadata indexes for DIAGRAM_ELEMENT table data
-    index_ID = -1
-    index_SHAPE_TYPE = -1
-    index_DIAGRAM_ID = -1
-    index_MODEL_ELEMENT_ID = -1
-    index_DEFINITION = -1
 
     def __init__(self, pathtoDB):
         self.has_diagram_elements = False
         self.tabledata = None
+        # identifiers for the tables used to extract UML data
+        self.tableid = u"DIAGRAM_ELEMENT"
+        # metadata indexes for DIAGRAM_ELEMENT table data
+        self.index_ID = -1
+        self.index_SHAPE_TYPE = -1
+        self.index_DIAGRAM_ID = -1
+        self.index_MODEL_ELEMENT_ID = -1
+        self.index_DEFINITION = -1
         self.vpp = VPPSQLiteParser(pathtoDB)
         self.LoadAndTest()
 
@@ -390,30 +389,30 @@ class VPPModelElement:
         Further information of this model element is extracted with this ID
         from the VPPModelElements Table.
     '''
-    ID = ""
-    MODEL_TYPE = ""
-    PARENT_ID = ""
-    NAME = ""
-    BLOB_STRING = ""
+
+    def __init__(self):
+        self.ID = ""
+        self.MODEL_TYPE = ""
+        self.PARENT_ID = ""
+        self.NAME = ""
+        self.BLOB_STRING = ""
 
 
 class VPPModelElements:
     ''' This class extracts all model elements in our favourite UML tool SQLite
         project file. It uses VPPSQLiteParser.
     '''
-    vpp = None
-    # identifiers for the tables used to extract UML data
-    tableid = u"MODEL_ELEMENT"
-    # metadata indexes for DIAGRAM_ELEMENT table data
-    index_ID = -1
-    index_MODEL_TYPE = -1
-    index_PARENT_ID = -1
-    index_NAME = -1
-    index_DEFINITION = -1
-
     def __init__(self, pathtoDB):
         self.has_model_elements = False
         self.tabledata = None
+        # identifiers for the tables used to extract UML data
+        self.tableid = u"MODEL_ELEMENT"
+        # metadata indexes for DIAGRAM_ELEMENT table data
+        self.index_ID = -1
+        self.index_MODEL_TYPE = -1
+        self.index_PARENT_ID = -1
+        self.index_NAME = -1
+        self.index_DEFINITION = -1
         self.vpp = VPPSQLiteParser(pathtoDB)
         self.LoadAndTest()
 
@@ -722,17 +721,17 @@ class StateDiagram:
         This class will use the diagram elements to lookup all the necessary model elements from the model elements table
         and create a transition table from that.
     '''
-    states = {}
-    transitions = {}
-    guards = {}
-    actions = {}
-    initialpseudostate = None
 
     def __init__(self, diagramName, diagramID, diagramElements, table_vppmodelelements):
         self.name = diagramName
         self.id = diagramID
         self.elements = diagramElements
         self.table_vppmodelelements = table_vppmodelelements
+        self.states = {}
+        self.transitions = {}
+        self.guards = {}
+        self.actions = {}
+        self.initialpseudostate = None
         self.LoadAndTest()
 
     ''' Will load the table and hope to catch any changes (for future proofing) if VP decide to change their database. '''

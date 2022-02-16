@@ -358,9 +358,13 @@ class CStateMachineGenerator(CBASEGenerator):
         return a.find("::") > 0
 
     def extractMemberNameAndTag(self, a):
-        member = a[a.find("::"):a.find(">>>")].replace("::", "")
+        member = a[a.find("::", a.find("<<<")):a.find(">>>")].replace("::","")
         tag = a.strip()
         return [tag, member]
+
+    def removeTag(self, a):
+        member = a[a.find("::", a.find("<<<")):a.find(">>>")]
+        return a.replace(member, "")
 
     def __innerexpand__secondfiltering__(self, names2x, lines2x, puthere):
         global alpha
@@ -524,8 +528,18 @@ class CStateMachineGenerator(CBASEGenerator):
                 for transitionDict in transitionList:
                     for l in snipped_to_expand:
                         for k, v in transitionDict.items():
-                            l = l.replace(k, v).replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
-                        if (l.find(__TAG_GUARDNAME__) == -1):  # If there is no guard, no hanging 'if'. Just remove it.
+                            # for those that are present but who have alternate text when not present.
+                            if self.hasTag(l, k):
+                                l = self.removeTag(l)
+                            l = l.replace(k, v)
+                        l = l.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
+                        # If there is no guard, or next state (transitions are not mandated to have either), just remove it (or replace it with the alternative text). Leave no hanging code.
+                        if self.hasTag(l,__TAG_GUARDNAME__)  or self.hasTag(l, __TAG_NEXTSTATENAME__):
+                            line_member = self.extractMemberNameAndTag(l)
+                            if line_member[1]: # alternative text is embedded in the tag.
+                                whitespace = len(l) - len(l.lstrip())
+                                puthere.append(whitespace*' ' + line_member[1] + '\n')
+                        elif l.find(__TAG_GUARDNAME__) == -1 and l.find(__TAG_NEXTSTATENAME__) == -1 :
                             puthere.append(l)
                 #----
                 ex_transition = False

@@ -30,8 +30,6 @@ from collections import OrderedDict
 
 
 class MsgIDType:
-    m_msg_id = ""
-    m_msg_type = ""
 
     def __init__(self, msg_id, msg_type):
         self.m_msg_id = msg_id
@@ -349,14 +347,13 @@ class Interface(OrderedDict, Query):
     - a message type id.
     """
 
-    enums = OrderedDict()
-    hashdefines = OrderedDict()
-
     def __init__(self, interfaceName, interfacePreamble=0xDEAD):
         super(Interface, self).__init__()
         self[MessageHeader.Name] = MessageHeader(interfacePreamble, -1)
         self.Name = interfaceName
         self.InterfacePreamble = interfacePreamble
+        self.enums = OrderedDict()
+        self.hashdefines = OrderedDict()
 
     def AddStruct(self, struct):
         self[struct.Name] = struct
