@@ -39,6 +39,23 @@ def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, s
     smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
 
+def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True):
+    if not templatedir.strip():
+        templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_cs_winlinmac")
+
+    if not os.path.isdir(templatedir):
+        print("Error : dir '" + templatedir + "' does not exist. Aborting.")
+        return
+
+    language = LanguageCsharp.LanguageCsharp()
+    smgenerator = smgen.CStateMachineGenerator(templatedir, outputdir, eventsinterface, language, author, group, brief)
+    if not __internal:
+        smgenerator.vpp_filename = "Transition Table"
+    else:
+        smgenerator.vpp_filename = __internal
+    smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
+
+
 def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __copy_other_files=True):
     transition_table = vppfs.ExtractTransitionTable(vp_statemachinename, vp_project_path)
     StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc, author, group, brief, templatedir, os.path.basename(vp_project_path),__copy_other_files)
@@ -52,7 +69,7 @@ def UML(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", g
     language = LanguageCPP.LanguageCPP()
     umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
 
-def UML2(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", group="", brief="", namespace_to_folders=False, templatefiledir=""):
+def UML_CSHARP(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", group="", brief="", namespace_to_folders=False, templatefiledir=""):
     language = LanguageCsharp.LanguageCsharp()
     umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
 

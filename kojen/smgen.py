@@ -466,14 +466,14 @@ class CStateMachineGenerator(CBASEGenerator):
                 puthere.append(tt_out)
                 tt_out = ""
 
-    def __innerexpand_sml__(self, smmodel, sml_entry_exit, puthere):
-        tt_out = "                // " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
+    def __innerexpand_sml__(self, smmodel, whitespace, sml_entry_exit, puthere):
+        tt_out = whitespace + "// " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
         startStateHasEntryExit = {}
         for i, ttline in enumerate(smmodel.transition_table):
             if i == 0:  # initial state
-                tt_out += "                 *"
+                tt_out += whitespace + " *"
             else:
-                tt_out += "                , "
+                tt_out += whitespace + ", "
             tt_out += even_space('state<' + self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE]) + '>', smmodel.maxlenSTART_STATE + 9) + '+'
             tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + '>', smmodel.maxlenEVENT + 9) + ' '
             tt_out += even_space('[' + self.__transitiontableLITE_guard_replace_NONE__(camel_case_small(ttline[smmodel.GUARD])) + ']', smmodel.maxlenGUARD + 4) + ' / '
@@ -486,8 +486,8 @@ class CStateMachineGenerator(CBASEGenerator):
             # State entry/exit, once only
             if not (ttline[smmodel.START_STATE] in startStateHasEntryExit) and sml_entry_exit:
                 startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-                tt_out += "                , state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
-                tt_out += "                , state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
+                tt_out += whitespace + ", state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
+                tt_out += whitespace + ", state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
                 tt_out += '\n'
                 puthere.append(tt_out)
                 tt_out = ""
@@ -648,7 +648,8 @@ class CStateMachineGenerator(CBASEGenerator):
                     self.__innerexpand_msmlite__(smmodel, alllinesexpanded)
                     ex_tt_lite = False
                 if ex_tt_lite_sml and line.find(__TAG_TTT_SML_END__) > -1:
-                    self.__innerexpand_sml__(smmodel, sml_entry_exit, alllinesexpanded)
+                    whitespace = line[0:line.find("<<<")]
+                    self.__innerexpand_sml__(smmodel, whitespace, sml_entry_exit, alllinesexpanded)
                     ex_tt_lite_sml = False
 
                 if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard or ex_tt or ex_tt_lite or ex_tt_lite_sml) and not begin:
