@@ -543,12 +543,8 @@ class LanguageCsharp:
             isMessage = interface.IsMessageStruct(mem[0])
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                ptr = "*" if isArray else ""
-                ref = "&" if isStruct or isMessage else ""
-                if (mem[0] in interface) and not isArray:
-                    factoryparams.append(((self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref, mem[1]))
-                else:
-                    factoryparams.append((mem[0] + ptr + ref, mem[1]))
+                ref = "ref " if isStruct or isMessage or isArray else ""
+                factoryparams.append((ref + mem[0], mem[1]))
         return factoryparams
 
     '''USED
