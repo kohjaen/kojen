@@ -673,6 +673,10 @@ class CStateMachineGenerator(CBASEGenerator):
         cm = self.__loadtemplates_firstfiltering__(sm)
         self.__expand_secondfiltering__(sm, cm)
 
+        # user labels.
+        if self.events_interface != None:
+            self.__do_user_labels__(cm, self.events_interface.UserLabels())
+
         # Preserve user tags.
         self.__preserve_usertags_in_files__(cm)
         '''

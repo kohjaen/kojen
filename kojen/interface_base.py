@@ -354,6 +354,7 @@ class Interface(OrderedDict, Query):
         self.InterfacePreamble = interfacePreamble
         self.enums = OrderedDict()
         self.hashdefines = OrderedDict()
+        self.userlabels = OrderedDict()
 
     def AddStruct(self, struct):
         self[struct.Name] = struct
@@ -367,6 +368,9 @@ class Interface(OrderedDict, Query):
 
     def AddHashDefine(self, name, val):
         self.hashdefines[name] = val
+
+    def AddUserLabel(self, name, val):
+        self.userlabels[name] = val
 
     def All(self):
         result = self.ProtocolStructs()
@@ -415,6 +419,9 @@ class Interface(OrderedDict, Query):
         for k, v in self.hashdefines.items():
             result.append((k, v))
         return result
+
+    def UserLabels(self):
+        return self.userlabels
 
     def Decompose(self):
         result = []

@@ -221,6 +221,16 @@ class CBASEGenerator:
                     line = line.replace('\t',"    ") # Last filter! Convert tabs to 4 spaces...
                     writer.write(line)
 
+    def __do_user_labels__(self, codemodel, dict_key_vals):
+        for fn, lines in codemodel.filenames_to_lines.items():
+            new_lines = []
+            for line in lines:
+                for k, v in dict_key_vals.items():
+                    line = line.replace('<<<' + k + '>>>', str(v))
+                    new_lines.append(line)
+            # replace
+            codemodel.filenames_to_lines[fn] = new_lines
+
     '''Will use the base-class configured 'output directory' if no preserve directory is passed in. '''
     def __preserve_usertags_in_files__(self, codemodel, preserve_dir = ""):
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
