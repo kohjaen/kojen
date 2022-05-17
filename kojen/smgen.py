@@ -351,21 +351,6 @@ class CStateMachineGenerator(CBASEGenerator):
                 return result.rsplit('\n', 1)[0]
         return ""
 
-    def hasTag(self, line, tag):
-        return line.find(tag.replace("<<<", "").replace(">>>", "")) > 0
-
-    def hasMemberName(self, a):
-        return a.find("::") > 0
-
-    def extractMemberNameAndTag(self, a):
-        member = a[a.find("::", a.find("<<<")):a.find(">>>")].replace("::","")
-        tag = a.strip()
-        return [tag, member]
-
-    def removeTag(self, a):
-        member = a[a.find("::", a.find("<<<")):a.find(">>>")]
-        return a.replace(member, "")
-
     def __innerexpand__secondfiltering__(self, names2x, lines2x, puthere):
         global alpha
         __resetalphabet__()
@@ -386,14 +371,14 @@ class CStateMachineGenerator(CBASEGenerator):
                 tabcnt = newline.count('    ')
                 newline = newline.replace(__TAG_EVENT_SIGNATURE__, self.__get_event_signature__(name))
                 # __TAG_EVENT_MEMBERINST__ -> PTR
-                if self.hasTag(newline,__TAG_EVENT_MEMBERINST__) and self.hasMemberName(newline):
-                    line_member = self.extractMemberNameAndTag(newline)
+                if self.hasSpecificTag(newline,__TAG_EVENT_MEMBERINST__) and self.hasDefault(newline):
+                    line_member = self.extractDefaultAndTag(newline)
                     newline = newline.replace(line_member[0],self.__instantiate_event_struct_member(name, tabcnt, True, line_member[1]))
                 else:
                     newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, True))        # PTR
                 # __TAG_LITE_EVENT_MEMBERINST__ -> NO PTR
-                if self.hasTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and self.hasMemberName(newline):
-                    line_member = self.extractMemberNameAndTag(newline)
+                if self.hasSpecificTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and self.hasDefault(newline):
+                    line_member = self.extractDefaultAndTag(newline)
                     newline = newline.replace(line_member[0],self.__instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
                 else:
                     newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
@@ -505,7 +490,7 @@ class CStateMachineGenerator(CBASEGenerator):
                     # Should now have all the Event repeats.
                     for ev, transitionList in dict.items():
                         # guard/action/next state repeats
-                        self.__innerexpand_transitionsperguard(ev, transitionList, snipped_to_expand, puthere)
+                        self.__innerexpand_transitionsperguard(ev, state, transitionList, snipped_to_expand, puthere)
                     # ----
                     ex_transition = False
 
@@ -516,7 +501,7 @@ class CStateMachineGenerator(CBASEGenerator):
                     if line.find(__TAG_PET_END__) == -1:
                         puthere.append(line.replace(__TAG_STATENAME__, state).replace(__TAG_STATENAME_SMALL_CAMEL__, state))
 
-    def __innerexpand_transitionsperguard(self, eventName, transitionList,lines2x, puthere):
+    def __innerexpand_transitionsperguard(self, eventName, stateName, transitionList,lines2x, puthere):
         ex_transition = False
         snipped_to_expand = []
         for line in lines2x:
@@ -529,13 +514,15 @@ class CStateMachineGenerator(CBASEGenerator):
                     for l in snipped_to_expand:
                         for k, v in transitionDict.items():
                             # for those that are present but who have alternate text when not present.
-                            if self.hasTag(l, k):
-                                l = self.removeTag(l)
+                            if self.hasSpecificTag(l, k):
+                                l = self.removeDefault(l)
                             l = l.replace(k, v)
-                        l = l.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
+                        l = l.replace(__TAG_EVENTNAME__, eventName)
+                        l = l.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
+                        l = l.replace(__TAG_STATENAME__, stateName).replace(__TAG_STATENAME_SMALL_CAMEL__, stateName)
                         # If there is no guard, or next state (transitions are not mandated to have either), just remove it (or replace it with the alternative text). Leave no hanging code.
-                        if self.hasTag(l,__TAG_GUARDNAME__)  or self.hasTag(l, __TAG_NEXTSTATENAME__):
-                            line_member = self.extractMemberNameAndTag(l)
+                        if self.hasSpecificTag(l,__TAG_GUARDNAME__)  or self.hasSpecificTag(l, __TAG_NEXTSTATENAME__):
+                            line_member = self.extractDefaultAndTag(l)
                             if line_member[1]: # alternative text is embedded in the tag.
                                 whitespace = len(l) - len(l.lstrip())
                                 puthere.append(whitespace*' ' + line_member[1] + '\n')
@@ -673,12 +660,12 @@ class CStateMachineGenerator(CBASEGenerator):
         cm = self.__loadtemplates_firstfiltering__(sm)
         self.__expand_secondfiltering__(sm, cm)
 
-        # user labels.
+        # user tags.
         if self.events_interface != None:
-            self.__do_user_labels__(cm, self.events_interface.UserLabels())
+            self.__do_user_tags__(cm, self.events_interface.UserTags())
 
-        # Preserve user tags.
-        self.__preserve_usertags_in_files__(cm)
+        # Preserve user code.
+        self.__preserve_usercode_in_files__(cm)
         '''
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
         preservation = Preservative(self.output_gen_file_dir)
