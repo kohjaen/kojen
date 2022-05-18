@@ -27,7 +27,7 @@ __author__ = 'eugene'
 
 '''
 
-from kojen.interface_base import *
+from kojen.kojentypes import *
 
 def CreateInterface():
     sCustomStruct = Struct('sCustomStruct')

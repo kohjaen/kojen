@@ -100,8 +100,8 @@ class CCogGenerator(CBASEGenerator):
 
         self.cm = self.__loadtemplates_firstfiltering__(sm)
 
-        # Preserve user tags.
-        self.__preserve_usertags_in_files__(self.cm,preserve_dir)
+        # Preserve user code.
+        self.__preserve_usercode_in_files__(self.cm,preserve_dir)
 
         # Write output to file.
         self.__createoutput__(self.cm.filenames_to_lines)

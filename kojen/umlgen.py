@@ -304,8 +304,8 @@ class CUMLGenerator(CBASEGenerator):
 
 def GenerateUML(umlgenerator, classdiagram, dclspc=""):
     cm = umlgenerator.__loadtemplates_firstfiltering__(classdiagram,dclspc)
-    # Preserve user tags.
-    umlgenerator.__preserve_usertags_in_files__(cm)
+    # Preserve user code.
+    umlgenerator.__preserve_usercode_in_files__(cm)
     '''
     # Round-trip Code Preservation. Will load the code to p
     preservation = Preservative(umlgenerator.output_gen_file_dir)

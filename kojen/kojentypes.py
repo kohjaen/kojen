@@ -354,6 +354,7 @@ class Interface(OrderedDict, Query):
         self.InterfacePreamble = interfacePreamble
         self.enums = OrderedDict()
         self.hashdefines = OrderedDict()
+        self.usertags = OrderedDict()
 
     def AddStruct(self, struct):
         self[struct.Name] = struct
@@ -368,6 +369,9 @@ class Interface(OrderedDict, Query):
     def AddHashDefine(self, name, val):
         self.hashdefines[name] = val
 
+    def AddUserTag(self, name, val):
+        self.usertags[name] = val
+
     def All(self):
         result = self.ProtocolStructs()
         result.extend(self.Structs())
@@ -377,8 +381,6 @@ class Interface(OrderedDict, Query):
     def Messages(self):
         result = []
         for key in self:
-            # Depending on the python setup, this will change. Which is a pain, because suddenly something doesnt work
-            # if str(type(self[key])) == "<class 'tcp_gen.interface_base.Message'>" or str(type(self[key])) == "<class 'interface_base.Message'>":
             typeof = str(type(self[key]))
             if typeof.find('class') > -1 and typeof.find('Struct') == -1 and typeof.find('Message') > -1 and typeof.find('MessageHeader') == -1:
                 result.append(self[key])
@@ -387,8 +389,6 @@ class Interface(OrderedDict, Query):
     def Structs(self):
         result = []
         for key in self:
-            # Depending on the python setup, this will change. Which is a pain, because suddenly something doesnt work.
-            # if str(type(self[key])) == "<class 'tcp_gen.interface_base.Struct'>" or str(type(self[key])) == "<class 'interface_base.Struct'>":
             typeof = str(type(self[key]))
             if typeof.find('class') > -1 and typeof.find('Struct') > -1 and typeof.find('Message') == -1 and typeof.find('MessageHeader') == -1:
                 result.append(self[key])
@@ -397,8 +397,6 @@ class Interface(OrderedDict, Query):
     def ProtocolStructs(self):
         result = []
         for key in self:
-            # Depending on the python setup, this will change. Which is a pain, because suddenly something doesnt work.
-            # if str(type(self[key])) == "<class 'tcp_gen.interface_base.MessageHeader'>" or str(type(self[key])) == "<class 'interface_base.MessageHeader'>":
             typeof = str(type(self[key]))
             if typeof.find('class') > -1 and typeof.find('Struct') == -1 and typeof.find('MessageHeader') > -1:
                 result.append(self[key])
@@ -415,6 +413,9 @@ class Interface(OrderedDict, Query):
         for k, v in self.hashdefines.items():
             result.append((k, v))
         return result
+
+    def UserTags(self):
+        return self.usertags
 
     def Decompose(self):
         result = []

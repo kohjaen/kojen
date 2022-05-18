@@ -4,6 +4,9 @@ __author__ = 'eugene'
 
 from collections import OrderedDict
 import os, shutil
+import datetime
+import sys
+import time
 try:
 	from .preservative import *
 except (ModuleNotFoundError, ImportError) as e:
@@ -42,7 +45,9 @@ except (ModuleNotFoundError, ImportError) as e:
     
 '''
 
-# Code Model -> Just a bunch of lines, mapped to filenames.
+__TAG_DATETIME__           = '<<<DATETIME>>>'
+__TAG_PLATFORM__           = '<<<PLATFORM>>>'
+
 class CCodeModel:
     def __init__(self):
         self.filenames_to_lines = OrderedDict()
@@ -174,6 +179,8 @@ class CBASEGenerator:
         template_file_found = False
         result = CCodeModel()
         CWD = self.input_template_file_dir
+        dict_to_replace_lines[__TAG_DATETIME__] = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+        dict_to_replace_lines[__TAG_PLATFORM__] = sys.platform + ' python ' + sys.version
         for root, dirs, files in os.walk(CWD):
             for file in files:
                 if (file.lower().find(filter_files_containing_in_name.lower()) > -1 or not filter_files_containing_in_name.strip()) and not file.lower().find(".removed") > -1 :
@@ -221,8 +228,48 @@ class CBASEGenerator:
                     line = line.replace('\t',"    ") # Last filter! Convert tabs to 4 spaces...
                     writer.write(line)
 
+    def hasTag(self, line):
+        return line.find('<<<') > 0 and line.find('>>>') > 0
+
+    def hasSpecificTag(self, line, tag):
+        # allows for defaults
+        res = self.hasTag(line)
+        if res:
+            res = line.find(tag.replace("<<<", "").replace(">>>", "")) > 0
+        return res
+
+    def hasDefault(self, a):
+        return a.find("::") > 0
+
+    def extractDefaultAndTag(self, a):
+        default = a[a.find("::", a.find("<<<")):a.find(">>>")].replace("::","")
+        tag = a[a.find("<<<"):a.find(">>>")+len(">>>")]
+        return [tag, default]
+
+    def removeDefault(self, a):
+        default = a[a.find("::", a.find("<<<")):a.find(">>>")]
+        return a.replace(default, "")
+
+    def __do_user_tags__(self, codemodel, dict_key_vals):
+        for fn, lines in codemodel.filenames_to_lines.items():
+            new_lines = []
+            # this should be called last, so at this point any tags should be user defined.
+            for line in lines:
+                if self.hasTag(line):
+                    taganddefault    = self.extractDefaultAndTag(line)
+                    line             = self.removeDefault(line)
+                    taganddefault[0] = self.removeDefault(taganddefault[0])
+                    tagnoprepostfix  = taganddefault[0].replace('<<<','').replace('>>>','')
+                    if tagnoprepostfix in dict_key_vals:
+                        line = line.replace(taganddefault[0], str(dict_key_vals[tagnoprepostfix]))
+                    elif taganddefault[1].strip():
+                        line = line.replace(taganddefault[0], taganddefault[1])
+                new_lines.append(line)
+            # replace
+            codemodel.filenames_to_lines[fn] = new_lines
+
     '''Will use the base-class configured 'output directory' if no preserve directory is passed in. '''
-    def __preserve_usertags_in_files__(self, codemodel, preserve_dir = ""):
+    def __preserve_usercode_in_files__(self, codemodel, preserve_dir = ""):
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
         # TCP gen might have a different output directory (typically COG will put files into an intermediate dir, and them copy them elsewhere
         ## Preserve only files...

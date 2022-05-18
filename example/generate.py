@@ -52,7 +52,7 @@ statemachinenameprefix = "CDPlayer"
 declspec = ""
 templatedir = "" # defaults are for 'SML'
 
-from kojen.interface_base import *
+from kojen.kojentypes import *
 EventPlay = Struct('EventPlay')
 EventPlay.AddType('m_track_no','uint16_t')
 

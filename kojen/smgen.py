@@ -149,9 +149,9 @@ __TAG_DECLSPEC_DLL_EXPORT__         = "<<<DLL_EXPORT>>>"
 
 # Python2 -> 3 shennanigans...try support both
 try:
-    from interface_base import *		# py2
+    from kojentypes import *		# py2
 except (ModuleNotFoundError, ImportError) as e:
-    from .interface_base import *		# py3
+    from .kojentypes import *		# py3
 
 try:
     from .preservative import *
@@ -351,21 +351,6 @@ class CStateMachineGenerator(CBASEGenerator):
                 return result.rsplit('\n', 1)[0]
         return ""
 
-    def hasTag(self, line, tag):
-        return line.find(tag.replace("<<<", "").replace(">>>", "")) > 0
-
-    def hasMemberName(self, a):
-        return a.find("::") > 0
-
-    def extractMemberNameAndTag(self, a):
-        member = a[a.find("::", a.find("<<<")):a.find(">>>")].replace("::","")
-        tag = a.strip()
-        return [tag, member]
-
-    def removeTag(self, a):
-        member = a[a.find("::", a.find("<<<")):a.find(">>>")]
-        return a.replace(member, "")
-
     def __innerexpand__secondfiltering__(self, names2x, lines2x, puthere):
         global alpha
         __resetalphabet__()
@@ -386,14 +371,14 @@ class CStateMachineGenerator(CBASEGenerator):
                 tabcnt = newline.count('    ')
                 newline = newline.replace(__TAG_EVENT_SIGNATURE__, self.__get_event_signature__(name))
                 # __TAG_EVENT_MEMBERINST__ -> PTR
-                if self.hasTag(newline,__TAG_EVENT_MEMBERINST__) and self.hasMemberName(newline):
-                    line_member = self.extractMemberNameAndTag(newline)
+                if self.hasSpecificTag(newline,__TAG_EVENT_MEMBERINST__) and self.hasDefault(newline):
+                    line_member = self.extractDefaultAndTag(newline)
                     newline = newline.replace(line_member[0],self.__instantiate_event_struct_member(name, tabcnt, True, line_member[1]))
                 else:
                     newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, True))        # PTR
                 # __TAG_LITE_EVENT_MEMBERINST__ -> NO PTR
-                if self.hasTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and self.hasMemberName(newline):
-                    line_member = self.extractMemberNameAndTag(newline)
+                if self.hasSpecificTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and self.hasDefault(newline):
+                    line_member = self.extractDefaultAndTag(newline)
                     newline = newline.replace(line_member[0],self.__instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
                 else:
                     newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
@@ -466,14 +451,14 @@ class CStateMachineGenerator(CBASEGenerator):
                 puthere.append(tt_out)
                 tt_out = ""
 
-    def __innerexpand_sml__(self, smmodel, sml_entry_exit, puthere):
-        tt_out = "                // " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
+    def __innerexpand_sml__(self, smmodel, whitespace, sml_entry_exit, puthere):
+        tt_out = whitespace + "// " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
         startStateHasEntryExit = {}
         for i, ttline in enumerate(smmodel.transition_table):
             if i == 0:  # initial state
-                tt_out += "                 *"
+                tt_out += whitespace + " *"
             else:
-                tt_out += "                , "
+                tt_out += whitespace + ", "
             tt_out += even_space('state<' + self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE]) + '>', smmodel.maxlenSTART_STATE + 9) + '+'
             tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + '>', smmodel.maxlenEVENT + 9) + ' '
             tt_out += even_space('[' + self.__transitiontableLITE_guard_replace_NONE__(camel_case_small(ttline[smmodel.GUARD])) + ']', smmodel.maxlenGUARD + 4) + ' / '
@@ -486,8 +471,8 @@ class CStateMachineGenerator(CBASEGenerator):
             # State entry/exit, once only
             if not (ttline[smmodel.START_STATE] in startStateHasEntryExit) and sml_entry_exit:
                 startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-                tt_out += "                , state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
-                tt_out += "                , state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
+                tt_out += whitespace + ", state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
+                tt_out += whitespace + ", state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
                 tt_out += '\n'
                 puthere.append(tt_out)
                 tt_out = ""
@@ -505,7 +490,7 @@ class CStateMachineGenerator(CBASEGenerator):
                     # Should now have all the Event repeats.
                     for ev, transitionList in dict.items():
                         # guard/action/next state repeats
-                        self.__innerexpand_transitionsperguard(ev, transitionList, snipped_to_expand, puthere)
+                        self.__innerexpand_transitionsperguard(ev, state, transitionList, snipped_to_expand, puthere)
                     # ----
                     ex_transition = False
 
@@ -516,7 +501,7 @@ class CStateMachineGenerator(CBASEGenerator):
                     if line.find(__TAG_PET_END__) == -1:
                         puthere.append(line.replace(__TAG_STATENAME__, state).replace(__TAG_STATENAME_SMALL_CAMEL__, state))
 
-    def __innerexpand_transitionsperguard(self, eventName, transitionList,lines2x, puthere):
+    def __innerexpand_transitionsperguard(self, eventName, stateName, transitionList,lines2x, puthere):
         ex_transition = False
         snipped_to_expand = []
         for line in lines2x:
@@ -529,13 +514,15 @@ class CStateMachineGenerator(CBASEGenerator):
                     for l in snipped_to_expand:
                         for k, v in transitionDict.items():
                             # for those that are present but who have alternate text when not present.
-                            if self.hasTag(l, k):
-                                l = self.removeTag(l)
+                            if self.hasSpecificTag(l, k):
+                                l = self.removeDefault(l)
                             l = l.replace(k, v)
-                        l = l.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
+                        l = l.replace(__TAG_EVENTNAME__, eventName)
+                        l = l.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
+                        l = l.replace(__TAG_STATENAME__, stateName).replace(__TAG_STATENAME_SMALL_CAMEL__, stateName)
                         # If there is no guard, or next state (transitions are not mandated to have either), just remove it (or replace it with the alternative text). Leave no hanging code.
-                        if self.hasTag(l,__TAG_GUARDNAME__)  or self.hasTag(l, __TAG_NEXTSTATENAME__):
-                            line_member = self.extractMemberNameAndTag(l)
+                        if self.hasSpecificTag(l,__TAG_GUARDNAME__)  or self.hasSpecificTag(l, __TAG_NEXTSTATENAME__):
+                            line_member = self.extractDefaultAndTag(l)
                             if line_member[1]: # alternative text is embedded in the tag.
                                 whitespace = len(l) - len(l.lstrip())
                                 puthere.append(whitespace*' ' + line_member[1] + '\n')
@@ -648,7 +635,8 @@ class CStateMachineGenerator(CBASEGenerator):
                     self.__innerexpand_msmlite__(smmodel, alllinesexpanded)
                     ex_tt_lite = False
                 if ex_tt_lite_sml and line.find(__TAG_TTT_SML_END__) > -1:
-                    self.__innerexpand_sml__(smmodel, sml_entry_exit, alllinesexpanded)
+                    whitespace = line[0:line.find("<<<")]
+                    self.__innerexpand_sml__(smmodel, whitespace, sml_entry_exit, alllinesexpanded)
                     ex_tt_lite_sml = False
 
                 if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard or ex_tt or ex_tt_lite or ex_tt_lite_sml) and not begin:
@@ -672,8 +660,12 @@ class CStateMachineGenerator(CBASEGenerator):
         cm = self.__loadtemplates_firstfiltering__(sm)
         self.__expand_secondfiltering__(sm, cm)
 
-        # Preserve user tags.
-        self.__preserve_usertags_in_files__(cm)
+        # user tags.
+        if self.events_interface != None:
+            self.__do_user_tags__(cm, self.events_interface.UserTags())
+
+        # Preserve user code.
+        self.__preserve_usercode_in_files__(cm)
         '''
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
         preservation = Preservative(self.output_gen_file_dir)
