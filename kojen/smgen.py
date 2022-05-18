@@ -149,9 +149,9 @@ __TAG_DECLSPEC_DLL_EXPORT__         = "<<<DLL_EXPORT>>>"
 
 # Python2 -> 3 shennanigans...try support both
 try:
-    from interface_base import *		# py2
+    from kojentypes import *		# py2
 except (ModuleNotFoundError, ImportError) as e:
-    from .interface_base import *		# py3
+    from .kojentypes import *		# py3
 
 try:
     from .preservative import *

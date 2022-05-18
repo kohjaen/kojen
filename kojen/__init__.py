@@ -6,4 +6,4 @@ if __package__ is None:
 
 # http://mikegrouchy.com/blog/2012/05/be-pythonic-__init__py.html
 #from .smgen import *
-__all__ = ['smgen', 'cgen', 'vppclassdiagram', 'vppfs', 'interface_base', 'umlgen', 'protogen', 'Generate']
+__all__ = ['smgen', 'cgen', 'vppclassdiagram', 'vppfs', 'kojentypes', 'umlgen', 'protogen', 'Generate']

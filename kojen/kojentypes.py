@@ -381,8 +381,6 @@ class Interface(OrderedDict, Query):
     def Messages(self):
         result = []
         for key in self:
-            # Depending on the python setup, this will change. Which is a pain, because suddenly something doesnt work
-            # if str(type(self[key])) == "<class 'tcp_gen.interface_base.Message'>" or str(type(self[key])) == "<class 'interface_base.Message'>":
             typeof = str(type(self[key]))
             if typeof.find('class') > -1 and typeof.find('Struct') == -1 and typeof.find('Message') > -1 and typeof.find('MessageHeader') == -1:
                 result.append(self[key])
@@ -391,8 +389,6 @@ class Interface(OrderedDict, Query):
     def Structs(self):
         result = []
         for key in self:
-            # Depending on the python setup, this will change. Which is a pain, because suddenly something doesnt work.
-            # if str(type(self[key])) == "<class 'tcp_gen.interface_base.Struct'>" or str(type(self[key])) == "<class 'interface_base.Struct'>":
             typeof = str(type(self[key]))
             if typeof.find('class') > -1 and typeof.find('Struct') > -1 and typeof.find('Message') == -1 and typeof.find('MessageHeader') == -1:
                 result.append(self[key])
@@ -401,8 +397,6 @@ class Interface(OrderedDict, Query):
     def ProtocolStructs(self):
         result = []
         for key in self:
-            # Depending on the python setup, this will change. Which is a pain, because suddenly something doesnt work.
-            # if str(type(self[key])) == "<class 'tcp_gen.interface_base.MessageHeader'>" or str(type(self[key])) == "<class 'interface_base.MessageHeader'>":
             typeof = str(type(self[key]))
             if typeof.find('class') > -1 and typeof.find('Struct') == -1 and typeof.find('MessageHeader') > -1:
                 result.append(self[key])

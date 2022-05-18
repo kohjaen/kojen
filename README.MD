@@ -27,7 +27,7 @@ In your interface definition file `MyInterface.py` create a function `CreateInte
 
 Here is an example of what is permissible in an interface. For messages, make sure each has a unique message-id (second parameter after the name in the constructor)
 ```python
-from kojen.interface_base import *
+from kojen.kojentypes import *
 
 def CreateInterface():
     sCustomStruct = Struct('sCustomStruct')
@@ -182,7 +182,7 @@ Create a file `Generate.py` (or add your state machine to the one already presen
 
 ```python
 from kojen import Generate
-from kojen.interface_base import *
+from kojen.kojentypes import *
 
 #
 # Generate Statemachine (from TransitionTable)

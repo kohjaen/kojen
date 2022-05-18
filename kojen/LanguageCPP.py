@@ -33,9 +33,9 @@ import time
 from string import Template
 
 try:
-    from interface_base import *
+    from kojentypes import *
 except (ModuleNotFoundError, ImportError) as e:
-    from .interface_base import *
+    from .kojentypes import *
 
 try:
     from vppclassdiagram import *

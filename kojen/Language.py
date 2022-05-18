@@ -26,8 +26,6 @@ __author__ = 'eugene'
     SOFTWARE.
 
 '''
-from interface_base import *
-from string import Template
 import time
 import datetime
 import sys
