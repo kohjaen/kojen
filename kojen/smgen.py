@@ -120,16 +120,17 @@ __TAG_EVENT_MEMBERINST__            = "<<<EVENTMEMBERSINSTANTIATE>>>"
 __TAG_LITE_EVENT_MEMBERINST__       = "<<<EVENTMEMBERSLITEINSTANTIATE>>>"
 __TAG_EVENT_MEMBERDECL__            = "<<<EVENTMEMBERSDECLARE>>>"
 
-__TAG_STATENAME__                   = '<<<STATENAME>>>'        # As given
-__TAG_STATENAME_SMALL_CAMEL__       = '<<<stateName>>>'        # camelCaps
-__TAG_NEXTSTATENAME__               = '<<<NEXTSTATENAME>>>'    # As given
-__TAG_NEXTSTATENAME_SMALL_CAMEL__   = '<<<nextStateName>>>'    # camelCaps
-__TAG_EVENTNAME__                   = '<<<EVENTNAME>>>'        # As given
-__TAG_EVENTNAME_SMALL_CAMEL__       = '<<<eventName>>>'        # camelCaps
-__TAG_ACTIONNAME__                  = '<<<ACTIONNAME>>>'       # As given
-__TAG_ACTIONNAME_SMALL_CAMEL__      = '<<<actionName>>>'       # camelCaps
-__TAG_GUARDNAME__                   = '<<<GUARDNAME>>>'        # As given
-__TAG_GUARDNAME_SMALL_CAMEL__       = '<<<guardName>>>'        # camelCaps
+__TAG_STATENAME__                   = '<<<STATENAME>>>'            # As given
+__TAG_STATENAME_SMALL_CAMEL__       = '<<<stateName>>>'            # camelCaps
+__TAG_NEXTSTATENAME__               = '<<<NEXTSTATENAME>>>'        # As given
+__TAG_NEXTSTATENAME_SMALL_CAMEL__   = '<<<nextStateName>>>'        # camelCaps
+__TAG_STATENAME_IF_NEXTSTATE__      = '<<<STATENAMEIFNEXTSTATE>>>' # As given
+__TAG_EVENTNAME__                   = '<<<EVENTNAME>>>'            # As given
+__TAG_EVENTNAME_SMALL_CAMEL__       = '<<<eventName>>>'            # camelCaps
+__TAG_ACTIONNAME__                  = '<<<ACTIONNAME>>>'           # As given
+__TAG_ACTIONNAME_SMALL_CAMEL__      = '<<<actionName>>>'           # camelCaps
+__TAG_GUARDNAME__                   = '<<<GUARDNAME>>>'            # As given
+__TAG_GUARDNAME_SMALL_CAMEL__       = '<<<guardName>>>'            # camelCaps
 
 __TAG_ABC__                         = '<<<ALPH>>>'
 __TAG_123__                         = '<<<NUM>>>'
@@ -261,6 +262,7 @@ class CTransitionTableModel(CStateMachineModel):
                 transition[__TAG_GUARDNAME__] = tableline[self.GUARD]
                 transition[__TAG_GUARDNAME_SMALL_CAMEL__] = camel_case_small(tableline[self.GUARD])
             if tableline[self.NEXT_STATE] != "" and tableline[self.NEXT_STATE].lower() != "none":
+                transition[__TAG_STATENAME_IF_NEXTSTATE__] = tableline[self.START_STATE]
                 transition[__TAG_NEXTSTATENAME__] = tableline[self.NEXT_STATE]
                 transition[__TAG_NEXTSTATENAME_SMALL_CAMEL__] = camel_case_small(tableline[self.NEXT_STATE])
 
@@ -519,14 +521,13 @@ class CStateMachineGenerator(CBASEGenerator):
                             l = l.replace(k, v)
                         l = l.replace(__TAG_EVENTNAME__, eventName)
                         l = l.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
-                        l = l.replace(__TAG_STATENAME__, stateName).replace(__TAG_STATENAME_SMALL_CAMEL__, stateName)
                         # If there is no guard, or next state (transitions are not mandated to have either), just remove it (or replace it with the alternative text). Leave no hanging code.
-                        if self.hasSpecificTag(l,__TAG_GUARDNAME__)  or self.hasSpecificTag(l, __TAG_NEXTSTATENAME__):
+                        if self.hasSpecificTag(l,__TAG_GUARDNAME__)  or self.hasSpecificTag(l, __TAG_NEXTSTATENAME__) or self.hasSpecificTag(l,__TAG_STATENAME_IF_NEXTSTATE__):
                             line_member = self.extractDefaultAndTag(l)
                             if line_member[1]: # alternative text is embedded in the tag.
                                 whitespace = len(l) - len(l.lstrip())
                                 puthere.append(whitespace*' ' + line_member[1] + '\n')
-                        elif l.find(__TAG_GUARDNAME__) == -1 and l.find(__TAG_NEXTSTATENAME__) == -1 :
+                        elif l.find(__TAG_GUARDNAME__) == -1 and l.find(__TAG_NEXTSTATENAME__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE__) == -1:
                             puthere.append(l)
                 #----
                 ex_transition = False

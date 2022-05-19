@@ -54,7 +54,7 @@ namespace <<<NAMESPACE>>>
             <<<PER_GUARDTRANSITION_BEGIN>>>
             if (context.<<<GUARDNAME>>>())
             {
-                sm.Exit<<<<STATENAME>>>>(ref context);
+                sm.Exit<<<<STATENAMEIFNEXTSTATE>>>>(ref context);
                 context.<<<ACTIONNAME>>>(ref data);
                 sm.Enter<<<<NEXTSTATENAME>>>>(ref context);
                 sm.estate = E<<<STATEMACHINENAME>>>State.<<<NEXTSTATENAME>>>;
