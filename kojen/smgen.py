@@ -242,7 +242,7 @@ class CTransitionTableModel(CStateMachineModel):
             self.actions.append(a)
         for g in tguard:
             self.guards.append(g)
-        self.__set_transitions_per_state()
+        self.set_transitions_per_state()
 
     ''' Returns a dictionary of dictionaries of lists of dictionaries.
     
@@ -252,7 +252,7 @@ class CTransitionTableModel(CStateMachineModel):
         These contain a list of dictionaries, as multiple of the same events can
         cause different transitions based on guards.
     '''
-    def __set_transitions_per_state(self):
+    def set_transitions_per_state(self):
         for tableline in self.transition_table:
             transition = OrderedDict()
             if tableline[self.ACTION] != "" and tableline[self.ACTION].lower() != "none":
@@ -275,7 +275,7 @@ class CTransitionTableModel(CStateMachineModel):
                     self.transitionsperstate[tableline[self.START_STATE]][tableline[self.EVENT]] = []
                 self.transitionsperstate[tableline[self.START_STATE]][tableline[self.EVENT]].append(transition)
 
-    def __getfirststate__(self):
+    def getfirststate(self):
         if not self.transition_table:
             return "NO TT PRESENT!"
         return self.transition_table[0][0]
@@ -287,7 +287,7 @@ class CStateMachineGenerator(CBASEGenerator):
         CBASEGenerator.__init__(self,inputfiledir,outputfiledir,language, author, group, brief)
         self.events_interface = events_interface
 
-    def __loadtemplates_firstfiltering__(self, smmodel):
+    def loadtemplates_firstfiltering(self, smmodel):
         """
         See baseclass implementation. This just prepares the dictionary of things to replace
         for this type of codegeneration.
@@ -313,9 +313,9 @@ class CStateMachineGenerator(CBASEGenerator):
         dict_to_replace_filenames = {}
         dict_to_replace_filenames["TEMPLATE_"] = smmodel.statemachinename
 
-        return CBASEGenerator.__loadtemplates_firstfiltering__(self,dict_to_replace_lines,dict_to_replace_filenames)
+        return CBASEGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames)
 
-    def __get_event_signature__(self,name):
+    def get_event_signature(self,name):
         if self.events_interface is None or self.language is None:
             return ""
         for s in self.events_interface.Structs():
@@ -324,7 +324,7 @@ class CStateMachineGenerator(CBASEGenerator):
 
         return ""
 
-    def __instantiate_event_struct_member(self, name, whitespace_cnt, is_ptr=True, instancename="data"):
+    def instantiate_event_struct_member(self, name, whitespace_cnt, is_ptr=True, instancename="data"):
         if self.events_interface is None or self.language is None:
             return ""
         for s in self.events_interface.Structs():
@@ -338,7 +338,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 return result.rsplit('\n', 1)[0]
         return ""
 
-    def __declare_event_struct_members(self, name, whitespace_cnt):
+    def declare_event_struct_members(self, name, whitespace_cnt):
         if self.events_interface is None or self.language is None:
             return ""
 
@@ -353,7 +353,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 return result.rsplit('\n', 1)[0]
         return ""
 
-    def __innerexpand__secondfiltering__(self, names2x, lines2x, puthere):
+    def innerexpand_secondfiltering(self, names2x, lines2x, puthere):
         global alpha
         __resetalphabet__()
         cnt = 0
@@ -371,27 +371,27 @@ class CStateMachineGenerator(CBASEGenerator):
                 newline = newline.replace(__TAG_ABC__, chr(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
-                newline = newline.replace(__TAG_EVENT_SIGNATURE__, self.__get_event_signature__(name))
+                newline = newline.replace(__TAG_EVENT_SIGNATURE__, self.get_event_signature(name))
                 # __TAG_EVENT_MEMBERINST__ -> PTR
                 if self.hasSpecificTag(newline,__TAG_EVENT_MEMBERINST__) and self.hasDefault(newline):
                     line_member = self.extractDefaultAndTag(newline)
-                    newline = newline.replace(line_member[0],self.__instantiate_event_struct_member(name, tabcnt, True, line_member[1]))
+                    newline = newline.replace(line_member[0],self.instantiate_event_struct_member(name, tabcnt, True, line_member[1]))
                 else:
-                    newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, True))        # PTR
+                    newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, True))        # PTR
                 # __TAG_LITE_EVENT_MEMBERINST__ -> NO PTR
                 if self.hasSpecificTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and self.hasDefault(newline):
                     line_member = self.extractDefaultAndTag(newline)
-                    newline = newline.replace(line_member[0],self.__instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
+                    newline = newline.replace(line_member[0],self.instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
                 else:
-                    newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.__instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
-                newline = newline.replace(__TAG_EVENT_MEMBERDECL__, self.__declare_event_struct_members(name, tabcnt))
+                    newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
+                newline = newline.replace(__TAG_EVENT_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt))
                 if newline == '\n' or newline == '' or newline == '\r\n' or newline.replace(' ','') == "" or newline.replace(' ','').replace('\n','').replace('\r','') == "":
                     continue
                 puthere.append(newline)
             cnt = cnt + 1
             __getnextalphabet__()
 
-    def __innerexpand_actionsignatures__(self, states2x, lines2x, puthere):
+    def innerexpand_actionsignatures(self, states2x, lines2x, puthere):
         global alpha
         __resetalphabet__()
         cnt = 0
@@ -411,23 +411,23 @@ class CStateMachineGenerator(CBASEGenerator):
             cnt = cnt + 1
             __getnextalphabet__()
 
-    def __innerexpand_msm__(self, smmodel, puthere):
+    def innerexpand_msm(self, smmodel, puthere):
         len_tt = len(smmodel.transition_table)
         tt_out = "        // " + len("msmf::Row < ") * ' ' + even_space("Start") + even_space("Event") + even_space("Next") + even_space("Action") + even_space("Guard") + '\n'
         for i, ttline in enumerate(smmodel.transition_table):
             tt_out += '        msmf::Row < '
-            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + ','
-            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT])) + ','
-            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.NEXT_STATE])) + ','
-            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.ACTION])) + ','
-            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.GUARD])) + '>    '
+            tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.START_STATE])) + ','
+            tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.EVENT])) + ','
+            tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.NEXT_STATE])) + ','
+            tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.ACTION])) + ','
+            tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.GUARD])) + '>    '
             if i != len_tt - 1:
                 tt_out += ","
             tt_out += "    // " + str(i) + '\n'
             puthere.append(tt_out)
             tt_out = ""
 
-    def __innerexpand_msmlite__(self, smmodel, puthere):
+    def innerexpand_msmlite(self, smmodel, puthere):
         tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
         startStateHasEntryExit = {}
         for i, ttline in enumerate(smmodel.transition_table):
@@ -435,12 +435,12 @@ class CStateMachineGenerator(CBASEGenerator):
                 tt_out += "                 *"
             else:
                 tt_out += "                , "
-            tt_out += even_space(self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE])) + '+'
-            tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + ">") + ' '
-            tt_out += even_space('[' + self.__transitiontableLITE_guard_replace_NONE__('__' + ttline[smmodel.GUARD]) + ']') + ' / '
-            tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__('__' + ttline[smmodel.ACTION]))
+            tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.START_STATE])) + '+'
+            tt_out += even_space('event<' + self.transitiontable_replace_NONE(ttline[smmodel.EVENT]) + ">") + ' '
+            tt_out += even_space('[' + self.transitiontableLITE_guard_replace_NONE('__' + ttline[smmodel.GUARD]) + ']') + ' / '
+            tt_out += even_space(self.transitiontableLITE_action_replace_NONE('__' + ttline[smmodel.ACTION]))
             if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
-                tt_out += ' = ' + even_space(self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]))
+                tt_out += ' = ' + even_space(self.transitiontableLITE_nextstate_replace_NONE(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]))
             tt_out += '\n'
             puthere.append(tt_out)
             tt_out = ""
@@ -453,7 +453,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 puthere.append(tt_out)
                 tt_out = ""
 
-    def __innerexpand_sml__(self, smmodel, whitespace, sml_entry_exit, puthere):
+    def innerexpand_sml(self, smmodel, whitespace, sml_entry_exit, puthere):
         tt_out = whitespace + "// " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
         startStateHasEntryExit = {}
         for i, ttline in enumerate(smmodel.transition_table):
@@ -461,12 +461,12 @@ class CStateMachineGenerator(CBASEGenerator):
                 tt_out += whitespace + " *"
             else:
                 tt_out += whitespace + ", "
-            tt_out += even_space('state<' + self.__transitiontable_replace_NONE__(ttline[smmodel.START_STATE]) + '>', smmodel.maxlenSTART_STATE + 9) + '+'
-            tt_out += even_space('event<' + self.__transitiontable_replace_NONE__(ttline[smmodel.EVENT]) + '>', smmodel.maxlenEVENT + 9) + ' '
-            tt_out += even_space('[' + self.__transitiontableLITE_guard_replace_NONE__(camel_case_small(ttline[smmodel.GUARD])) + ']', smmodel.maxlenGUARD + 4) + ' / '
-            tt_out += even_space(self.__transitiontableLITE_action_replace_NONE__(camel_case_small(ttline[smmodel.ACTION])), smmodel.maxlenACTION + 2)
+            tt_out += even_space('state<' + self.transitiontable_replace_NONE(ttline[smmodel.START_STATE]) + '>', smmodel.maxlenSTART_STATE + 9) + '+'
+            tt_out += even_space('event<' + self.transitiontable_replace_NONE(ttline[smmodel.EVENT]) + '>', smmodel.maxlenEVENT + 9) + ' '
+            tt_out += even_space('[' + self.transitiontableLITE_guard_replace_NONE(camel_case_small(ttline[smmodel.GUARD])) + ']', smmodel.maxlenGUARD + 4) + ' / '
+            tt_out += even_space(self.transitiontableLITE_action_replace_NONE(camel_case_small(ttline[smmodel.ACTION])), smmodel.maxlenACTION + 2)
             if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
-                tt_out += ' = ' + even_space('state<' + self.__transitiontableLITE_nextstate_replace_NONE__(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]) + '>', 0)
+                tt_out += ' = ' + even_space('state<' + self.transitiontableLITE_nextstate_replace_NONE(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]) + '>', 0)
             tt_out += '\n'
             puthere.append(tt_out)
             tt_out = ""
@@ -479,7 +479,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 puthere.append(tt_out)
                 tt_out = ""
 
-    def __innerexpand_transitionsperstate__(self, transitionperstate, lines2x, puthere):
+    def innerexpand_transitionsperstate(self, transitionperstate, lines2x, puthere):
         for state, dict in transitionperstate.items():
             ex_transition = False
             snipped_to_expand = []
@@ -492,7 +492,7 @@ class CStateMachineGenerator(CBASEGenerator):
                     # Should now have all the Event repeats.
                     for ev, transitionList in dict.items():
                         # guard/action/next state repeats
-                        self.__innerexpand_transitionsperguard(ev, state, transitionList, snipped_to_expand, puthere)
+                        self.innerexpand_transitionsperguard(ev, state, transitionList, snipped_to_expand, puthere)
                     # ----
                     ex_transition = False
 
@@ -503,7 +503,7 @@ class CStateMachineGenerator(CBASEGenerator):
                     if line.find(__TAG_PET_END__) == -1:
                         puthere.append(line.replace(__TAG_STATENAME__, state).replace(__TAG_STATENAME_SMALL_CAMEL__, state))
 
-    def __innerexpand_transitionsperguard(self, eventName, stateName, transitionList,lines2x, puthere):
+    def innerexpand_transitionsperguard(self, eventName, stateName, transitionList,lines2x, puthere):
         ex_transition = False
         snipped_to_expand = []
         for line in lines2x:
@@ -538,25 +538,25 @@ class CStateMachineGenerator(CBASEGenerator):
                 if line.find(__TAG_PGT_END__) == -1:
                     puthere.append(line.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName)))
 
-    def __transitiontable_replace_NONE__(self, val):
+    def transitiontable_replace_NONE(self, val):
         if val == "" or val.lower() == 'none':
             val = "msmf::none"
         return val
 
-    def __transitiontableLITE_guard_replace_NONE__(self, val):
+    def transitiontableLITE_guard_replace_NONE(self, val):
         tmp_val = val.replace('__', '')
         if tmp_val == "" or tmp_val.lower() == 'none':
             val = "gnone"
         return val
 
-    def __transitiontableLITE_action_replace_NONE__(self, val):
+    def transitiontableLITE_action_replace_NONE(self, val):
         tmp_val = val.replace('__', '')
         if tmp_val == "" or tmp_val.lower() == 'none' or tmp_val.lower().find('::none<') > -1:
             val = "none"
         return val
 
     ''' This SM doesnt seem to allow 'none' transitions -> make it transition to the source state'''
-    def __transitiontableLITE_nextstate_replace_NONE__(self, val, source_state):
+    def transitiontableLITE_nextstate_replace_NONE(self, val, source_state):
         tmp_val = val.replace('__', '')
         tmp_val = tmp_val.replace('msmf::', '')
         if tmp_val == "" or tmp_val.lower() == 'none':
@@ -564,7 +564,7 @@ class CStateMachineGenerator(CBASEGenerator):
         return val
 
 
-    def __expand_secondfiltering__(self, smmodel, cmmodel):
+    def expand_secondfiltering(self, smmodel, cmmodel):
         for file in cmmodel.filenames_to_lines:
 
             ex_state       = False
@@ -603,41 +603,41 @@ class CStateMachineGenerator(CBASEGenerator):
                 sml_entry_exit = line.find(__TAG_TTT_SML_BEGIN_ENTRYEXIT__) > -1 or sml_entry_exit
 
                 if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_transition and not ex_guard and not ex_tt and not ex_tt_lite and not ex_tt_lite_sml:
-                    alllinesexpanded.append(line.replace(__TAG_INIT_STATE__, smmodel.__getfirststate__()))
+                    alllinesexpanded.append(line.replace(__TAG_INIT_STATE__, smmodel.getfirststate()))
 
                 if ex_state and line.find(__TAG_PS_END__) > -1:
-                    self.__innerexpand__secondfiltering__(smmodel.states, snipped_to_expand, alllinesexpanded)
+                    self.innerexpand_secondfiltering(smmodel.states, snipped_to_expand, alllinesexpanded)
                     snipped_to_expand = []
                     ex_state = False
                 if ex_event and line.find(__TAG_PE_END__) > -1:
-                    self.__innerexpand__secondfiltering__(smmodel.events, snipped_to_expand, alllinesexpanded)
+                    self.innerexpand_secondfiltering(smmodel.events, snipped_to_expand, alllinesexpanded)
                     snipped_to_expand = []
                     ex_event = False
                 if ex_action and line.find(__TAG_PA_END__) > -1:
-                    self.__innerexpand__secondfiltering__(smmodel.actions, snipped_to_expand, alllinesexpanded)
+                    self.innerexpand_secondfiltering(smmodel.actions, snipped_to_expand, alllinesexpanded)
                     snipped_to_expand = []
                     ex_action = False
                 if ex_actionsig and line.find(__TAG_PASIG_END__) > -1:
-                    self.__innerexpand_actionsignatures__(smmodel.actionsignatures, snipped_to_expand, alllinesexpanded)
+                    self.innerexpand_actionsignatures(smmodel.actionsignatures, snipped_to_expand, alllinesexpanded)
                     snipped_to_expand = []
                     ex_actionsig = False
                 if ex_transition and line.find(__TAG_PST_END__) > -1:
-                    self.__innerexpand_transitionsperstate__(smmodel.transitionsperstate, snipped_to_expand, alllinesexpanded)
+                    self.innerexpand_transitionsperstate(smmodel.transitionsperstate, snipped_to_expand, alllinesexpanded)
                     snipped_to_expand = []
                     ex_transition = False
                 if ex_guard and line.find(__TAG_PG_END__) > -1:
-                    self.__innerexpand__secondfiltering__(smmodel.guards, snipped_to_expand, alllinesexpanded)
+                    self.innerexpand_secondfiltering(smmodel.guards, snipped_to_expand, alllinesexpanded)
                     snipped_to_expand = []
                     ex_guard = False
                 if ex_tt and line.find(__TAG_TTT_END___) > -1:
-                    self.__innerexpand_msm__(smmodel, alllinesexpanded)
+                    self.innerexpand_msm(smmodel, alllinesexpanded)
                     ex_tt = False
                 if ex_tt_lite and line.find(__TAG_TTT_LITE_END__) > -1:
-                    self.__innerexpand_msmlite__(smmodel, alllinesexpanded)
+                    self.innerexpand_msmlite(smmodel, alllinesexpanded)
                     ex_tt_lite = False
                 if ex_tt_lite_sml and line.find(__TAG_TTT_SML_END__) > -1:
                     whitespace = line[0:line.find("<<<")]
-                    self.__innerexpand_sml__(smmodel, whitespace, sml_entry_exit, alllinesexpanded)
+                    self.innerexpand_sml(smmodel, whitespace, sml_entry_exit, alllinesexpanded)
                     ex_tt_lite_sml = False
 
                 if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard or ex_tt or ex_tt_lite or ex_tt_lite_sml) and not begin:
@@ -658,22 +658,22 @@ class CStateMachineGenerator(CBASEGenerator):
         print("*************************************")
 
         sm = CTransitionTableModel(transitiontable, namespacenname, statemachinename, dclspc)
-        cm = self.__loadtemplates_firstfiltering__(sm)
-        self.__expand_secondfiltering__(sm, cm)
+        cm = self.loadtemplates_firstfiltering(sm)
+        self.expand_secondfiltering(sm, cm)
 
         # user tags.
         if self.events_interface != None:
-            self.__do_user_tags__(cm, self.events_interface.UserTags())
+            self.do_user_tags(cm, self.events_interface.UserTags())
 
         # Preserve user code.
-        self.__preserve_usercode_in_files__(cm)
+        self.preserve_usercode_in_files(cm)
         '''
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
         preservation = Preservative(self.output_gen_file_dir)
         preservation.Emplace(cm.filenames_to_lines)
         '''
         # Write output to file.
-        self.__createoutput__(cm.filenames_to_lines)
+        self.createoutput(cm.filenames_to_lines)
 
         # Copy non-autogenerated required files to output.
         if isinstance(self.language, LanguageCPP) and copyotherfiles:
@@ -743,8 +743,8 @@ class CStateMachineGenerator(CBASEGenerator):
     def GenerateProtocol(self, pythoninterfacegeneratorfilename, namespacenname, classname, dclspc="", preserve_dir=""):
         sm = CTransitionTableModel([], namespacenname, classname, dclspc)
         sm.pythoninterfacegeneratorfilename = pythoninterfacegeneratorfilename
-        cm = self.__loadtemplates_firstfiltering__(sm)
-        self.__expand_secondfiltering__(sm, cm)
+        cm = self.loadtemplates_firstfiltering(sm)
+        self.expand_secondfiltering(sm, cm)
 
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
         # TCP gen might have a different output directory (typically COG will put files into an intermediate dir, and them copy them elsewhere
@@ -756,7 +756,7 @@ class CStateMachineGenerator(CBASEGenerator):
 
         preservation.Emplace(cm.filenames_to_lines)
         # Write output to file.
-        self.__createoutput__(cm.filenames_to_lines)
+        self.createoutput(cm.filenames_to_lines)
 
         # return the filenames
         filenames = []
