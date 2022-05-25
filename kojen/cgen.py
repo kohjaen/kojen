@@ -51,6 +51,26 @@ __TAG_PLATFORM__           = '<<<PLATFORM>>>'
 __TAG_EXTENDS__            = '<<<EXTENDS>>>'
 __TAG_EXCLUDE__            = '<<<EXCLUDE>>>'
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def warning(text):
+    print(bcolors.WARNING + "Warning : " + text + bcolors.ENDC)
+
+def info(text):
+    print(bcolors.OKGREEN + "Info : " + text + bcolors.ENDC)
+
+def error(text):
+    print(bcolors.FAIL + "Error : " + text + bcolors.ENDC)
+
 class CCodeModel:
     def __init__(self):
         self.filenames_to_lines = OrderedDict()
@@ -123,7 +143,7 @@ class CBASEGenerator:
                 # Check the output dir
                 if not os.path.exists(outputfiledir):
                     os.makedirs(outputfiledir)
-                    print("Directory '" + outputfiledir + "' does not exist...created.")
+                    info("Directory '" + outputfiledir + "' does not exist...created.")
 
     def generate_filenames_from_templates(self,file, dict_to_replace_filenames):
         for tag, desired_text in dict_to_replace_filenames.items():
@@ -150,24 +170,28 @@ class CBASEGenerator:
         templateFilePath = Path(inner_template_file)
         if not os.path.isabs(templateFilePath):
             templateFilePath = path_to_parent_folder / templateFilePath
-
         if not os.path.isfile(templateFilePath):
-            print("Error : path '" + inner_template_file + "' does not exist. Ignoring.")
+            warning("path '" + inner_template_file + "' does not exist. Ignoring.")
         else:
             with open(templateFilePath) as f:
                 extended_lines = []
                 for l in f:
                     if not any(excl in l for excl in ignore_lines_with):
                         extended_lines.append(l)
-                for start, end in ignore_lines_between:
-                    isBetween = False
-                    for l in extended_lines:
-                        if start in l:
-                            isBetween = True
-                        if not isBetween:
+                isBetween = False
+                for l in extended_lines:
+                    if any(start in l for start, end in ignore_lines_between):
+                        isBetween = True
+                    if not isBetween:
+                        if self.hasSpecificTag(l, __TAG_EXTENDS__): # nested extension
+                            [unused, ext_rel_filepath] = self.extractDefaultAndTag(l)
+                            if ext_rel_filepath:
+                                nested_ext = self.processExtends(os.path.dirname(templateFilePath),ext_rel_filepath,ignore_lines_with, ignore_lines_between)
+                                result.extend(nested_ext)
+                        else:
                             result.append(l)
-                        if end in l:
-                            isBetween = False
+                    if any(end in l for start, end in ignore_lines_between):
+                        isBetween = False
         return result
 
     def processLine(self, dict_to_replace_lines, lines, line):
@@ -203,7 +227,7 @@ class CBASEGenerator:
                             elif len(start_begin) == 2:
                                 ignore_lines_between.append(start_begin)
                             else:
-                                print("Error : tags '" + exclude_line_with + "' is not supported. Ignoring.")
+                                warnings.warn("Tags '" + exclude_line_with + "' is not supported. Ignoring.")
                 f.seek(0)
                 for line in f:
                     if self.hasSpecificTag(line, __TAG_EXTENDS__):
@@ -366,6 +390,6 @@ def FileCopyUtil(dir_from, dir_to, list_of_filenames):
             try:
                 shutil.copy(os.path.join(dir_from, filename), os.path.join(dir_to, filename))
             except OSError:
-                print("Copy of the file %s failed" % os.path.join(dir_from, filename))
+                warnings.warn("Copy of the file %s failed" % os.path.join(dir_from, filename))
     except OSError:
-        print("Creation of the directory %s failed" % dir_to)
+        warnings.warn("Creation of the directory %s failed" % dir_to)
