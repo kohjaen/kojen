@@ -441,6 +441,7 @@ class CStateMachineGenerator(CBASEGenerator):
             tt_out += even_space(self.transitiontableLITE_action_replace_NONE('__' + ttline[smmodel.ACTION]))
             if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
                 tt_out += ' = ' + even_space(self.transitiontableLITE_nextstate_replace_NONE(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]))
+            tt_out = tt_out.rstrip()
             tt_out += '\n'
             puthere.append(tt_out)
             tt_out = ""
@@ -449,6 +450,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
                 tt_out += "                , " + ttline[smmodel.START_STATE] + " + msm::on_entry / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
                 tt_out += "                , " + ttline[smmodel.START_STATE] + " + msm::on_exit / __" + ttline[smmodel.START_STATE] + 'OnExit'
+                tt_out = tt_out.rstrip()
                 tt_out += '\n'
                 puthere.append(tt_out)
                 tt_out = ""
@@ -467,6 +469,7 @@ class CStateMachineGenerator(CBASEGenerator):
             tt_out += even_space(self.transitiontableLITE_action_replace_NONE(camel_case_small(ttline[smmodel.ACTION])), smmodel.maxlenACTION + 2)
             if ttline[smmodel.NEXT_STATE].lower() != 'none':  # to not get transitions into/outof state on actions that dont change the state...
                 tt_out += ' = ' + even_space('state<' + self.transitiontableLITE_nextstate_replace_NONE(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]) + '>', 0)
+            tt_out = tt_out.rstrip()
             tt_out += '\n'
             puthere.append(tt_out)
             tt_out = ""
@@ -475,6 +478,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
                 tt_out += whitespace + ", state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_entry<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnEntry\n'
                 tt_out += whitespace + ", state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
+                tt_out = tt_out.rstrip()
                 tt_out += '\n'
                 puthere.append(tt_out)
                 tt_out = ""
