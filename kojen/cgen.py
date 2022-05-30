@@ -7,6 +7,7 @@ import os, shutil
 import datetime
 import sys
 import time
+from pathlib import Path
 try:
 	from .preservative import *
 except (ModuleNotFoundError, ImportError) as e:
@@ -47,6 +48,28 @@ except (ModuleNotFoundError, ImportError) as e:
 
 __TAG_DATETIME__           = '<<<DATETIME>>>'
 __TAG_PLATFORM__           = '<<<PLATFORM>>>'
+__TAG_EXTENDS__            = '<<<EXTENDS>>>'
+__TAG_EXCLUDE__            = '<<<EXCLUDE>>>'
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def warning(text):
+    print(bcolors.WARNING + "Warning : " + text + bcolors.ENDC)
+
+def info(text):
+    print(bcolors.OKGREEN + "Info : " + text + bcolors.ENDC)
+
+def error(text):
+    print(bcolors.FAIL + "Error : " + text + bcolors.ENDC)
 
 class CCodeModel:
     def __init__(self):
@@ -120,15 +143,15 @@ class CBASEGenerator:
                 # Check the output dir
                 if not os.path.exists(outputfiledir):
                     os.makedirs(outputfiledir)
-                    print("Directory '" + outputfiledir + "' does not exist...created.")
+                    info("Directory '" + outputfiledir + "' does not exist...created.")
 
-    def __generate_filenames_from_templates__(self,file, dict_to_replace_filenames):
+    def generate_filenames_from_templates(self,file, dict_to_replace_filenames):
         for tag, desired_text in dict_to_replace_filenames.items():
             file = file.replace(tag, desired_text)
         return file
 
     ''' This will remove multiple newlines directly after each, leaving only 1'''
-    def __filter_multiple_newlines(self,list_of_lines_in_file):
+    def filter_multiple_newlines(self,list_of_lines_in_file):
         last = ''
         for i in range(len(list_of_lines_in_file)):
             was_filtered = False
@@ -141,33 +164,109 @@ class CBASEGenerator:
                 last = current
         return list_of_lines_in_file
 
-    def __loadtemplates_firstfiltering_FILE__(self, filepath, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
+    def processExtends(self, path_to_parent_folder, inner_template_file, ignore_lines_with, ignore_lines_between):
+        result = []
+
+        templateFilePath = Path(inner_template_file)
+        if not os.path.isabs(templateFilePath):
+            templateFilePath = path_to_parent_folder / templateFilePath
+        if not os.path.isfile(templateFilePath):
+            warning("path '" + inner_template_file + "' does not exist. Ignoring.")
+        else:
+            with open(templateFilePath) as f:
+                extended_lines = []
+                isBetween = False
+                isBetween_end = ''
+                for l in f:
+                    if not isBetween:
+                        for start, end in ignore_lines_between:
+                            if start in l:
+                                isBetween = True
+                                isBetween_end = end
+                                break
+                    if not isBetween:
+                        if self.hasSpecificTag(l, __TAG_EXTENDS__): # nested extension
+                            [unused, ext_rel_filepath] = self.extractDefaultAndTag(l)
+                            if ext_rel_filepath:
+                                nested_ext = self.processExtends(os.path.dirname(templateFilePath),ext_rel_filepath,ignore_lines_with, ignore_lines_between)
+                                extended_lines.extend(nested_ext)
+                        else:
+                            extended_lines.append(l)
+                    if isBetween:
+                        if isBetween_end in l:
+                            isBetween = False
+                for l in extended_lines:
+                    if not any(excl in l for excl in ignore_lines_with):
+                        result.append(l)
+        return result
+
+    def processLine(self, dict_to_replace_lines, lines, line):
+        for tag, desired_text in dict_to_replace_lines.items():
+            desired_text = self.preserve_leading_tagwhitespace_in_multiline_searchandreplace(line, tag, desired_text)
+            line = line.replace(tag, desired_text)
+        # split multi-line-in-one-string to multi line. Code preservation does not work otherwise.
+        if line.count('\n') > 1:
+            lines_in_line = line.rstrip('\n').split('\n')
+            for l in lines_in_line:
+                lines.append(l + '\n')  # could do
+        else:
+            lines.append(line)
+
+    def loadtemplates_firstfiltering_FILE(self, filepath, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
         result = CCodeModel()
         if os.path.exists(filepath):
             file_without_path = os.path.basename(filepath)
             with open(filepath) as f:
                 lines = []
-                # Replace the key:value pairs per line...
+                extended_filenames = []
+                ignore_lines_with = []
+                ignore_lines_between = []
+
+                # Get all exclude tags...no matter what order they exist in the file.
                 for line in f:
-                    for tag, desired_text in dict_to_replace_lines.items():
-                        desired_text = self.__preserve_leading_tagwhitespace_in_multiline_searchandreplace(line, tag, desired_text)
-                        line = line.replace(tag, desired_text)
-                    # split multi-line-in-one-string to multi line. Code preservation does not work otherwise.
-                    if line.count('\n') > 1:
-                        lines_in_line = line.rstrip('\n').split('\n')
-                        for l in lines_in_line:
-                            lines.append(l + '\n')  # could do
+                    if self.hasSpecificTag(line, __TAG_EXCLUDE__):
+                        [unused, exclude_line_with] = self.extractDefaultAndTag(line)
+                        if exclude_line_with:
+                            start_begin = exclude_line_with.split(",")
+                            if len(start_begin) < 2:
+                                ignore_lines_with.append(exclude_line_with)
+                            elif len(start_begin) == 2:
+                                ignore_lines_between.append(start_begin)
+                            else:
+                                warnings.warn("Tags '" + exclude_line_with + "' is not supported. Ignoring.")
+                f.seek(0)
+                for line in f:
+                    if self.hasSpecificTag(line, __TAG_EXTENDS__):
+                        [unused, ext_rel_filepath] = self.extractDefaultAndTag(line)
+                        if ext_rel_filepath:
+                            extension = self.processExtends(os.path.dirname(filepath), ext_rel_filepath, ignore_lines_with, ignore_lines_between)
+                            for ex_l in extension:
+                                # Replace the key:value pairs per line...
+                                self.processLine(dict_to_replace_lines, lines, ex_l)
+                            if extension:
+                                # Replace the key:value pairs per filename...
+                                self.processLine(dict_to_replace_filenames, extended_filenames, os.path.basename(ext_rel_filepath))
+                    elif self.hasSpecificTag(line, __TAG_EXCLUDE__):
+                        pass
                     else:
-                        lines.append(line)
+                        # Replace the key:value pairs per line...
+                        self.processLine(dict_to_replace_lines, lines, line)
+
+                # Replace any template names (extended) in the files by making them empty
+                for i, l in enumerate(lines):
+                    for ext_fn in extended_filenames:
+                        if l.find(ext_fn) > -1:
+                            lines[i] = ''
+
                 # Replace the key:value pairs per filename...
                 for tag, desired_text in dict_to_replace_filenames.items():
                     file_without_path = file_without_path.replace(tag, desired_text)
                 # Remove multiple newlines
-                lines = self.__filter_multiple_newlines(lines)
+                lines = self.filter_multiple_newlines(lines)
                 result.filenames_to_lines[file_without_path] = lines
         return result
 
-    def __loadtemplates_firstfiltering__(self, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
+    def loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
         """
         Load Template and do 1st round of filtering. The filtering will replace the TAG
 
@@ -185,7 +284,7 @@ class CBASEGenerator:
             for file in files:
                 if (file.lower().find(filter_files_containing_in_name.lower()) > -1 or not filter_files_containing_in_name.strip()) and not file.lower().find(".removed") > -1 :
                     template_file_found = True
-                    cm = self.__loadtemplates_firstfiltering_FILE__(os.path.join(root, file), dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name)
+                    cm = self.loadtemplates_firstfiltering_FILE(os.path.join(root, file), dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name)
                     result.Merge(cm)
 
         if not template_file_found:
@@ -193,7 +292,7 @@ class CBASEGenerator:
 
         return result
 
-    def __preserve_leading_tagwhitespace_in_multiline_searchandreplace(self, line, tag, desired_text):
+    def preserve_leading_tagwhitespace_in_multiline_searchandreplace(self, line, tag, desired_text):
         """
         For the case where the 'desired_text' that should replace the 'tag' in the 'line', if it is a multi-line
         replace, it will keep the leading spaces across all lines...otherwise simply returns the input desired_text
@@ -216,7 +315,7 @@ class CBASEGenerator:
 
         return desired_text
 
-    def __createoutput__(self, filenames_to_lines):
+    def createoutput(self, filenames_to_lines):
         for f in filenames_to_lines:
             print("+++++++++ ", f)
             filename = os.path.join(self.output_gen_file_dir, f)
@@ -229,28 +328,28 @@ class CBASEGenerator:
                     writer.write(line)
 
     def hasTag(self, line):
-        return line.find('<<<') > 0 and line.find('>>>') > 0
+        return '<<<' in line and '>>>' in line
 
     def hasSpecificTag(self, line, tag):
         # allows for defaults
         res = self.hasTag(line)
         if res:
-            res = line.find(tag.replace("<<<", "").replace(">>>", "")) > 0
+            res = tag.replace("<<<", "").replace(">>>", "") in line
         return res
 
     def hasDefault(self, a):
-        return a.find("::") > 0
+        return "::" in a
 
     def extractDefaultAndTag(self, a):
-        default = a[a.find("::", a.find("<<<")):a.find(">>>")].replace("::","")
-        tag = a[a.find("<<<"):a.find(">>>")+len(">>>")]
+        default = a[a.find("::", a.find("<<<")):a.rfind(">>>")].replace("::","")
+        tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
         return [tag, default]
 
     def removeDefault(self, a):
-        default = a[a.find("::", a.find("<<<")):a.find(">>>")]
+        default = a[a.find("::", a.find("<<<")):a.rfind(">>>")]
         return a.replace(default, "")
 
-    def __do_user_tags__(self, codemodel, dict_key_vals):
+    def do_user_tags(self, codemodel, dict_key_vals):
         for fn, lines in codemodel.filenames_to_lines.items():
             new_lines = []
             # this should be called last, so at this point any tags should be user defined.
@@ -269,10 +368,7 @@ class CBASEGenerator:
             codemodel.filenames_to_lines[fn] = new_lines
 
     '''Will use the base-class configured 'output directory' if no preserve directory is passed in. '''
-    def __preserve_usercode_in_files__(self, codemodel, preserve_dir = ""):
-        # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
-        # TCP gen might have a different output directory (typically COG will put files into an intermediate dir, and them copy them elsewhere
-        ## Preserve only files...
+    def preserve_usercode_in_files(self, codemodel, preserve_dir = ""):
         copy_filename_to_lines = codemodel.filenames_to_lines.copy() # prevent mutation whilst iteration.
         for filename_nopath in copy_filename_to_lines:
             file_to_preserve = ""
@@ -282,14 +378,6 @@ class CBASEGenerator:
                 file_to_preserve = os.path.join(preserve_dir, filename_nopath)
             preservation = Preservative(file_to_preserve)
             preservation.Emplace(codemodel.filenames_to_lines)
-
-        ## Preserve the entire directory
-        # preservation = None
-        # if preserve_dir == "":
-        #    preservation = Preservative(self.output_gen_file_dir)
-        # else:
-        #    preservation = Preservative(preserve_dir)
-        # preservation.Emplace(codemodel.filenames_to_lines)
 '''------------------------------------------------------------------------------------------------------'''
 
 
@@ -308,6 +396,6 @@ def FileCopyUtil(dir_from, dir_to, list_of_filenames):
             try:
                 shutil.copy(os.path.join(dir_from, filename), os.path.join(dir_to, filename))
             except OSError:
-                print("Copy of the file %s failed" % os.path.join(dir_from, filename))
+                warnings.warn("Copy of the file %s failed" % os.path.join(dir_from, filename))
     except OSError:
-        print("Creation of the directory %s failed" % dir_to)
+        warnings.warn("Creation of the directory %s failed" % dir_to)

@@ -66,7 +66,7 @@ class CCogGenerator(CBASEGenerator):
         #self.dict_to_replace_filenames['.t#'] = '.cs'
         #self.dict_to_replace_filenames['.tpp'] = '.cpp'  # there are no '.hpp' templates...but search and replace will apply '.t -> .h' first so '.tpp' becomes '.hpp'...grrr
 
-    def __loadtemplates_firstfiltering__(self, ccmodel):
+    def loadtemplates_firstfiltering(self, ccmodel):
         """
         See baseclass implementation. This just prepares the dictionary of things to replace
         for this type of codegeneration.
@@ -84,10 +84,10 @@ class CCogGenerator(CBASEGenerator):
         dict_to_replace_lines[__TAG_GROUP__] = ccmodel.group
         dict_to_replace_lines[__TAG_BRIEF__] = ccmodel.brief
 
-        return CBASEGenerator.__loadtemplates_firstfiltering__(self, dict_to_replace_lines, self.dict_to_replace_filenames)
+        return CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, self.dict_to_replace_filenames)
 
-    def __generate_filenames_from_templates__(self, file):
-        return CBASEGenerator.__generate_filenames_from_templates__(self,file, self.dict_to_replace_filenames)
+    def generate_filenames_from_templates(self, file):
+        return CBASEGenerator.generate_filenames_from_templates(self,file, self.dict_to_replace_filenames)
 
     def Generate(self, pythoninterfacegeneratorfilename, namespacenname, classname, group, brief, preserve_dir="",dclspc=""):
         sm = CCogCodeModel()
@@ -98,13 +98,13 @@ class CCogGenerator(CBASEGenerator):
         sm.group = group
         sm.brief = brief
 
-        self.cm = self.__loadtemplates_firstfiltering__(sm)
+        self.cm = self.loadtemplates_firstfiltering(sm)
 
         # Preserve user code.
-        self.__preserve_usercode_in_files__(self.cm,preserve_dir)
+        self.preserve_usercode_in_files(self.cm,preserve_dir)
 
         # Write output to file.
-        self.__createoutput__(self.cm.filenames_to_lines)
+        self.createoutput(self.cm.filenames_to_lines)
 
         # return the filenames
         filenames = []
@@ -166,7 +166,7 @@ def GenerateFile(output_dir, pythonfile, cog_template_file, author, namespacenam
 def GenerateDirectory(output_dir, pythonfile, cog_template_dir, author, namespacename, classname, group, brief, dclspc=""):
     cog_template_dir = cog_template_dir.strip()
     if os.path.isfile(cog_template_dir):
-        GenerateDirectory(output_dir, pythonfile, cog_template_dir, author, namespacename, classname, group, brief, dclspc)
+        GenerateFile(output_dir, pythonfile, cog_template_dir, author, namespacename, classname, group, brief, dclspc)
         return
     if not os.path.isdir(cog_template_dir):
         print("Error : dir '" + cog_template_dir + "' does not exist. Aborting.")

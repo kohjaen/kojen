@@ -109,7 +109,7 @@ class CUMLGenerator(CBASEGenerator):
 
     # Load Template and do 1st round of filtering.
     # Returns {filename,[lines]}
-    def __loadtemplates_firstfiltering__(self, classdiagram, declspc):
+    def loadtemplates_firstfiltering(self, classdiagram, declspc):
         """
         See baseclass implementation. This just prepares the dictionary of things to replace
         for this type of codegeneration.
@@ -162,8 +162,8 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames['.t'] = '.h'
                     dict_to_replace_filenames['.hpp'] = '.cpp'
 
-                    tmp_res = CBASEGenerator.__loadtemplates_firstfiltering__(self, dict_to_replace_lines, dict_to_replace_filenames, "Class")
-                    tmp_res = self.__update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
+                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Class")
+                    tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
                 # INTERFACE
                 elif not classobj.IS_ENUM and not classobj.IS_STRUCT and not classobj.AUTOGEN and classobj.PURE_VIRTUAL_INTERFACE:
@@ -202,8 +202,8 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames['.t'] = '.h'
                     dict_to_replace_filenames['.hpp'] = '.cpp'
 
-                    tmp_res = CBASEGenerator.__loadtemplates_firstfiltering__(self,dict_to_replace_lines,dict_to_replace_filenames, "Interface")
-                    tmp_res = self.__update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
+                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames, "Interface")
+                    tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
                 # ENUM
                 elif classobj.IS_ENUM and not classobj.IS_STRUCT:
@@ -224,8 +224,8 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames['.ty'] = '.py'
                     dict_to_replace_filenames['.t'] = '.h'
                     dict_to_replace_filenames['.hpp'] = '.cpp'
-                    tmp_res = CBASEGenerator.__loadtemplates_firstfiltering__(self, dict_to_replace_lines, dict_to_replace_filenames, "Enum")
-                    tmp_res = self.__update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
+                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Enum")
+                    tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
                 # STRUCT
                 elif not classobj.IS_ENUM and classobj.IS_STRUCT:
@@ -251,8 +251,8 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames['.t'] = '.h'
                     dict_to_replace_filenames['.hpp'] = '.cpp'
 
-                    tmp_res = CBASEGenerator.__loadtemplates_firstfiltering__(self, dict_to_replace_lines, dict_to_replace_filenames, "Struct")
-                    tmp_res = self.__update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
+                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Struct")
+                    tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
 
             ### PROJECT FILES
@@ -273,8 +273,8 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames = {}
                     dict_to_replace_lines["<<<PROJECT_REFERENCE_INCLUDES>>>"] = self.language.GetProjectIncludes(dependency_set)
                     dict_to_replace_filenames["Project"] = namespace
-                    tmp_res = CBASEGenerator.__loadtemplates_firstfiltering__(self, dict_to_replace_lines, dict_to_replace_filenames, "Project")
-                    tmp_res = self.__update_filename_path_from_namespace(namespace, tmp_res)
+                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Project")
+                    tmp_res = self.update_filename_path_from_namespace(namespace, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
                 except:
                     pass
@@ -283,7 +283,7 @@ class CUMLGenerator(CBASEGenerator):
         else:
             raise Exception( str(classdiagram) + " is not of type ClassDiagram")
 
-    def __update_filename_path_from_namespace(self, fully_qualified_namespace, codemodel):
+    def update_filename_path_from_namespace(self, fully_qualified_namespace, codemodel):
         """
         Will return a CodeModels' filenames with a path built up from a fully qualified namespace.
         For example: 'Filename.cpp', and input namespace of 'XNamespace1::XNamespace2'
@@ -303,16 +303,16 @@ class CUMLGenerator(CBASEGenerator):
         return codemodel
 
 def GenerateUML(umlgenerator, classdiagram, dclspc=""):
-    cm = umlgenerator.__loadtemplates_firstfiltering__(classdiagram,dclspc)
+    cm = umlgenerator.loadtemplates_firstfiltering(classdiagram,dclspc)
     # Preserve user code.
-    umlgenerator.__preserve_usercode_in_files__(cm)
+    umlgenerator.preserve_usercode_in_files(cm)
     '''
     # Round-trip Code Preservation. Will load the code to p
     preservation = Preservative(umlgenerator.output_gen_file_dir)
     preservation.Emplace(cm.filenames_to_lines)
     '''
     # Write output to file.
-    umlgenerator.__createoutput__(cm.filenames_to_lines)
+    umlgenerator.createoutput(cm.filenames_to_lines)
 
 def Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc="", templatefiledir = ""):
 

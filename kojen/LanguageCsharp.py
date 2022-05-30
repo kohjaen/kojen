@@ -835,14 +835,14 @@ class LanguageCsharp:
 
     # Packedness
     def AddAttributePackedToDecl(self, declaration):
-        '''
+        """
         ws = ' '
         len_declaration = len(declaration)
         trailingspacecnt = 50 - len_declaration
         for i in range(trailingspacecnt):
             ws = ws + ' '
         result = declaration + ws + '__attribute__ ((packed))'
-        '''
+        """
         return declaration
 
     def DeleteArray(self, instancename):
@@ -942,8 +942,6 @@ class LanguageCsharp:
             return 'for (size_t i = ' + str(start) + '; i < ' + str(stop) + '; ++i)'
         return 'for (size_t i = ' + str(start) + '; i < ' + str(stop) + '; i+=' + str(incr) + ')'
 
-    # ------------------------------ End
-
     def LicenseAgreement(self):
         product_name = "'KoJen'"
         result = []
@@ -990,7 +988,7 @@ class LanguageCsharp:
 
     def GetFormatNestedNamespaceEnd(self, classObj):
         """
-         Returns the C++ format string for a nested namespace end-declaration on one line...
+        Returns the C++ format string for a nested namespace end-declaration on one line...
 
         @param classObj: class information from vppclassdiagram.Class
         @return: string i.e. for "namespace XFullStack { namespace XProtocol {" will return "} }"
@@ -1116,7 +1114,7 @@ class LanguageCsharp:
             raise RuntimeError("classObj not of type 'Class' OR classDiagram not of type 'ClassDiagram'")
 
     def GetTypeAndNameFromMultiplicityAndModifier(self, classObj, TYPE, TYPE_MODIFIER, MULTIPLICITY, NAME):
-        '''
+        """
         https://www.researchgate.net/figure/Mappings-from-C-declarations-to-UML-multiplicity-ranges-depend-on-pointer-reference_tbl1_4207986
         http://www.cs.kent.edu/~jmaletic/papers/JIST07.pdf
 
@@ -1125,7 +1123,7 @@ class LanguageCsharp:
         @param MULTIPLICITY:
         @param NAME:
         @return:
-        '''
+        """
         # Csharpify
         TYPE = TYPE.replace("::",".")
         if TYPE_MODIFIER.find("*") > -1 or TYPE_MODIFIER.find("&") > -1:
@@ -1420,14 +1418,14 @@ class LanguageCsharp:
         return result
 
     def GetProjectIncludes(self, setOfProjectDependencies):
-        '''
+        """
         Used in a .csharp project to include other dependant project files :
 
         <ItemGroup>
             <ProjectReference Include="..\XTestingClassTypes\XTestingClassTypes.csproj" />
             <ProjectReference Include="..\XTestingInheritance\XTestingInheritance.csproj" />
         </ItemGroup>
-        '''
+        """
         result = ""
         if len(setOfProjectDependencies) > 0:
             result = "<ItemGroup>\n"
