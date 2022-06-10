@@ -2,7 +2,7 @@
 
 # Description
 
-Kojen is a C++ protocol, C++ state-machine and C++/C# Class Diagram (from UML Code Model) code-generation tool written in Python and existing within the Python Package Index (PyPi). Python 3 is supported. Python 2 was supported, but there are no guarantees as I have not tried since deprecation. To install run ```python -m pip install kojen```.  
+Kojen is a C++ protocol, C++ state-machine and C++/C# Class (from UML) code-generation tool written in Python and existing within the Python Package Index (PyPi). Python 3 is supported. Python 2 was supported, but there are no guarantees as I have not tried since deprecation. To install run ```python -m pip install kojen```.  
 
 The default generated state-machine uses the fast and lightweight single-header-file-only [boost sml](https://boost-ext.github.io/sml/). It is linked to the repository as a git sub-module for an out-the-box solution. This is suitable for both embedded and PC applications using C++14 and higher.
 
