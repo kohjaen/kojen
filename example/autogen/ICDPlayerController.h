@@ -18,7 +18,7 @@
 /// {{{USER_HEADER}}}
 
 // For printouts.
-//#define _OUT_CDPlayer_DISP_
+#define _OUT_CDPlayer_DISP_
 
 /** Should you wish to run your state machine on the caller thread instead of using a threaded dispatcher,
     add '#undef THREADED' in the 'USER_FORWARD_DECLARATIONS' preservation tags.
