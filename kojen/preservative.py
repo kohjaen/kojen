@@ -194,8 +194,8 @@ class TestPreservative(unittest.TestCase):
     """
     def setUp(self):
         self.TempFolder = "testpreservative"
-        self.HeaderFileName = "TestPreservative.h"
-        self.SourceFileName = "TestPreservative.cpp"
+        self.HeaderFileName = os.path.join(self.TempFolder, "TestPreservative.h")
+        self.SourceFileName = os.path.join(self.TempFolder, "TestPreservative.cpp")
         self.Preserve1 = "aabbccddeeffgghh"
         self.Preserve2 = "1122334455667788"
         self.Preserve3 = "howdydooody"
@@ -221,7 +221,7 @@ class TestPreservative(unittest.TestCase):
             print("Creation of the directory %s failed" % self.TempFolder)
 
     def makeFile(self, filename):
-        with open(os.path.join(self.TempFolder, filename), 'w+') as temp_file:
+        with open(filename, 'w+') as temp_file:
             for i in range(10):
                 temp_file.write('1' + i*"1" + '\n')
             temp_file.write('{{{USER_STUFF_1\n')

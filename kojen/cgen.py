@@ -111,7 +111,9 @@ def camel_case(str):
 
 
 def camel_case_small(str):
-    return str[0].lower() + str[1:]
+    if str:
+        return str[0].lower() + str[1:]
+    return ""
 
 
 def caps(str):
@@ -319,9 +321,7 @@ class CBASEGenerator:
         for f in filenames_to_lines:
             print("+++++++++ ", f)
             filename = os.path.join(self.output_gen_file_dir, f)
-
             os.makedirs(os.path.dirname(filename), exist_ok=True)
-
             with open(filename, 'w') as writer:
                 for line in filenames_to_lines[f]:
                     line = line.replace('\t',"    ") # Last filter! Convert tabs to 4 spaces...
@@ -399,3 +399,8 @@ def FileCopyUtil(dir_from, dir_to, list_of_filenames):
                 warnings.warn("Copy of the file %s failed" % os.path.join(dir_from, filename))
     except OSError:
         warnings.warn("Creation of the directory %s failed" % dir_to)
+
+''' TODO : Testing
+    - template extending and excluding.
+    - user tags
+'''

@@ -863,9 +863,5 @@ class TestDBFormat(unittest.TestCase):
         self.assertTrue(tt[1][0] == 'StateOrange' 	and tt[1][1] == 'EventButtonPressed' and tt[1][2] == 'StateGreen' 	and tt[1][3] == 'OnGreen' 	and tt[1][4] == 'GuardCanChangeToGreen', "Error with row 2 of transition table from TestStateMachine in TestModels.vpp")
         self.assertTrue(tt[2][0] == 'StateGreen' 	and tt[2][1] == 'EventButtonPressed' and tt[2][2] == 'StateRed' 	and tt[2][3] == 'OnRed' 	and tt[2][4] == 'GuardCanChangeToRed', "Error with row 3 of transition table from TestStateMachine in TestModels.vpp")
 
-#########################################################
-# Development Tests
-#########################################################
-
 if __name__ == "__main__":
     unittest.main()

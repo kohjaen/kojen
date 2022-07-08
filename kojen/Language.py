@@ -209,8 +209,22 @@ class Language:
     def This(self):
         raise RuntimeError("Language Feature Not Implemented")
 
-    def ParameterString(self, parameters):
-        raise RuntimeError("Language Feature Not Implemented")
+    def ParameterString(self,  parameters=None):
+        if parameters is None:
+            parameters = []
+
+        if str(type(parameters)) == "<type 'list'>" or str(type(parameters)) == "<class 'list'>":  # Python2 gives the first, python3 the second!
+            parameter_string = ''
+            size = len(parameters)
+            cnt = 0
+            for param in parameters:
+                parameter_string += param[1]
+                if cnt != (size - 1):
+                    parameter_string += ', '
+                cnt += 1
+            return parameter_string
+
+        raise Exception("Please use OrderedDict when passing parameters into 'ParameterString'")
 
     # 1 means ++
     def For_Range(self, start, stop, incr=1):

@@ -26,7 +26,7 @@ __author__ = 'eugene'
     SOFTWARE.
 
 '''
-from Language import *
+from .Language import *
 
 
 class LanguagePython(Language):
