@@ -17,13 +17,11 @@
 /// {{{USER_HEADER}}}
 /// {{{USER_HEADER}}}
 
-// For printouts.
-//#define _OUT_<<<STATEMACHINENAME>>>_DISP_
+#define VERBOSE <<<Verbose::1>>>
+#if VERBOSE == 1
+#define _OUT_<<<STATEMACHINENAME>>>_DISP_
+#endif
 
-/** Should you wish to run your state machine on the caller thread instead of using a threaded dispatcher,
-    add '#undef THREADED' in the 'USER_FORWARD_DECLARATIONS' preservation tags.
-*/
-#define THREADED
 /// {{{USER_FORWARD_DECL}}}
 /// {{{USER_FORWARD_DECL}}}
 

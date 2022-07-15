@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = 'eugene'
 
@@ -70,9 +70,9 @@ Step 3) Search for the following pairs of tags replacing each tag with the all t
 '''
 
 try:
-    from cgen import CBASEGenerator, CCodeModel, alpha, __getnextalphabet__, __resetalphabet__, even_space
+    from cgen import CBASEGenerator, CCodeModel, get_next_alphabet, reset_alphabet, even_space
 except (ModuleNotFoundError, ImportError) as e:
-    from .cgen import CBASEGenerator, CCodeModel, alpha, __getnextalphabet__, __resetalphabet__, even_space
+    from .cgen import CBASEGenerator, CCodeModel, get_next_alphabet, reset_alphabet, even_space
 
 try:
     from vppclassdiagram import  ExtractClassDiagram, ExtractAllClassDiagrams, ClassDiagram, Class, ClassOperation, ClassAttribute, Package, Association, Inheritance

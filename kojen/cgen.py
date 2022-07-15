@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = 'eugene'
 
@@ -62,20 +62,20 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-def warning(text):
+def warning(text) -> None:
     print(bcolors.WARNING + "Warning : " + text + bcolors.ENDC)
 
-def info(text):
+def info(text) -> None:
     print(bcolors.OKGREEN + "Info : " + text + bcolors.ENDC)
 
-def error(text):
+def error(text) -> None:
     print(bcolors.FAIL + "Error : " + text + bcolors.ENDC)
 
 class CCodeModel:
     def __init__(self):
         self.filenames_to_lines = OrderedDict()
 
-    def Merge(self, codemodel):
+    def Merge(self, codemodel) -> None:
         """
         Will merge the input codemodel with this.
 
@@ -87,36 +87,37 @@ class CCodeModel:
 '''------------------------------------------------------------------------------------------------------'''
 alpha = 97
 
-
-def __getnextalphabet__():
+def get_next_alphabet() -> str:
     global alpha
     alpha = alpha + 1
-    if alpha == 120:
+    if alpha == 123:
         alpha = 65
     if alpha == 91:
         alpha = 97
+    return chr(alpha)
 
 
-def __resetalphabet__():
+def reset_alphabet() -> str:
     global alpha
     alpha = 97
+    return chr(alpha)
 
 
-def even_space(str, nospaces=35):
+def even_space(str, nospaces=35) -> str:
     return str + (nospaces - len(str)) * " "
 
 
-def camel_case(str):
+def camel_case(str) -> str:
     return str.title()
 
 
-def camel_case_small(str):
+def camel_case_small(str) -> str:
     if str:
         return str[0].lower() + str[1:]
     return ""
 
 
-def caps(str):
+def caps(str) -> str:
     return str.upper()
 
 
@@ -147,7 +148,7 @@ class CBASEGenerator:
                     os.makedirs(outputfiledir)
                     info("Directory '" + outputfiledir + "' does not exist...created.")
 
-    def generate_filenames_from_templates(self,file, dict_to_replace_filenames):
+    def generate_filenames_from_templates(self, file, dict_to_replace_filenames):
         for tag, desired_text in dict_to_replace_filenames.items():
             file = file.replace(tag, desired_text)
         return file
@@ -338,7 +339,7 @@ class CBASEGenerator:
         return res
 
     def hasDefault(self, a):
-        return "::" in a
+        return a.find("::", a.find("<<<")) >= 0
 
     def extractDefaultAndTag(self, a):
         default = a[a.find("::", a.find("<<<")):a.rfind(">>>")].replace("::","")
@@ -400,7 +401,3 @@ def FileCopyUtil(dir_from, dir_to, list_of_filenames):
     except OSError:
         warnings.warn("Creation of the directory %s failed" % dir_to)
 
-''' TODO : Testing
-    - template extending and excluding.
-    - user tags
-'''

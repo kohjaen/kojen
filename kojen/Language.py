@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = 'eugene'
 '''
@@ -148,7 +148,7 @@ class Language:
     def DeclareStruct(self, structname, declspec=''):
         raise RuntimeError("Language Feature Not Implemented")
 
-    def DeclareEnum(self, enum):
+    def DeclareEnum(self, enum, whitespace):
         raise RuntimeError("Language Feature Not Implemented")
 
     def DeclareHashDefine(self, name, val):

@@ -1,7 +1,8 @@
 /**
  * @file
  * @ingroup <<<GROUP>>>
- * @brief   <<<BRIEF>>>
+ * @brief   The state machine interface for the <<<STATEMACHINENAME>>>.
+ * @detail  <<<BRIEF>>>
  *
  *          This statemachine has the following transition table:
  *
@@ -14,86 +15,28 @@
  * @author  <<<AUTHOR>>>
  */
 
+#define SM_THREAD_<<<StateMachineThread::1>>>
+
+using System.Threading;
+
 namespace <<<NAMESPACE>>>
 {
     /// <summary>
-    /// E<<<STATEMACHINENAME>>>State internal enumeration.
-    /// </summary>
-    internal enum E<<<STATEMACHINENAME>>>State : ushort                                                                                                      
-    {
-    <<<PER_STATE_BEGIN>>>
-        <<<STATENAME>>>,
-    <<<PER_STATE_END>>>
-    };
-    /// <summary>
-    /// <<<STATEMACHINENAME>>>State internal base class.
-    /// </summary>
-    internal class <<<STATEMACHINENAME>>>State
-    {
-        <<<PER_EVENT_BEGIN>>>
-        internal virtual void Trigger<<<EVENTNAME>>>(ref <<<STATEMACHINENAME>>>Context context, /*ref*/ <<<STATEMACHINENAME>>>StateMachine sm, ref <<<EVENTNAME>>> data)
-        {}
-        <<<PER_EVENT_END>>>
-        internal virtual void OnEntry(ref <<<STATEMACHINENAME>>>Context context)
-        {}
-        internal virtual void OnExit(ref <<<STATEMACHINENAME>>>Context context)
-        {}
-    };
-    <<<PER_STATETRANSITION_BEGIN>>>
-    /// <summary>
-    /// <<<STATENAME>>> specific internal implementation.
-    /// </summary>
-    internal class <<<STATENAME>>> : <<<STATEMACHINENAME>>>State
-    {
-        <<<PER_EVENTTRANSITION_BEGIN>>>
-        /// <summary>
-        /// Overridden on Trigger<<<EVENTNAME>>> function.
-        /// </summary>
-        internal override void Trigger<<<EVENTNAME>>>(ref <<<STATEMACHINENAME>>>Context context, /*ref*/ <<<STATEMACHINENAME>>>StateMachine sm, ref <<<EVENTNAME>>> data)
-        {
-            <<<PER_GUARDTRANSITION_BEGIN>>>
-            if (context.<<<GUARDNAME>>>())
-            {
-                sm.Exit<<<<STATENAMEIFNEXTSTATE>>>>(ref context);
-                context.<<<ACTIONNAME>>>(ref data);
-                sm.Enter<<<<NEXTSTATENAME>>>>(ref context);
-                sm.estate = E<<<STATEMACHINENAME>>>State.<<<NEXTSTATENAME>>>;
-                return;
-            }
-            <<<PER_GUARDTRANSITION_END>>>
-        }
-        <<<PER_EVENTTRANSITION_END>>>
-        /// <summary>
-        /// <<<STATENAME>>> overridden on entry action.
-        /// </summary>
-        internal override void OnEntry(ref <<<STATEMACHINENAME>>>Context context)
-        {
-            context.On<<<STATENAME>>>Entry();
-        }
-        /// <summary>
-        /// <<<STATENAME>>> overridden on exit action.
-        /// </summary>
-        internal override void OnExit(ref <<<STATEMACHINENAME>>>Context context)
-        {
-            context.On<<<STATENAME>>>Exit();
-        }
-    };
-    <<<PER_STATETRANSITION_END>>>
-
-    /// <summary>
     /// <<<STATEMACHINENAME>>>StateMachine public implementation.
     /// </summary>
-    public class <<<STATEMACHINENAME>>>StateMachine
+    public partial class <<<STATEMACHINENAME>>>StateMachine
     {
-        public <<<STATEMACHINENAME>>>StateMachine(/*ref*/ <<<STATEMACHINENAME>>>Context context)
+        public <<<STATEMACHINENAME>>>StateMachine(I<<<STATEMACHINENAME>>>Context context)
         {
             controller = context;
-            Reset(ref controller);
-        }
-        internal void Reset(ref <<<STATEMACHINENAME>>>Context context)
-        {
-            Enter<<<<STATE_0>>>>(ref context);
-            estate = E<<<STATEMACHINENAME>>>State.<<<STATE_0>>>;
+            Reset();
+#if SM_THREAD_1
+            dispatchThread = new Thread(new ThreadStart(Dispatch))
+            {
+                IsBackground = true
+            };
+            dispatchThread.Start();
+#endif
         }
         <<<PER_STATE_BEGIN>>>
         /// <summary>
@@ -110,29 +53,15 @@ namespace <<<NAMESPACE>>>
         /// </summary>
         public void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>)
         {
-            <<<EVENTNAME>>> evt = new <<<EVENTNAME>>>();
+            <<<EVENTNAME>>> evt = new ();
             <<<EVENTMEMBERSLITEINSTANTIATE::evt>>>
-            state.Trigger<<<EVENTNAME>>>(ref controller, /*ref*/ this, ref evt);
+#if SM_THREAD_1
+            dispatchQ.Enqueue(evt);
+#else
+            state.Trigger<<<EVENTNAME>>>(controller, this, evt);
+#endif
         }
         <<<PER_EVENT_END>>>
-        /// <summary>
-        /// Generic function to enter the state 'StateT'.
-        /// </summary>
-        internal void Enter<StateT>(ref <<<STATEMACHINENAME>>>Context context) where StateT : new()  
-        {
-            state = new StateT() as <<<STATEMACHINENAME>>>State;
-            state.OnEntry(ref context);
-        }
-        /// <summary>
-        /// Generic function to exit the state 'StateT'.
-        /// </summary>
-        internal void Exit<StateT>(ref <<<STATEMACHINENAME>>>Context context)
-        {
-            state.OnExit(ref context);
-        }
-        internal <<<STATEMACHINENAME>>>Context controller;
-        internal E<<<STATEMACHINENAME>>>State estate;
-        internal <<<STATEMACHINENAME>>>State state;
     };
 } // namespace <<<NAMESPACE>>>
 

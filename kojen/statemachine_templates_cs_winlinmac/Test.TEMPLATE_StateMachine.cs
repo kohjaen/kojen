@@ -9,63 +9,97 @@
  *
  * @author  <<<AUTHOR>>>
  */
+
+#define VERBOSE_<<<Verbose::1>>>
+
+using System;
 using <<<NAMESPACE>>>;
-/// {{{USER_USING_DECLARATIONS}}}
-/// {{{USER_USING_DECLARATIONS}}}
+// {{{USER_USING_DECLARATIONS}}}
+// {{{USER_USING_DECLARATIONS}}}
+using Xunit;
 
 namespace <<<NAMESPACE>>>Test
 {
-    internal class Test<<<STATEMACHINENAME>>>Controller : <<<STATEMACHINENAME>>>Context
+    internal class Test<<<STATEMACHINENAME>>>Controller : I<<<STATEMACHINENAME>>>Context
     {
         /// <summary>
         /// Test context constructor.
         /// </summary>
         internal Test<<<STATEMACHINENAME>>>Controller()
         {
-            /// {{{USER_CONSTRUCTOR}}}
-            /// {{{USER_CONSTRUCTOR}}}
+            // {{{USER_CONSTRUCTOR}}}
+            // {{{USER_CONSTRUCTOR}}}
         }
         /// <summary>
         /// Overridden guards.
         /// </summary>
         <<<PER_GUARD_BEGIN>>>
-        public override bool <<<GUARDNAME>>>()
+        public virtual bool <<<GUARDNAME>>>()
         {
-            /// {{{USER_<<<GUARDNAME>>>}}}
-            /// {{{USER_<<<GUARDNAME>>>}}}
-            return base.<<<GUARDNAME>>>();
+            // {{{USER_<<<GUARDNAME>>>}}}
+            // {{{USER_<<<GUARDNAME>>>}}}
+#if VERBOSE_1
+            Console.WriteLine("<<<STATEMACHINENAME>>> >> <<<GUARDNAME>>> is " + ((<<<guardName>>>) ? ("True") : ("False")));
+#endif
+            //return base.<<<GUARDNAME>>>();
+            return <<<guardName>>>;
         }
+        protected bool <<<guardName>>> = false;
         <<<PER_GUARD_END>>>
-        /// <summary>
-        /// Overridden on state entry/exit.
-        /// </summary>
-        <<<PER_STATE_BEGIN>>>
-        public override void On<<<STATENAME>>>Entry()
-        {
-            base.On<<<STATENAME>>>Entry();
-            /// {{{USER_<<<STATENAME>>>_on_entry}}}
-            /// {{{USER_<<<STATENAME>>>_on_entry}}}
-        }
-        public override void On<<<STATENAME>>>Exit()
-        {
-            base.On<<<STATENAME>>>Exit();
-            /// {{{USER_<<<STATENAME>>>_on_exit}}}
-            /// {{{USER_<<<STATENAME>>>_on_exit}}}
-        }
-        <<<PER_STATE_END>>>
         /// <summary>
         /// Overridden actions.
         /// </summary>
         <<<PER_ACTION_SIGNATURE_BEGIN>>>
-        public override void <<<ACTIONNAME>>>(ref <<<EVENTNAME>>> data)
+        public virtual void <<<ACTIONNAME>>>(<<<EVENTNAME>>> data)
         {
-            base.<<<ACTIONNAME>>>(ref data);
-            /// {{{USER_<<<ACTIONNAME>>>_<<<EVENTNAME>>>}}}
-            /// {{{USER_<<<ACTIONNAME>>>_<<<EVENTNAME>>>}}}
+            // {{{USER_<<<ACTIONNAME>>>_<<<EVENTNAME>>>}}}
+            // {{{USER_<<<ACTIONNAME>>>_<<<EVENTNAME>>>}}}
+            //handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.Set();
+#if VERBOSE_1
+            Console.WriteLine("<<<STATEMACHINENAME>>> >> <<<ACTIONNAME>>> on event <<<EVENTNAME>>>...");
+#endif
         }
         <<<PER_ACTION_SIGNATURE_END>>>
-        /// {{{USER_MEMBERS}}}
-        /// {{{USER_MEMBERS}}}
+        /// <summary>
+        /// Overridden on state entry/exit.
+        /// </summary>
+        <<<PER_STATE_BEGIN>>>
+        public virtual void On<<<STATENAME>>>Entry()
+        {
+            // {{{USER_On<<<STATENAME>>>Entry}}}
+            // {{{USER_On<<<STATENAME>>>Entry}}}
+#if VERBOSE_1
+            Console.WriteLine("<<<STATEMACHINENAME>>> >> on<<<STATENAME>>>Entry...");
+#endif
+        }
+        public virtual void On<<<STATENAME>>>Exit()
+        {
+            // {{{USER_On<<<STATENAME>>>Exit}}}
+            // {{{USER_On<<<STATENAME>>>Exit}}}
+#if VERBOSE_1
+            Console.WriteLine("<<<STATEMACHINENAME>>> >> on<<<STATENAME>>>Exit...");
+#endif
+        }
+        <<<PER_STATE_END>>>
+        /// <summary>
+        ///
+        /// </summary>
+        <<<PER_ACTION_SIGNATURE_BEGIN>>>
+        //OsWrappers::Event handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry;
+        <<<PER_ACTION_SIGNATURE_END>>>
+
+        /// <summary>
+        ///
+        /// </summary>
+        <<<PER_ACTION_SIGNATURE_BEGIN>>>
+        public void Check<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry()
+        {
+            //CHECK_TRUE(cSuccess == handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.TimedWait(cEventTimeoutMs));
+            //handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.Reset();
+        }
+        <<<PER_ACTION_SIGNATURE_END>>>
+        // {{{USER_MEMBERS}}}
+        // {{{USER_MEMBERS}}}
     };
 
     /// <summary>
@@ -75,19 +109,20 @@ namespace <<<NAMESPACE>>>Test
     {
         internal void Test<<<STATEMACHINENAME>>>States()
         {
-            Test<<<STATEMACHINENAME>>>Controller context = new Test<<<STATEMACHINENAME>>>Controller();
-            <<<STATEMACHINENAME>>>StateMachine sm = new <<<STATEMACHINENAME>>>StateMachine(context);
-            /// {{{USER_UNIT_TEST_STATES}}}
-            /// {{{USER_UNIT_TEST_STATES}}}
+            Test<<<STATEMACHINENAME>>>Controller context = new ();
+            <<<STATEMACHINENAME>>>StateMachine sm = new (context);
+            // {{{USER_UNIT_TEST_STATES}}}
+            // {{{USER_UNIT_TEST_STATES}}}
         }
-        /// {{{USER_TESTS}}}
-        /// {{{USER_TESTS}}}
+        // {{{USER_TESTS}}}
+        // {{{USER_TESTS}}}
+        [Fact]
         public void Run() 
         {
             Test<<<STATEMACHINENAME>>>States();
             // Don't forget to run your tests here.
-            /// {{{USER_TEST_SUITE_TESTS}}}
-            /// {{{USER_TEST_SUITE_TESTS}}}
+            // {{{USER_TEST_SUITE_TESTS}}}
+            // {{{USER_TEST_SUITE_TESTS}}}
         }
     };
 }

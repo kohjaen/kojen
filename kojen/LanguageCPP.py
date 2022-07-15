@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = 'eugene'
 
@@ -42,6 +42,10 @@ try:
 except (ModuleNotFoundError, ImportError) as e:
     from .vppclassdiagram import *
 
+try:
+    from Language import *
+except (ModuleNotFoundError, ImportError) as e:
+    from .Language import *
 
 class UnitTestFramework:
     NO_FW, BOOST, CPPuTEST, MINUNIT = range(4)
@@ -464,7 +468,7 @@ class UnitTestWriter:
         return result
 
 
-class LanguageCPP:
+class LanguageCPP(Language):
 
     """USED"""
     def MessageDescriptor(self, interface, struct):
@@ -878,11 +882,15 @@ class LanguageCPP:
         return 'struct ' + structname + '\n'
 
     def DeclareEnum(self, enum, whitespace):
-        result = whitespace + "enum " + enum.Name + "{\n"
+        result = ""
+        if hasattr(enum, 'documentation'):
+            result += self.FormatComment(enum.documentation)
+        result += "enum class " + enum.Name + " : unsigned char\n"
+        result += "{\n"
         for descriptionName, val in enum.items():
-            result += whitespace*2 + str(descriptionName) + " = " + str(val) + ",\n"
+            result += whitespace + str(descriptionName) + " = " + str(val) + ",\n"
         result = result[:len(result)-2] + "\n"  # items from the beginning through end-1 (i.e. remove last character which is a ','
-        result += whitespace + "};\n"
+        result += "};\n"
         return result
 
     def DeclareHashDefine(self, name, val):
@@ -896,7 +904,7 @@ class LanguageCPP:
     '''USED'''
     def FormatComment(self, commenttext):
         if commenttext:
-            return '// ' + commenttext
+            return '// ' + commenttext + "\n"
         return ""
 
     def FormatLongComment(self, commenttext):
