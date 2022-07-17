@@ -2,7 +2,7 @@
 
 # Description
 
-Kojen is a C++ protocol, C++ state-machine and C++/C# Class (from UML) code-generation tool written in Python and existing within the Python Package Index (PyPi). Python 3 is supported. Python 2 was supported, but there are no guarantees as I have not tried since deprecation. To install run ```python -m pip install kojen```.  
+Kojen is a protocol (C++), state-machine(C++/C#/Python) and Class (C++/C# from UML) code-generation tool written in Python and existing within the Python Package Index (PyPi). Python >= 3.6.8 is supported. To install run ```python -m pip install kojen```.  
 
 The default generated state-machine uses the fast and lightweight single-header-file-only [boost sml](https://boost-ext.github.io/sml/). It is linked to the repository as a git sub-module for an out-the-box solution. This is suitable for both embedded and PC applications using C++14 and higher.
 
@@ -149,7 +149,7 @@ A summary to link it up:
 * Set the Receiver to the derived IConnection. You will then get messages in the message receiving functions...override the correct ones to handle them.
 * Use the Transmitter to send.
 
-## State Machine
+## State Machine in C++
 ### Requrements
 - Don't forget to update your git submodules when checking out.
 ### Input
@@ -192,8 +192,12 @@ from kojen.kojentypes import *
 EventPlay = Struct('EventPlay')
 EventPlay.AddType('m_track_no','uint16_t')
 
-eventsinterface = Interface('IMyIntefaceIO')
+eventsinterface = Interface('params')
 eventsinterface.AddStruct(EventPlay)
+
+# Optional features
+eventsinterface.AddUserTag("StateMachineThread", 1) # 0 = SM runs on caller thread, 1 = SM runs on its own thread. Default is 1.
+eventsinterface.AddUserTag("Verbose", 1)            # 0 = No printouts, 1 = printouts. Default is 1.
 
 # Transition Table.
 transition_table = []
@@ -227,7 +231,7 @@ Execute `Generate.py` using python. Your C++ code should be generated to the con
 
 > **Please note** : you may may wish to parameterize events in your statemachine. An event is of type `kojen.Struct` in a `kojen.Interface` object. 
 > Simply follow the quickstart for protocols, creating and returning an interface : your Event structs need to have the exact same name as defined in the transition table.
-> You should thus pass your interface object  as the *eventsinterface* argument to the generator instead of **None**. 
+> You should thus pass your interface object  as the *eventsinterface* argument to the generator instead of **None**.
 
 ### Output
 
@@ -260,6 +264,26 @@ As the state-machine-implementation uses the controller base class, the followin
 All state queries and event triggering are done using the ```sm``` instance.
 
 Due to the use of move-semantics, parameterized event structs are unique_ptr's (allocated in fixed-blocks for embedded applications) and thus once an event is triggered those pointers are no longer valid in the calling context.
+
+## State Machine in C#
+
+Similar to the above example, the only difference is the Generate call to use.
+
+```python
+   ...
+   Generate.StateMachine_CSHARP(...)
+   ...
+```
+
+## State Machine in Python
+
+Similar to the above example, the only difference is the Generate call to use.
+
+```python
+    ...
+   Generate.StateMachine_PYTHON(...)
+   ...
+```
 
 <!---
 ### Deferred Events

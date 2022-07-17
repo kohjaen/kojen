@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 def FromTransitionTable(TransitionTable, outputPath):
     assert len(TransitionTable) >= 1
     assert len(TransitionTable[0]) == 5

@@ -5,7 +5,7 @@ with open("README.MD", "r") as fh:
 
 setuptools.setup(
     name="kojen",
-    version="1.1.23",
+    version="1.1.24",
     author="kohjaen",
     author_email="koh.jaen@yahoo.de",
     description="Code generation tools.",
@@ -28,7 +28,9 @@ setuptools.setup(
                        'classdiagram_templates/CPP/*.*', 
                        'protocol_templates/CPP/*.*', 
                        'protocol_templates/PY/*.*',
+                       'statemachine_templates_cs_winlinmac/*.*',
                        'statemachine_templates_embedded_arm/*.*',
+                       'statemachine_templates_py/*.*',
                        'statemachine_templates_pc_boost/*.*', 
                        'docs/images/*.*', 
                        'docs/*.*']},

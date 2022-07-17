@@ -45,12 +45,12 @@ protocolfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), "example
 Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec, author, group, brief)
 
 #
-# Generate Statemachine (from TransitionTable ... to do it directly from a model, please write to koh.jaen@yahoo.de)
+# Generate Statemachine (C++)
 #
 namespacename = "CDPlayerSM"
 statemachinenameprefix = "CDPlayer"
 declspec = ""
-templatedir = "" # defaults are for 'SML'
+templatedir = "" # use defaults
 
 from kojen.kojentypes import *
 EventPlay = Struct('EventPlay')
@@ -58,6 +58,10 @@ EventPlay.AddType('m_track_no','uint16_t')
 
 eventsinterface = Interface('IMyIntefaceIO')
 eventsinterface.AddStruct(EventPlay)
+
+# Optional features
+#eventsinterface.AddUserTag("StateMachineThread", 0) # 0 = SM runs on caller thread, 1 = SM runs on its own thread. Default is 1.
+#eventsinterface.AddUserTag("Verbose", 0) # 0 = No printouts, 1 = printouts. Default is 1.
 
 transition_table = []
 #               		  StartState    Event			         NextState	    Action		           Guard
@@ -74,6 +78,22 @@ transition_table.append(['StatePause', 'EventPlay', 			 'StatePlay',  'OnPlayTra
 transition_table.append(['StatePause', 'EventAfter10Minutes', 	 'StateStop',  'OnStop', 			   'None'])
 
 Generate.StateMachine(outputdir, transition_table, eventsinterface, namespacename, statemachinenameprefix, declspec, author, group, brief, templatedir)
+
+#
+# Generate Statemachine (C#)
+#
+EventPlay = Struct('EventPlay')
+EventPlay.AddType('trackNo','ushort')
+
+eventsinterface = Interface('IMyIntefaceIO')
+eventsinterface.AddStruct(EventPlay)
+
+Generate.StateMachine_CSHARP(outputdir + "_cs", transition_table, eventsinterface, namespacename, statemachinenameprefix, declspec, author, group, brief, templatedir)
+
+#
+# Generate Statemachine (Python)
+#
+Generate.StateMachine_PYTHON(outputdir + "_py", transition_table, eventsinterface, namespacename, statemachinenameprefix, declspec, author, group, brief, templatedir)
 
 #
 # UML (C++/C# ... to do it directly from a model, please write to koh.jaen@yahoo.de)

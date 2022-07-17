@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = 'eugene'
 '''
@@ -101,6 +101,12 @@ class DefaultVal:
             return self.defaults[varname]
         return "0"
 
+class Documentation:
+    def __init__(self):
+        self.documentation = ""
+
+    def SetDocumentation(self, documentation):
+        self.documentation = documentation
 
 # TODO : This is currently defined, but unused anywhere.
 class RoutingHeader(OrderedDict, Query, DefaultVal):
@@ -204,7 +210,7 @@ class MessageHeader(OrderedDict, Query, DefaultVal):
         return DefaultVal.GetDefaultsAsString(self)
 
 
-class Enum(OrderedDict):
+class Enum(OrderedDict, Documentation):
     """
     Enumeration.
     """
@@ -223,7 +229,7 @@ class Enum(OrderedDict):
         return result
 
 
-class Struct(OrderedDict, Query, DefaultVal):
+class Struct(OrderedDict, Query, DefaultVal, Documentation):
     """
     Struct.
     A struct is a collection of base types, that form part of a message, as a separate member.
@@ -244,7 +250,7 @@ class Struct(OrderedDict, Query, DefaultVal):
         return result
 
 
-class Array(OrderedDict, Query):
+class Array(OrderedDict, Query, Documentation):
 
     PREFIX = '_Cnt'
 
@@ -272,7 +278,7 @@ class Array(OrderedDict, Query):
 MessageMap = {}
 
 
-class Message(OrderedDict, Query, DefaultVal):
+class Message(OrderedDict, Query, DefaultVal, Documentation):
     """
     Message.
     This represents a package of data the is passed between entities.

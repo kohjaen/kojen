@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = 'eugene'
 '''
@@ -109,9 +109,6 @@ class LanguagePython(Language):
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            # ptr = ""
-            # if struct.IsArray(mem[1]):
-            #    ptr = "*"
             if not struct.IsArray(mem[1]):
                 result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + '# ' + mem[0])
             else:
@@ -221,6 +218,14 @@ class LanguagePython(Language):
         result = 'class ' + structname + '(Structure):\n'
         result += self.AddAttributePackedToDecl('') + '\n'
         result += '_fields_ = [\n'
+        return result
+
+    def DeclareEnum(self, enum, whitespace):
+        result = self.FormatComment(enum.documentation)
+        result += whitespace + "@unique"
+        result += whitespace + "class " + enum.Name + "(Enum):\n"
+        for descriptionName, val in enum.items():
+            result += whitespace*2 + str(descriptionName) + " = " + str(val) + "\n"
         return result
 
     def DeclareNamespace(self, namespacename):

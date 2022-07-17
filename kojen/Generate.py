@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
 try:
-    from . import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp
+    from . import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython
 except:
-    import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp
+    import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython
 
 import os
 
@@ -48,6 +49,22 @@ def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacen
         return
 
     language = LanguageCsharp.LanguageCsharp()
+    smgenerator = smgen.CStateMachineGenerator(templatedir, outputdir, eventsinterface, language, author, group, brief)
+    if not __internal:
+        smgenerator.vpp_filename = "Transition Table"
+    else:
+        smgenerator.vpp_filename = __internal
+    smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
+
+def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True):
+    if not templatedir.strip():
+        templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_py")
+
+    if not os.path.isdir(templatedir):
+        print("Error : dir '" + templatedir + "' does not exist. Aborting.")
+        return
+
+    language = LanguagePython.LanguagePython()
     smgenerator = smgen.CStateMachineGenerator(templatedir, outputdir, eventsinterface, language, author, group, brief)
     if not __internal:
         smgenerator.vpp_filename = "Transition Table"

@@ -28,18 +28,25 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.7, 3.8, 3.9, 3.10.0]
+        dotnet-version: [ '6.0.x' ]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository (AND SUBMODULES) under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
-        
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -55,10 +62,21 @@ jobs:
       - name: Install Kojen locally from this repository
         shell: bash
         run: python -m pip install --no-index ./dist/*.whl
+        
+      - name: Run Kojen Unittests
+        shell: bash
+        run: python -m unittest discover -s ./kojen/test -p '*_test.py'
           
       - name: Generate example code
         run: |
           python example/generate.py
+
+      - name: (C#) Create/Build/Test
+        shell: bash
+        working-directory: ${{github.workspace}}/example/autogen_cs
+        run: |
+          dotnet new xunit
+          dotnet test
           
       #- name: Lint with flake8
       #  run: |
@@ -75,13 +93,14 @@ jobs:
       #    # Destination path
       #    path: ${{github.workspace}}/example/autogen
 
-      - name: Create Build Environment
+      - name: (C++) Create Build Environment
         # Some projects don't allow in-source building, so create a separate build directory
         # We'll use this as our working directory for all subsequent commands
         shell: bash
+        working-directory: ${{github.workspace}}
         run: cmake -E make_directory ${{github.workspace}}/build
 
-      - name: Configure CMake
+      - name: (C++) Configure CMake
         # Use a bash shell so we can use the same syntax for environment variable
         # access regardless of the host operating system
         shell: bash
@@ -91,7 +110,7 @@ jobs:
         # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
         run: cmake -S $GITHUB_WORKSPACE/example/autogen/allplatforms -B $GITHUB_WORKSPACE/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
-      - name: Build
+      - name: (C++) Build
         working-directory: ${{github.workspace}}/build
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
@@ -102,7 +121,7 @@ jobs:
       #  shell: bash
       #  run: ls -R
       
-      - name: Run Tests
+      - name: (C++) Run Generated Code Tests
         shell: bash
         working-directory: ${{github.workspace}}/build
         run: $GITHUB_WORKSPACE/build/$BUILD_TYPE/RunTests

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = 'eugene'
 
@@ -36,6 +36,7 @@ __TAG_SM_NAME_SMALL_CAMEL__         = '<<<stateMachineName>>>'       # camelCaps
 __TAG_SM_NAME_UPPER__               = '<<<STATEMACHINENAMEUPPER>>>'  # ALL UPPER
 __TAG_CLASS_NAME__                  = '<<<CLASSNAME>>>'
 __TAG_PyIFGen_NAME__                = '<<<PYIFGENNAME>>>'
+__TAG_ENUMERATIONS__                = '<<<ENUMS>>>'
 
 __TAG_PS_BEGIN__                    = "<<<PER_STATE_BEGIN>>>"
 __TAG_PS_END__                      = "<<<PER_STATE_END>>>"
@@ -106,14 +107,16 @@ except (ModuleNotFoundError, ImportError) as e:
     from preservative import *
 
 try:
-    from .cgen import CBASEGenerator, CCodeModel, alpha, __getnextalphabet__, __resetalphabet__, even_space, FileCopyUtil, caps, camel_case_small, camel_case
+    from .cgen import CBASEGenerator, CCodeModel, get_next_alphabet, reset_alphabet, even_space, FileCopyUtil, caps, camel_case_small, camel_case
 except (ModuleNotFoundError, ImportError) as e:
-    from cgen import CBASEGenerator, CCodeModel, alpha, __getnextalphabet__, __resetalphabet__, even_space, FileCopyUtil, caps, camel_case_small, camel_case
+    from cgen import CBASEGenerator, CCodeModel, get_next_alphabet, reset_alphabet, even_space, FileCopyUtil, caps, camel_case_small, camel_case
 
 try:
     from LanguageCPP import LanguageCPP
 except  (ModuleNotFoundError, ImportError) as e:
     from .LanguageCPP import LanguageCPP
+
+import re
 
 # Model that describes a state machine.
 class CStateMachineModel:
@@ -122,10 +125,10 @@ class CStateMachineModel:
         self.namespacename    = ""
         self.declspecdllexport = ""
         self.pythoninterfacegeneratorfilename = ""
-        self.states           = set()
-        self.actions          = set()
-        self.events           = set()
-        self.guards           = set()
+        self.states           = []
+        self.actions          = []
+        self.events           = []
+        self.guards           = []
         self.actionsignatures = OrderedDict()
         self.transitionsperstate = OrderedDict()
 
@@ -143,7 +146,7 @@ class CTransitionTableModel(CStateMachineModel):
         self.statemachinename   = smn
         self.namespacename      = nn
         self.declspecdllexport  = dclspc
-        tstate  = OrderedDict()
+        tstate  = OrderedDict() # TODO : Since py 3.7 a regular dict is guaranteed to preserve order, and is more performat.
         taction = OrderedDict()
         tevent  = OrderedDict()
         tguard  = OrderedDict()
@@ -181,13 +184,13 @@ class CTransitionTableModel(CStateMachineModel):
                     self.maxlenGUARD = length
         # Populate CStateMachineModel
         for s in tstate:
-            self.states.add(s)
+            self.states.append(s)
         for e in tevent:
-            self.events.add(e)
+            self.events.append(e)
         for a in taction:
-            self.actions.add(a)
+            self.actions.append(a)
         for g in tguard:
-            self.guards.add(g)
+            self.guards.append(g)
         self.set_transitions_per_state()
 
     ''' Returns a dictionary of dictionaries of lists of dictionaries.
@@ -258,6 +261,13 @@ class CStateMachineGenerator(CBASEGenerator):
         dict_to_replace_lines[__TAG_BRIEF__] = self.brief
         dict_to_replace_lines[__TAG_DECLSPEC_DLL_EXPORT__] = smmodel.declspecdllexport
 
+        if self.language and self.events_interface:
+            enums = ""
+            for e in self.events_interface.Enums():
+                enums += self.language.DeclareEnum(e, '\t')
+            dict_to_replace_lines[__TAG_ENUMERATIONS__] = enums
+
+
         dict_to_replace_filenames = {}
         dict_to_replace_filenames["TEMPLATE_"] = smmodel.statemachinename
 
@@ -302,8 +312,7 @@ class CStateMachineGenerator(CBASEGenerator):
         return ""
 
     def innerexpand_secondfiltering(self, names2x, lines2x, puthere):
-        global alpha
-        __resetalphabet__()
+        alpha = reset_alphabet()
         cnt = 0
         for name in names2x:
             for line in lines2x:
@@ -316,7 +325,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 newline = newline.replace(__TAG_ACTIONNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_GUARDNAME__, name)
                 newline = newline.replace(__TAG_GUARDNAME_SMALL_CAMEL__, camel_case_small(name))
-                newline = newline.replace(__TAG_ABC__, chr(alpha))
+                newline = newline.replace(__TAG_ABC__, alpha)
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
                 if self.hasSpecificTag(newline,__TAG_EVENT_SIGNATURE__):
@@ -328,6 +337,8 @@ class CStateMachineGenerator(CBASEGenerator):
                         newline = newline.replace(user_params[0], signature)
                     else:
                         newline = newline.replace(__TAG_EVENT_SIGNATURE__, self.get_event_signature(name))
+                    # check for brackets...remove any spurious ',' and ' '
+                    newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
                 # __TAG_EVENT_MEMBERINST__ -> PTR
                 if self.hasSpecificTag(newline,__TAG_EVENT_MEMBERINST__) and self.hasDefault(newline):
                     line_member = self.extractDefaultAndTag(newline)
@@ -345,11 +356,10 @@ class CStateMachineGenerator(CBASEGenerator):
                     continue
                 puthere.append(newline)
             cnt = cnt + 1
-            __getnextalphabet__()
+            alpha = get_next_alphabet()
 
     def innerexpand_actionsignatures(self, states2x, lines2x, puthere):
-        global alpha
-        __resetalphabet__()
+        alpha = reset_alphabet()
         cnt = 0
         for key, (actionname, eventname) in states2x.items():
             if eventname == "" or eventname.lower() == 'none':
@@ -362,10 +372,10 @@ class CStateMachineGenerator(CBASEGenerator):
                             .replace(__TAG_ACTIONNAME__, actionname)
                             .replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventname))
                             .replace(__TAG_EVENTNAME__, eventname)
-                            .replace(__TAG_ABC__, chr(alpha))
+                            .replace(__TAG_ABC__, alpha)
                             .replace(__TAG_123__, str(cnt)))
             cnt = cnt + 1
-            __getnextalphabet__()
+            alpha = get_next_alphabet()
 
     def innerexpand_msm(self, smmodel, puthere):
         len_tt = len(smmodel.transition_table)
@@ -620,7 +630,8 @@ class CStateMachineGenerator(CBASEGenerator):
         sm = CTransitionTableModel(transitiontable, namespacenname, statemachinename, dclspc)
 
         for e in self.events_interface.Structs(): # only necessary for stateless (nonTT) events.
-            sm.events.add(e.Name)
+            if not e.Name in sm.events:
+                sm.events.append(e.Name)
 
         cm = self.loadtemplates_firstfiltering(sm)
         self.expand_secondfiltering(sm, cm)
@@ -728,180 +739,3 @@ class CStateMachineGenerator(CBASEGenerator):
             filenames.append(filename)
         return filenames
 
-import unittest
-from .LanguagePython import LanguagePython
-class TestFeatures(unittest.TestCase):
-
-    workingfolder = os.path.join(os.path.dirname(__file__), "test")
-
-    @classmethod
-    def setUpClass(cls):
-        os.makedirs(cls.workingfolder, exist_ok=True)
-
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.workingfolder)
-
-    @classmethod
-    def create_template_file(cls, list_of_lines):
-        assert os.path.isdir(cls.workingfolder)
-        with open(os.path.join(cls.workingfolder, "file.t"), 'w') as f:
-            for l in list_of_lines:
-                f.write("%s\n" % l)
-
-    @classmethod
-    def read_lines_of_output_file(cls):
-        path = os.path.join(cls.workingfolder, "file.t")
-        assert os.path.isfile(path)
-        with open(path, 'r') as f:
-            return f.readlines()
-
-    @classmethod
-    def do_magic(cls, input, interface, tt = []):
-        TestFeatures.create_template_file(input)
-        smgenerator = CStateMachineGenerator(cls.workingfolder, cls.workingfolder, interface, LanguagePython(), "", "", "")
-        smgenerator.Generate(tt, "", "", "", False)
-        return TestFeatures.read_lines_of_output_file()
-
-    def test_event_custom_params_nosignature(self):
-        input = []
-        input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTSIGNATURE::p1, p2, p3,>>>")
-        input.append("<<<PER_EVENT_END>>>")
-        s = Struct("somestruct")
-        i = Interface('')
-        i.AddStruct(s)
-
-        output = TestFeatures.do_magic(input, i)
-
-        self.assertEqual(len(output), 1)
-        self.assertEqual(output[0]  , "p1, p2, p3\n")
-
-    def test_event_custom_params_signature(self):
-        input = []
-        input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTSIGNATURE::p1, p2, p3,>>>")
-        input.append("<<<PER_EVENT_END>>>")
-        s = Struct("somestruct")
-        s.AddType("binga","bungaBunga")
-        i = Interface('')
-        i.AddStruct(s)
-
-        output = TestFeatures.do_magic(input, i)
-
-        self.assertEqual(len(output), 1)
-        self.assertEqual(output[0], "binga, p1, p2, p3\n") # Python
-
-    def test_event_members_instantiate_custom_name(self):
-        input = []
-        input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTMEMBERSLITEINSTANTIATE::hello>>>")
-        input.append("<<<PER_EVENT_END>>>")
-        s = Struct("somestruct")
-        s.AddType("binga", "bungaBunga")
-        i = Interface('')
-        i.AddStruct(s)
-
-        output = TestFeatures.do_magic(input, i)
-
-        self.assertEqual(len(output), 1)
-        self.assertEqual(output[0], "hello.binga = binga\n")
-
-    def test_event_members_instantiate_no_custom_name(self):
-        input = []
-        input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTMEMBERSLITEINSTANTIATE>>>")
-        input.append("<<<PER_EVENT_END>>>")
-        s = Struct("somestruct")
-        s.AddType("binga", "bungaBunga")
-        i = Interface('')
-        i.AddStruct(s)
-
-        output = TestFeatures.do_magic(input, i)
-
-        self.assertEqual(len(output), 1)
-        self.assertEqual(output[0], "data.binga = binga\n")
-
-    def test_transitionsperguard_tags(self):
-        input = []
-        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
-        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
-        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
-        input.append("<<<GUARDNAME::No Guard>>>")
-        #input.append("<<<EVENTNAME::No Event>>>") Hmmm ... need to think more on this.
-        input.append("<<<EVENTNAME>>>")
-        input.append("<<<STATENAMEIFNEXTSTATE::No Next State>>>")
-        input.append("<<<ACTIONNAME::No Action>>>")
-        input.append("<<<NEXTSTATENAME::No Next State>>>")
-        input.append("<<<PER_GUARDTRANSITION_END>>>")
-        input.append("<<<PER_EVENTTRANSITION_END>>>")
-        input.append("<<<PER_STATETRANSITION_END>>>")
-        tt = [['S1', 'Do', 'S1', 'A1', 'G1']]
-        s = Struct("somestruct")
-        s.AddType("binga", "bungaBunga")
-        i = Interface('')
-        i.AddStruct(s)
-
-        output = TestFeatures.do_magic(input, i, tt)
-
-        self.assertEqual(len(output), 5)
-        self.assertEqual(output[0], "G1\n")
-        self.assertEqual(output[1], "Do\n")
-        self.assertEqual(output[2], "S1\n")
-        self.assertEqual(output[3], "A1\n")
-        self.assertEqual(output[4], "S1\n")
-
-    def test_transitionsperguard_tags_with_custom_defaults(self):
-        input = []
-        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
-        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
-        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
-        input.append("<<<GUARDNAME::No Guard>>>")
-        input.append("<<<EVENTNAME::No Event>>>")
-        input.append("<<<STATENAMEIFNEXTSTATE::No Next State>>>")
-        input.append("<<<ACTIONNAME::No Action>>>")
-        input.append("<<<NEXTSTATENAME::No Next State>>>")
-        input.append("<<<PER_GUARDTRANSITION_END>>>")
-        input.append("<<<PER_EVENTTRANSITION_END>>>")
-        input.append("<<<PER_STATETRANSITION_END>>>")
-        tt = [['S1', 'Do', 'None', 'None', 'None']]
-        s = Struct("somestruct")
-        s.AddType("binga", "bungaBunga")
-        i = Interface('')
-        i.AddStruct(s)
-
-        output = TestFeatures.do_magic(input, i, tt)
-
-        self.assertEqual(len(output), 5)
-        self.assertEqual(output[0], "No Guard\n")
-        self.assertEqual(output[1], "No Event\n")
-        self.assertEqual(output[2], "No Next State\n")
-        self.assertEqual(output[3], "No Action\n")
-        self.assertEqual(output[4], "No Next State\n")
-
-    def test_events(self):
-        input = []
-        input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTNAME>>>")
-        input.append("<<<PER_EVENT_END>>>")
-        tt = [['S1', "how ya doin'", 'None', 'None', 'None']]
-        s = Struct("hello")
-        i = Interface('')
-        i.AddStruct(s)
-
-        output = TestFeatures.do_magic(input, i, tt)
-
-        self.assertEqual(len(output), 2)
-        self.assertEqual(output[0], "hello\n")
-        self.assertEqual(output[1], "how ya doin'\n")
-
-    '''
-    def test_split(self):
-        s = 'hello world'
-        self.assertEqual(s.split(), ['hello', 'world'])
-        # check that s.split fails when the separator is not a string
-        with self.assertRaises(TypeError):
-            s.split(2)
-    '''
-if __name__ == '__main__':
-    unittest.main()

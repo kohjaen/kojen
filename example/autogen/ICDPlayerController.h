@@ -17,15 +17,12 @@
 /// {{{USER_HEADER}}}
 /// {{{USER_HEADER}}}
 
-// For printouts.
+#define VERBOSE 1
+#if VERBOSE == 1
 #define _OUT_CDPlayer_DISP_
+#endif
 
-/** Should you wish to run your state machine on the caller thread instead of using a threaded dispatcher,
-    add '#undef THREADED' in the 'USER_FORWARD_DECLARATIONS' preservation tags.
-*/
-#define THREADED
 /// {{{USER_FORWARD_DECL}}}
-//#undef THREADED
 /// {{{USER_FORWARD_DECL}}}
 
 #define MOVE_ONLY(name)                     \
