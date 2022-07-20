@@ -90,7 +90,7 @@ class <<<STATEMACHINENAME>>>StateMachine(threading.Thread):
     #
     #@{
     def process(self, event) -> None:
-        print("<<<STATEMACHINENAME>>>StateMachine::process ", type(event));
+        #print("<<<STATEMACHINENAME>>>StateMachine::process ", str(type(event)).replace("<class '",'').replace("'>",''))
         <<<PER_STATETRANSITION_BEGIN>>>
         if self.currentState == <<<STATEMACHINENAME>>>StateId.c<<<STATENAME>>>:
             self.process<<<STATENAME>>>(event)
@@ -110,7 +110,7 @@ class <<<STATEMACHINENAME>>>StateMachine(threading.Thread):
                 return
             <<<PER_GUARDTRANSITION_END>>>
         <<<PER_EVENTTRANSITION_END>>>
-        print("<<<STATEMACHINENAME>>>StateMachine no transition in state '<<<STATENAME>>>' on event ", type(event));
+        print("<<<STATEMACHINENAME>>>StateMachine no transition in state '<<<STATENAME>>>' on event ", str(type(event)).replace("<class '",'').replace("'>",''));
         self.context.NoTransition(event)
 
     <<<PER_STATETRANSITION_END>>>

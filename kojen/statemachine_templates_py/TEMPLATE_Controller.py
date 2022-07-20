@@ -52,7 +52,7 @@ class <<<STATEMACHINENAME>>>Controller:
     #@{
     <<<PER_ACTION_BEGIN>>>
     def <<<ACTIONNAME>>>(self, event) -> None:
-        print("<<<ACTIONNAME>>> on ", str(type(event)))
+        print("<<<ACTIONNAME>>> on ", str(type(event)).replace("<class '",'').replace("'>",''))
     <<<PER_ACTION_END>>>
     #@}
 
@@ -61,9 +61,9 @@ class <<<STATEMACHINENAME>>>Controller:
     #@{
     <<<PER_STATE_BEGIN>>>
     def On<<<STATENAME>>>Entry(self, event) -> None:
-        print("On<<<STATENAME>>>Entry on ", str(type(event)))
+        print("On<<<STATENAME>>>Entry on ", str(type(event)).replace("<class '",'').replace("'>",''))
     def On<<<STATENAME>>>Exit(self, event) -> None:
-        print("On<<<STATENAME>>>Exit(self, event) on ", str(type(event)))
+        print("On<<<STATENAME>>>Exit(self, event) on ", str(type(event)).replace("<class '",'').replace("'>",''))
     <<<PER_STATE_END>>>
     #@}
 

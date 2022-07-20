@@ -73,6 +73,11 @@ class Test<<<STATEMACHINENAME>>>(unittest.TestCase):
         # {{{USER_UNIT_TEST_STATES}}}
         pass
 
+## Console Runner Exit
+#
+class Exit(Exception):
+    pass
+
 ## Console Runner Test Suite
 # Run a statemachine on the console taking keypresses as events.
 #
@@ -110,33 +115,49 @@ class ConsoleRunner(threading.Thread):
     def printHelp(self):
         print("##############################################")
         <<<PER_EVENT_BEGIN>>>
-        print("<<<ALPH>>> : send <<<EVENTNAME>>> event.")
+        print("<<<ALPH>>>      : send <<<EVENTNAME>>> event.")
         <<<PER_EVENT_END>>>
-        print("H : print this HELP.")
-        print("exit : EXIT the console runner.")
+        <<<PER_GUARD_BEGIN>>>
+        print('g<<<NUM>>>=0/1 : set <<<GUARDNAME>>> to false/true')
+        <<<PER_GUARD_END>>>
+        print("H      : print this HELP.")
+        print("exit   : EXIT the console runner.")
         print("##############################################")
 
-    # {{{USER_TESTS}}}
-    # {{{USER_TESTS}}}
+    def processConsoleInput(self, input):
+        <<<PER_EVENT_BEGIN>>>
+        if input == '<<<ALPH>>>':
+            self.sm.Trigger<<<EVENTNAME>>>()
+            return
+        <<<PER_EVENT_END>>>
+        <<<PER_GUARD_BEGIN>>>
+        if 'g<<<NUM>>>=' in input:
+            input = input.replace('g<<<NUM>>>=', '').strip()
+            self.context.<<<guardName>>> = False if '0' in input else True
+            print ("<<<guardName>>> set as ", "false" if not self.context.<<<guardName>>> else "true")
+            return
+        <<<PER_GUARD_END>>>
+        if input == 'H':
+            self.printHelp()
+            return
+        if input == 'exit':
+            raise Exit
+        print("'", input, '" not defined.')
+    
+
     def startConsole(self):
         import sys
         self.printHelp()
-        for line in sys.stdin:
-            line = line.replace("\n", "")
-            if len(line) == 1:
+        try:
+            for line in sys.stdin:
+                line = line.replace("\n", "")
                 for var in line.split():
-                    <<<PER_EVENT_BEGIN>>>
-                    if var == '<<<ALPH>>>':
-                        self.sm.Trigger<<<EVENTNAME>>>()
-                    <<<PER_EVENT_END>>>
-            else:
-                print("Received ", len(line), "chars.")  # could do fancier processing on multiple chars
-                if line == "exit":
-                    print("Goodbye...")
-                    return
+                    self.processConsoleInput(var)
+        except Exit:
+            print("Goodbye...")
 
-    # {{{USER_TEST_SUITE_TESTS}}}
-    # {{{USER_TEST_SUITE_TESTS}}}
+    # {{{USER_TESTS}}}
+    # {{{USER_TESTS}}}
 
 if __name__ == '__main__':
     testrunner = ConsoleRunner()
