@@ -61,6 +61,7 @@ __TAG_PG_BEGIN__                    = "<<<PER_GUARD_BEGIN>>>"
 __TAG_PG_END__                      = "<<<PER_GUARD_END>>>"
 
 __TAG_EVENT_SIGNATURE__             = "<<<EVENTSIGNATURE>>>"
+__TAG_EVENT_SIGNATURE_DEF__         = "<<<EVENTSIGNATUREWITHDEFAULTS>>>"
 __TAG_EVENT_MEMBERINST__            = "<<<EVENTMEMBERSINSTANTIATE>>>"
 __TAG_LITE_EVENT_MEMBERINST__       = "<<<EVENTMEMBERSLITEINSTANTIATE>>>"
 __TAG_EVENT_MEMBERDECL__            = "<<<EVENTMEMBERSDECLARE>>>"
@@ -273,12 +274,12 @@ class CStateMachineGenerator(CBASEGenerator):
 
         return CBASEGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames)
 
-    def get_event_signature(self,name):
+    def get_event_signature(self,name, with_defaults):
         if self.events_interface is None or self.language is None:
             return ""
         for s in self.events_interface.Structs():
             if s.Name == name:
-                return self.language.ParameterString(self.language.GetFactoryCreateParams(s, self.events_interface))
+                return self.language.ParameterString(self.language.GetFactoryCreateParams(s, self.events_interface, with_defaults))
 
         return ""
 
@@ -329,14 +330,15 @@ class CStateMachineGenerator(CBASEGenerator):
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
                 if self.hasSpecificTag(newline,__TAG_EVENT_SIGNATURE__):
+                    has_signature_defaults = __TAG_EVENT_SIGNATURE_DEF__ in newline
                     if self.hasDefault(newline):
                         # Has user params
                         user_params = self.extractDefaultAndTag(newline)
-                        signature = self.get_event_signature(name) + ", " + user_params[1]
+                        signature = self.get_event_signature(name, False) + ", " + user_params[1]
                         signature = signature.strip(',').strip(' ')
                         newline = newline.replace(user_params[0], signature)
                     else:
-                        newline = newline.replace(__TAG_EVENT_SIGNATURE__, self.get_event_signature(name))
+                        newline = newline.replace(__TAG_EVENT_SIGNATURE_DEF__ if has_signature_defaults else __TAG_EVENT_SIGNATURE__, self.get_event_signature(name, has_signature_defaults))
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
                 # __TAG_EVENT_MEMBERINST__ -> PTR

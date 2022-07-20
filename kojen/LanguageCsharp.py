@@ -46,14 +46,6 @@ from .Language import *
 
 class LanguageCsharp(Language):
 
-    """USED"""
-    def MessageDescriptor(self, interface, struct):
-        return "" if interface.GetMessageTypeIDStr(struct) == "" else " [ MsgTypeID = " + interface.GetMessageTypeIDStr(struct) + " ]"
-
-    # White space
-    def WhiteSpace(self, indentationlevels):
-        return (indentationlevels+1)*'    '
-
     '''USED'''
     def ByteStreamTypeSharedPtr(self):
         return self.SharedPtrToType(self.ByteStreamType())
@@ -86,7 +78,7 @@ class LanguageCsharp(Language):
         return typename + '*'
 
     # parameters need to be a list of (type, name).
-    def ParameterString(self, parameters=None):
+    def ParameterString(self, parameters=None) -> str:
         # def ParameterString(self, parameters = []):
         # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
@@ -105,7 +97,7 @@ class LanguageCsharp(Language):
 
         raise Exception("Please use OrderedDict when passing parameters into 'ParameterString'")
     '''USED'''
-    def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False):
+    def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False) -> str:
         # def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=[], virtual=False):
         # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
@@ -127,7 +119,7 @@ class LanguageCsharp(Language):
         raise Exception("Please use list when passing parameters into 'DeclareFunction'")
 
     '''USED'''
-    def GetFactoryCreateParams(self, struct, interface):
+    def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
@@ -135,37 +127,32 @@ class LanguageCsharp(Language):
             isMessage = interface.IsMessageStruct(mem[0])
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                ref = "ref " if isStruct or isMessage or isArray else ""
-                factoryparams.append((ref + mem[0], mem[1]))
+                factoryparams.append((mem[0], (mem[1] + "=" + mem[2]) if (with_defaults and self.HasDefault(mem)) else mem[1]))
         return factoryparams
 
     '''USED
     Declares the guts of a struct declaration
     '''
-    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True):
+    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True) -> list:
         arrayName = []
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
             ptr = ""
-            if struct.IsArray(mem[1]):
-                ptr = "*"
+            #if struct.IsArray(mem[1]):
+            #    ptr = "*"
             if (mem[0] in interface) and not struct.IsArray(mem[1]):
                 result.append(whitespace + "public " + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
-                result.append(whitespace + "public " + self.InstantiateType(mem[0] + ptr, mem[1], '', attr_packed) + ";")
+                result.append(whitespace + "public " + self.InstantiateType(mem[0] + ptr, mem[1], mem[2] if self.HasDefault(mem) else "", is_attr_packed=False) + ";")
 
             if struct.IsArray(mem[1]):
                 arrayName.append(mem[1])
         if len(arrayName) != 0:
-            result.append(whitespace+"~%s()" % struct.Name)
-            result.append(whitespace+"{")
-            for todel in arrayName:
-                result.append(2*whitespace+"delete[] %s;" % todel)
-            result.append(whitespace+"}")
+            raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
         return result
     '''USED'''
-    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor = "."):
+    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor = ".") -> list:
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
@@ -177,20 +164,9 @@ class LanguageCsharp(Language):
             if not isArray and (not isProtocol or isStruct):
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]) + ";")
             elif not isArray and isProtocol and not isStruct:
-                s = Template("sizeof(${this}) - sizeof(${header})")
-                result.append(instance_accessor + self.InstantiateType("", mem[1], "Create_" + mem[0] + "(" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + ");"))
+                raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             elif isArray and not isProtocol and not isStruct:
-                if not IsMessageStruct(interface, struct.Name):
-                    raise RuntimeError("Only mesage structs are allowed arrays.")
-                result.append(whitespace + "// cant transmit ptr's across the world, but well data.")
-                s = Template("${payload} ${op} ${bytes}")
-                array = struct[mem[1]]
-                result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="-=", bytes="sizeof("+instancename+accessor+array.Name+");"))
-                result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="+=", bytes="sizeof("+array.type + ")*" + array.Count() + ";"))
-                # result.append(instance_accessor + self.InstantiateType("",array.Count(),array.Count()))
-                result.append(instance_accessor + self.InstantiateArray(array.type, array.Name, array.Count()) + ";")
-                result.append(whitespace + "if(nullptr != " + array.Name + ")")
-                result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t", '').replace("    ","") + array.Name + ',(void*) ' + array.Name + ',sizeof(' + array.type + ")*" + array.Count() + ");")
+                raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             else:
                 print("WTF : InstantiateStructMembers")
 
@@ -198,160 +174,23 @@ class LanguageCsharp(Language):
     '''USED
     All custom structs, protocol structs and message structs.
     '''
-    def SerializeStructToByteStream(self, struct, interface, whitespace, outname, inname, inacessor, is_arm=False):
+    def SerializeStructToByteStream(self, struct, interface, whitespace, outname, inname, inacessor, is_arm=False) -> list:
+        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
         result = []
-        hasArray = False
-        isProtocol = interface.IsProtocolStruct(struct.Name)
-        isStruct = interface.IsStruct(struct.Name)
-        if isProtocol or isStruct:
-            result.append(whitespace + "size_t streamsize = sizeof("+struct.Name+");")
-        else:
-            hasArray = struct.HasArray()  # Message can not have an array.
-            result.append(whitespace + "size_t streamsize = sizeof("+inname + inacessor + struct.HeaderName() + ") +" + inname + inacessor + struct.HeaderName() + "."+struct[struct.HeaderName()].PayloadSize() + ";")
-        out_accessor = outname + self.BytestreamAccessor()
-        if not is_arm:
-            result.append(whitespace + out_accessor + "resize(streamsize)"+";")
-        if isProtocol or isStruct or not hasArray:
-            if not is_arm:
-                result.append(whitespace + "memcpy((void*) &(*"+outname+")[0], (void*) " + (("&"+inname) if ("." == inacessor) else (inname + ".get()")) + ", streamsize);")
-            else:
-                result.append(whitespace + "memcpy((void*) " + outname + ", (void*) " + (("&"+inname) if ("." == inacessor) else ("&(*" + inname + ")")) + ", streamsize);")
-        else:
-            if not interface.IsMessageStruct(struct.Name):
-                raise RuntimeError("Unhandled type. This should be an message struct, but is a %s" % str(type(struct)))
-            result.append(whitespace + "size_t index = 0;")
-            structmembers = struct.Decompose()
-            for mem in structmembers:
-                if struct.IsArray(mem[1]):
-                    array = struct[mem[1]]
-                    result.append(whitespace + "memcpy((void*) &(*"+outname+")[index], (void*) "+inname + inacessor + mem[1] + ", sizeof("+mem[0]+")*"+inname + inacessor + array.Count() + ");")
-                    result.append(whitespace + "index += sizeof("+mem[0]+")*" + inname + inacessor + array.Count()+";")
-                else:
-                    result.append(whitespace + "memcpy((void*) &(*"+outname+")[index], (void*) &"+inname + inacessor + mem[1] + ", sizeof("+mem[0]+"));")
-                    result.append(whitespace + "index += sizeof("+mem[0]+");")
-            result.append(whitespace + "assert(index == streamsize); // index should be at next (non existant) place (thus streamsize).")
         return result
     '''USED
     All custom structs, protocol structs and message structs.
     '''
-    def SerializeStructIntoByteStream(self, struct, interface, whitespace, inname, streamname, cntname, inacessor):
+    def SerializeStructIntoByteStream(self, struct, interface, whitespace, inname, streamname, cntname, inacessor) -> list:
+        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
         result = []
-        hasArray = False
-        isProtocol = interface.IsProtocolStruct(struct.Name)
-        isStruct = interface.IsStruct(struct.Name)
-        if isProtocol or isStruct:
-            result.append(whitespace + "size_t append_size = sizeof("+struct.Name+");")
-        else:
-            hasArray = struct.HasArray()  # Message can not have an array.
-            result.append(whitespace + "size_t append_size = sizeof("+inname + inacessor + struct.HeaderName() + ") +"+inname + inacessor + struct.HeaderName() + "."+struct[struct.HeaderName()].PayloadSize() + ";")
-        result.append(whitespace + "size_t avail_size = "+streamname+"->size() - "+cntname+";")
-        result.append(whitespace + "if(avail_size < append_size)")
-        result.append(whitespace*2 + streamname + "->resize(append_size - avail_size);")
-        if isProtocol or isStruct or not hasArray:
-            result.append(whitespace + "memcpy((void*) &(*"+streamname+")["+cntname+"], (void*) " + (("&"+inname ) if ("." == inacessor) else (inname + ".get()")) + ", append_size);")
-        else:
-            if not interface.IsMessageStruct(struct.Name):
-                raise RuntimeError("Unhandled type. This should be an message struct, but is a %s" % str(type(struct)))
-
-            structmembers = struct.Decompose()
-            for mem in structmembers:
-                if struct.IsArray(mem[1]):
-                    array = struct[mem[1]]
-                    result.append(whitespace + "memcpy((void*) &(*"+streamname+")[index], (void*) "+inname + inacessor + mem[1] + ", sizeof("+mem[0]+")*"+inname + inacessor + array.Count() + ");")
-                    result.append(whitespace + "index += sizeof("+mem[0]+")*" + inname + inacessor + array.Count()+";")
-                else:
-                    result.append(whitespace + "memcpy((void*) &(*"+streamname+")[index], (void*) &"+inname+inacessor + mem[1] + ", sizeof("+mem[0]+"));")
-                    result.append(whitespace + "index += sizeof("+mem[0]+");")
-        result.append(whitespace + cntname + "+=append_size;")
         return result
     '''USED
     All custom structs, protocol structs and message structs.
     '''
-    def SerializeStructFromByteStream(self, functioname, struct, interface, whitespace, streamname, cntname, outname, outaccessor):
+    def SerializeStructFromByteStream(self, functioname, struct, interface, whitespace, streamname, cntname, outname, outaccessor) -> list:
+        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
         result = []
-
-        structmembers = struct.Decompose()
-        has_allowed_stream_size = False
-        for mem in structmembers:
-
-            isProtocol = interface.IsProtocolStruct(mem[0])
-            isStruct = interface.IsStruct(mem[0])
-            isArray = struct.IsArray(mem[1])
-            isType = not isProtocol and not isStruct and not isArray
-
-            access_member = outname+outaccessor+mem[1]
-            if isArray:
-                array = struct[mem[1]]
-                size_of_cnt_var = 'sizeof(' + array[array.Count()] + ')'
-                array_cnt_var = outname + outaccessor + array.Count()
-                size_of_array = 'sizeof(' + mem[0] + ')*' + array_cnt_var
-                result.append(whitespace + 'if ((' + cntname + ' + ' + size_of_cnt_var + ' < streamsize) && (' + size_of_cnt_var + ' <= allowed_streamsize))')
-                result.append(whitespace + '{')
-                result.append(whitespace*2 +      'memcpy((void*) &' + array_cnt_var + ', (void*) &('+streamname+'['+cntname+']), ' + size_of_cnt_var + ');')
-                result.append(whitespace*2 +      cntname + '+=' + size_of_cnt_var + ";")
-                result.append(whitespace*2 +      'allowed_streamsize-=' + size_of_cnt_var + ";")
-                # Create a new array, set the size, and memcpy the entire contents into the member var
-                result.append(whitespace*2 +      self.InstantiateArray(mem[0], access_member, array_cnt_var) + ";")
-                result.append(whitespace*2 +      'if ((' + cntname + ' + ' + size_of_array + ' <= streamsize) && (' + size_of_array + ' <= allowed_streamsize))')
-                result.append(whitespace*2 +      '{')
-                result.append(whitespace*3 +          'memcpy((void*) ' + access_member + ', (void*) &(' + streamname + '[' + cntname + ']), ' + size_of_array + ');')
-                result.append(whitespace*3 +          cntname + '+=' + size_of_array + ";")
-                result.append(whitespace*3 +          'allowed_streamsize-=' + size_of_array + ";")
-                result.append(whitespace*2 +      '}')
-                result.append(whitespace*2 +      'else if ((' + cntname + ' + ' + size_of_array + ' <= streamsize) && (' + size_of_array + ' > allowed_streamsize))')
-                result.append(whitespace*2 +      '{')
-                result.append(whitespace*3 +          'memcpy((void*) ' + access_member + ', (void*) &(' + streamname + '[' + cntname + ']), allowed_streamsize);')
-                result.append(whitespace*3 +          cntname + '+=allowed_streamsize;')
-                result.append(whitespace*3 +          'allowed_streamsize-=allowed_streamsize;')
-                result.append(whitespace*2 +      '}')
-                result.append(whitespace*2 +      'else')
-                result.append(whitespace*2 +      '{')
-                result.append(whitespace*3 +          self.PrintMessage('"' + functioname + ' Safety Bogey : resyncing streams, not copying..."'))
-                result.append(whitespace*3 +          'index+=allowed_streamsize;')
-                result.append(whitespace*3 +          'allowed_streamsize=0;')
-                result.append(whitespace*2 +      '}')
-                result.append(whitespace + '}')
-                result.append(whitespace + 'else')
-                result.append(whitespace + '{')
-                result.append(whitespace*2 +      self.PrintMessage('"' + functioname + ' index exceeds given streamsize."'))
-                result.append(whitespace + '}')
-            elif isProtocol:
-                result.append(whitespace + access_member + ' = FromByteStream_' + mem[0] + '('+streamname+', streamsize, '+cntname+');')
-                result.append(whitespace + '// Backward Compat: Protocol header should NEVER change, but payloads may.')
-                result.append(whitespace + '// Calculate remaining non destructive stream size.')
-                result.append(whitespace + 'size_t allowed_streamsize = '+access_member+'.' + struct[mem[1]].PayloadSize()+";")
-                has_allowed_stream_size = True
-            elif isStruct:
-                result.append(whitespace + access_member + ' = FromByteStream_' + mem[0] + '('+streamname+', streamsize, '+cntname+');')
-                result.append(whitespace + 'allowed_streamsize-=sizeof('+mem[0]+');')
-            elif isType:
-                if mem[1].find(Array.PREFIX) == -1:  # Ignore the array count memember here! deal with it in the array...
-                    if has_allowed_stream_size:
-                        result.append(whitespace + "if((" + cntname + " + sizeof(" + mem[0] + ") <= streamsize) && (sizeof(" + mem[0] + ") <= allowed_streamsize))")
-                        result.append(whitespace + "{")
-                        result.append(whitespace*2 +   "memcpy((void*) &" + access_member + ", (void*) &(" + streamname + "[" + cntname + "]), sizeof(" + mem[0] + "));")
-                        result.append(whitespace*2 +   cntname + "+=sizeof(" + mem[0] + ");")
-                        result.append(whitespace*2 +   "allowed_streamsize-=sizeof(" + mem[0] + ");")
-                        result.append(whitespace + "}")
-                        result.append(whitespace + "else")
-                        result.append(whitespace + "{")
-                        result.append(whitespace*2 +   self.PrintMessage('"' + functioname + ' index exceeds given streamsize."'))
-                        result.append(whitespace + "}")
-                    else:
-                        result.append(whitespace + 'if(index + sizeof(' + mem[0] + ') <= streamsize)')
-                        result.append(whitespace + '{')
-                        result.append(whitespace*2 +      'memcpy((void*) &' + access_member + ', (void*) &(' + streamname + '[' + cntname + ']), sizeof(' + mem[0] + '));')
-                        result.append(whitespace*2 +      cntname + '+=sizeof(' + mem[0] + ');')
-                        result.append(whitespace + '}')
-                        result.append(whitespace + "else")
-                        result.append(whitespace + '{')
-                        result.append(whitespace*2 + self.PrintMessage('"' + functioname + ' index exceeds given streamsize."'))
-                        result.append(whitespace + '}')
-            else:
-                raise RuntimeError("Unhandled type %s in SerializeStructFromByteStream" % str(type(mem[1])))
-
-        if has_allowed_stream_size:
-            result.append(whitespace + 'assert(allowed_streamsize==0);')
         return result
 
     '''USED'''
@@ -368,7 +207,7 @@ class LanguageCsharp(Language):
         Instantiate/declare a basic type, with optional initializer. Only declarations can use 'attribute packed' directives.
         use typename = '' to make it a known variable initialization
     '''
-    def InstantiateType(self, typename, instancename, initialevalue='', is_attr_packed=False, is_static=False, is_const=False):
+    def InstantiateType(self, typename, instancename, initialevalue='', is_attr_packed=False, is_static=False, is_const=False) -> str:
         # declaration...i.e. in class or struct. no initial value, can be packed
         if initialevalue.replace(' ', '') == '':
             decl = typename + ' ' + instancename
@@ -390,13 +229,6 @@ class LanguageCsharp(Language):
         if is_const:
             res = 'const ' + res
         return res
-
-    # File extenstion
-    def DotHFile(self):
-        return '.h'
-
-    def DotCPPFile(self):
-        return '.cpp'
 
     # Braces
     '''USED'''

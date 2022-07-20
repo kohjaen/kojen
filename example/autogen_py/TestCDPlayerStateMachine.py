@@ -268,6 +268,11 @@ class TestCDPlayer(unittest.TestCase):
         # {{{USER_UNIT_TEST_STATES}}}
         pass
 
+## Console Runner Exit
+#
+class Exit(Exception):
+    pass
+
 ## Console Runner Test Suite
 # Run a statemachine on the console taking keypresses as events.
 #
@@ -304,48 +309,83 @@ class ConsoleRunner(threading.Thread):
 
     def printHelp(self):
         print("##############################################")
-        print("a : send EventOpen event.")
-        print("b : send EventPlay event.")
-        print("c : send EventEndOfTrack event.")
-        print("d : send EventSkipNextTrack event.")
-        print("e : send EventSkipPreviousTrack event.")
-        print("f : send EventStop event.")
-        print("g : send EventAfter10Minutes event.")
-        print("H : print this HELP.")
-        print("exit : EXIT the console runner.")
+        print("a      : send EventOpen event.")
+        print("b      : send EventPlay event.")
+        print("c      : send EventEndOfTrack event.")
+        print("d      : send EventSkipNextTrack event.")
+        print("e      : send EventSkipPreviousTrack event.")
+        print("f      : send EventStop event.")
+        print("g      : send EventAfter10Minutes event.")
+        print('g0=0/1 : set GuardCDInside to false/true')
+        print('g1=0/1 : set GuardCDHasMoreTracks to false/true')
+        print('g2=0/1 : set GuardCDHasNoMoreTracks to false/true')
+        print('g3=0/1 : set GuardCDHasPreviousTrack to false/true')
+        print("H      : print this HELP.")
+        print("exit   : EXIT the console runner.")
         print("##############################################")
 
-    # {{{USER_TESTS}}}
-    # {{{USER_TESTS}}}
+    def processConsoleInput(self, input):
+        if input == 'a':
+            self.sm.TriggerEventOpen()
+            return
+        if input == 'b':
+            self.sm.TriggerEventPlay(trackNo)
+            return
+        if input == 'c':
+            self.sm.TriggerEventEndOfTrack()
+            return
+        if input == 'd':
+            self.sm.TriggerEventSkipNextTrack()
+            return
+        if input == 'e':
+            self.sm.TriggerEventSkipPreviousTrack()
+            return
+        if input == 'f':
+            self.sm.TriggerEventStop()
+            return
+        if input == 'g':
+            self.sm.TriggerEventAfter10Minutes()
+            return
+        if 'g0=' in input:
+            input = input.replace('g0=', '').strip()
+            self.context.guardCDInside = False if '0' in input else True
+            print ("guardCDInside set as ", "false" if not self.context.guardCDInside else "true")
+            return
+        if 'g1=' in input:
+            input = input.replace('g1=', '').strip()
+            self.context.guardCDHasMoreTracks = False if '0' in input else True
+            print ("guardCDHasMoreTracks set as ", "false" if not self.context.guardCDHasMoreTracks else "true")
+            return
+        if 'g2=' in input:
+            input = input.replace('g2=', '').strip()
+            self.context.guardCDHasNoMoreTracks = False if '0' in input else True
+            print ("guardCDHasNoMoreTracks set as ", "false" if not self.context.guardCDHasNoMoreTracks else "true")
+            return
+        if 'g3=' in input:
+            input = input.replace('g3=', '').strip()
+            self.context.guardCDHasPreviousTrack = False if '0' in input else True
+            print ("guardCDHasPreviousTrack set as ", "false" if not self.context.guardCDHasPreviousTrack else "true")
+            return
+        if input == 'H':
+            self.printHelp()
+            return
+        if input == 'exit':
+            raise Exit
+        print("'", input, '" not defined.')
+    
     def startConsole(self):
         import sys
         self.printHelp()
-        for line in sys.stdin:
-            line = line.replace("\n", "")
-            if len(line) == 1:
+        try:
+            for line in sys.stdin:
+                line = line.replace("\n", "")
                 for var in line.split():
-                    if var == 'a':
-                        self.sm.TriggerEventOpen()
-                    if var == 'b':
-                        self.sm.TriggerEventPlay()
-                    if var == 'c':
-                        self.sm.TriggerEventEndOfTrack()
-                    if var == 'd':
-                        self.sm.TriggerEventSkipNextTrack()
-                    if var == 'e':
-                        self.sm.TriggerEventSkipPreviousTrack()
-                    if var == 'f':
-                        self.sm.TriggerEventStop()
-                    if var == 'g':
-                        self.sm.TriggerEventAfter10Minutes()
-            else:
-                print("Received ", len(line), "chars.")  # could do fancier processing on multiple chars
-                if line == "exit":
-                    print("Goodbye...")
-                    return
+                    self.processConsoleInput(var)
+        except Exit:
+            print("Goodbye...")
 
-    # {{{USER_TEST_SUITE_TESTS}}}
-    # {{{USER_TEST_SUITE_TESTS}}}
+    # {{{USER_TESTS}}}
+    # {{{USER_TESTS}}}
 
 if __name__ == '__main__':
     testrunner = ConsoleRunner()

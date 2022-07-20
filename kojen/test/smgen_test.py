@@ -2,6 +2,8 @@ import unittest
 import shutil
 import os
 from kojen.LanguagePython import LanguagePython
+from kojen.LanguageCPP import LanguageCPP
+from kojen.LanguageCsharp import LanguageCsharp
 from kojen.smgen import CStateMachineGenerator
 from kojen.kojentypes import Interface, Struct
 
@@ -32,9 +34,9 @@ class TestFeatures(unittest.TestCase):
             return f.readlines()
 
     @classmethod
-    def do_magic(cls, input, interface, tt = []):
+    def do_magic(cls, input, interface, tt = [], language=LanguagePython()):
         TestFeatures.create_template_file(input)
-        smgenerator = CStateMachineGenerator(cls.workingfolder, cls.workingfolder, interface, LanguagePython(), "", "", "")
+        smgenerator = CStateMachineGenerator(cls.workingfolder, cls.workingfolder, interface, language, "", "", "")
         smgenerator.Generate(tt, "", "", "", False)
         return TestFeatures.read_lines_of_output_file()
 
@@ -56,36 +58,41 @@ class TestFeatures(unittest.TestCase):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("<<<EVENTSIGNATURE::p1, p2, p3,>>>")
+        input.append("<<<EVENTSIGNATUREWITHDEFAULTS::p1, p2, p3,>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
-        s.AddType("binga","bungaBunga")
+        s.AddType("binga","bungaBunga", 0x66)
         i = Interface('')
         i.AddStruct(s)
 
         output = TestFeatures.do_magic(input, i)
 
-        self.assertEqual(len(output), 1)
+        self.assertEqual(len(output), 2)
         self.assertEqual(output[0], "binga, p1, p2, p3\n") # Python
+        self.assertEqual(output[1], "binga, p1, p2, p3\n")
 
     def test_event_custom_params_signature2(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("<<<EVENTSIGNATURE>>>")
+        input.append("<<<EVENTSIGNATUREWITHDEFAULTS>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
-        s.AddType("binga","bungaBunga")
+        s.AddType("binga","bungaBunga", "0x66")
         i = Interface('')
         i.AddStruct(s)
 
         output = TestFeatures.do_magic(input, i)
 
-        self.assertEqual(len(output), 1)
+        self.assertEqual(len(output), 2)
         self.assertEqual(output[0], "binga\n") # Python
+        self.assertEqual(output[1], "binga=0x66\n")  # Python
 
     def test_event_custom_params_signature3(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("(some, <<<EVENTSIGNATURE>>>)")
+        input.append("(some, <<<EVENTSIGNATUREWITHDEFAULTS>>>)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         i = Interface('')
@@ -93,13 +100,15 @@ class TestFeatures(unittest.TestCase):
 
         output = TestFeatures.do_magic(input, i)
 
-        self.assertEqual(len(output), 1)
+        self.assertEqual(len(output), 2)
         self.assertEqual(output[0], "(some)\n") # Python
+        self.assertEqual(output[1], "(some)\n")
 
     def test_event_custom_params_signature4(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("(<<<EVENTSIGNATURE>>> , other)")
+        input.append("(<<<EVENTSIGNATUREWITHDEFAULTS>>> , other)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         i = Interface('')
@@ -107,23 +116,60 @@ class TestFeatures(unittest.TestCase):
 
         output = TestFeatures.do_magic(input, i)
 
-        self.assertEqual(len(output), 1)
+        self.assertEqual(len(output), 2)
         self.assertEqual(output[0], "(other)\n") # Python
+        self.assertEqual(output[1], "(other)\n")
 
     def test_event_custom_params_signature5(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("(some, <<<EVENTSIGNATURE>>>)")
+        input.append("(some, <<<EVENTSIGNATUREWITHDEFAULTS>>>)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
-        s.AddType("binga","bungaBunga")
+        s.AddType("binga","bungaBunga", "0x66")
         i = Interface('')
         i.AddStruct(s)
 
         output = TestFeatures.do_magic(input, i)
 
-        self.assertEqual(len(output), 1)
+        self.assertEqual(len(output), 2)
         self.assertEqual(output[0], "(some, binga)\n") # Python
+        self.assertEqual(output[1], "(some, binga=0x66)\n")
+
+    def test_event_custom_params_signature6(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("(<<<EVENTSIGNATURE>>>, yo)")
+        input.append("(<<<EVENTSIGNATUREWITHDEFAULTS>>>, yo)")
+        input.append("<<<PER_EVENT_END>>>")
+        s = Struct("s")
+        s.AddType("binga","bungaBunga", "0x66")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i)
+
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], "(binga, yo)\n") # Python
+        self.assertEqual(output[1], "(binga=0x66, yo)\n")
+
+    def test_event_members_declare(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("<<<EVENTMEMBERSDECLARE>>>")
+        input.append("<<<PER_EVENT_END>>>")
+
+        s = Struct("s")
+        s.AddType("binga", "bungaBunga", "0x66")
+        s.AddType("bonga", "bangaBanga")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i)#, [], LanguageCsharp())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0].strip(' '), "binga = 0x66 # bungaBunga\n")
+        self.assertEqual(output[1].strip(' '), "bonga = None # bangaBanga\n")
 
     def test_event_members_instantiate_custom_name(self):
         input = []

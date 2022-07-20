@@ -470,14 +470,6 @@ class UnitTestWriter:
 
 class LanguageCPP(Language):
 
-    """USED"""
-    def MessageDescriptor(self, interface, struct):
-        return "" if interface.GetMessageTypeIDStr(struct) == "" else " [ MsgTypeID = " + interface.GetMessageTypeIDStr(struct) + " ]"
-
-    # White space
-    def WhiteSpace(self, indentationlevels):
-        return (indentationlevels+1)*'    '
-
     '''USED'''
     def ByteStreamTypeSharedPtr(self):
         return self.SharedPtrToType(self.ByteStreamType())
@@ -510,7 +502,7 @@ class LanguageCPP(Language):
         return typename + '*'
 
     # parameters need to be a list of (type, name).
-    def ParameterString(self, parameters=None):
+    def ParameterString(self, parameters=None) -> str:
         # def ParameterString(self, parameters = []):
         # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
@@ -529,7 +521,7 @@ class LanguageCPP(Language):
 
         raise Exception("Please use OrderedDict when passing parameters into 'ParameterString'")
     '''USED'''
-    def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False):
+    def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False) -> str:
         # def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=[], virtual=False):
         # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
@@ -551,7 +543,7 @@ class LanguageCPP(Language):
         raise Exception("Please use list when passing parameters into 'DeclareFunction'")
 
     '''USED'''
-    def GetFactoryCreateParams(self, struct, interface):
+    def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
@@ -563,7 +555,8 @@ class LanguageCPP(Language):
                 #ref = "&" if isStruct or isMessage else ""
                 ref = "" if isArray else "&"
                 if (mem[0] in interface) and not isArray:
-                    factoryparams.append(("const "+(self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref, mem[1]))
+                    factoryparams.append(("const " + (self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref,
+                                          (mem[1] + "{" + mem[2] + "}") if (with_defaults and self.HasDefault(mem)) else mem[1]))
                 else:
                     factoryparams.append(("const "+mem[0] + ptr + ref, mem[1]))
         return factoryparams
@@ -571,7 +564,7 @@ class LanguageCPP(Language):
     '''USED
     Declares the guts of a struct declaration
     '''
-    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True):
+    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True) -> list:
         arrayName = []
         structmembers = struct.Decompose()
         result = []
@@ -582,7 +575,9 @@ class LanguageCPP(Language):
             if (mem[0] in interface) and not struct.IsArray(mem[1]):
                 result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
-                result.append(whitespace + self.InstantiateType(mem[0] + ptr, mem[1], '', attr_packed) + ";")
+                result.append(whitespace + self.InstantiateType(mem[0] + ptr, mem[1],
+                                                                "" if (not self.HasDefault(mem) or attr_packed) else mem[2],
+                                                                attr_packed) + ";")
 
             if struct.IsArray(mem[1]):
                 arrayName.append(mem[1])
@@ -594,7 +589,7 @@ class LanguageCPP(Language):
             result.append(whitespace+"}")
         return result
     '''USED'''
-    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor):
+    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor) -> list:
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
@@ -626,7 +621,7 @@ class LanguageCPP(Language):
     '''USED
     All custom structs, protocol structs and message structs.
     '''
-    def SerializeStructToByteStream(self, struct, interface, whitespace, outname, inname, inacessor, is_arm=False):
+    def SerializeStructToByteStream(self, struct, interface, whitespace, outname, inname, inacessor, is_arm=False) -> list:
         result = []
         hasArray = False
         isProtocol = interface.IsProtocolStruct(struct.Name)
@@ -662,7 +657,7 @@ class LanguageCPP(Language):
     '''USED
     All custom structs, protocol structs and message structs.
     '''
-    def SerializeStructIntoByteStream(self, struct, interface, whitespace, inname, streamname, cntname, inacessor):
+    def SerializeStructIntoByteStream(self, struct, interface, whitespace, inname, streamname, cntname, inacessor) -> list:
         result = []
         hasArray = False
         isProtocol = interface.IsProtocolStruct(struct.Name)
@@ -695,7 +690,7 @@ class LanguageCPP(Language):
     '''USED
     All custom structs, protocol structs and message structs.
     '''
-    def SerializeStructFromByteStream(self, functioname, struct, interface, whitespace, streamname, cntname, outname, outaccessor):
+    def SerializeStructFromByteStream(self, functioname, struct, interface, whitespace, streamname, cntname, outname, outaccessor) -> list:
         result = []
 
         structmembers = struct.Decompose()
@@ -795,7 +790,7 @@ class LanguageCPP(Language):
         Instantiate/declare a basic type, with optional initializer. Only declarations can use 'attribute packed' directives.
         use typename = '' to make it a known variable initialization
     '''
-    def InstantiateType(self, typename, instancename, initialevalue='', is_attr_packed=False, is_static=False, is_const=False):
+    def InstantiateType(self, typename, instancename, initialevalue='', is_attr_packed=False, is_static=False, is_const=False) -> str:
         # declaration...i.e. in class or struct. no initial value, can be packed
         if initialevalue.replace(' ', '') == '':
             decl = typename + ' ' + instancename
@@ -817,13 +812,6 @@ class LanguageCPP(Language):
         if is_const:
             res = 'const ' + res
         return res
-
-    # File extenstion
-    def DotHFile(self):
-        return '.h'
-
-    def DotCPPFile(self):
-        return '.cpp'
 
     # Braces
     '''USED'''

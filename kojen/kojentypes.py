@@ -108,7 +108,7 @@ class Documentation:
     def SetDocumentation(self, documentation):
         self.documentation = documentation
 
-# TODO : This is currently defined, but unused anywhere.
+''' TODO
 class RoutingHeader(OrderedDict, Query, DefaultVal):
     """
     RoutingHeader.
@@ -153,7 +153,7 @@ class RoutingHeader(OrderedDict, Query, DefaultVal):
 
     def PayloadSize(self):
         return 'PayloadSize'
-
+'''
 
 class MessageHeader(OrderedDict, Query, DefaultVal):
     """
@@ -181,9 +181,9 @@ class MessageHeader(OrderedDict, Query, DefaultVal):
         self[self.Preamble()]				= 'uint16'
         self[self.TypeID()]					= 'uint16'
         self[self.PayloadSize()]			= 'uint32'
-        self.defaults[self.Preamble()]		= preamble
-        self.defaults[self.TypeID()]		= typeid
-        self.defaults[self.PayloadSize()]	= plsz
+        self.defaults[self.Preamble()]		= str(preamble)
+        self.defaults[self.TypeID()]		= str(typeid)
+        self.defaults[self.PayloadSize()]	= str(plsz)
 
     def Preamble(self):
         return 'Preamble'
@@ -197,7 +197,7 @@ class MessageHeader(OrderedDict, Query, DefaultVal):
     def Decompose(self):
         result = []
         for memberName in self:
-            result.append((self[memberName], memberName))
+            result.append((self[memberName], memberName, self.defaults[memberName]))
         return result
 
     def OverridePreamble(self, preamble):
@@ -239,14 +239,18 @@ class Struct(OrderedDict, Query, DefaultVal, Documentation):
         DefaultVal.__init__(self)
         self.Name  = structName
 
-    def AddType(self, memberName, memberType, val=0):
+    def AddType(self, memberName, memberType, default = None):
         self[memberName]          = memberType
-        self.defaults[memberName] = val
+        self.defaults[memberName] = str(default) if default else default
 
-    def Decompose(self):
+    def Decompose(self) -> list:
+        """
+        Returns a list of tuples:
+            (memberType, memberName, memberDefault) -> memberDefault = None if there is no default.
+        """
         result = []
         for memberName in self:
-            result.append((self[memberName], memberName))
+            result.append((self[memberName], memberName, self.defaults[memberName]))
         return result
 
 
@@ -307,9 +311,9 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
     def HeaderName(self):
         return 'Header'
 
-    def AddType(self, memberName, membertype, val=0):
+    def AddType(self, memberName, membertype, default = None):
         self[memberName] = membertype
-        self.defaults[memberName] = val
+        self.defaults[memberName] = str(default) if default else default
 
     def AddStruct(self, memberName, struct):
         self[memberName] = struct
@@ -336,7 +340,7 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
                     kid = self[memberName].Decompose()
                     result.extend(kid)
             else:
-                result.append((self[memberName], memberName))
+                result.append((self[memberName], memberName, self.defaults[memberName]))
         return result
 
 
