@@ -150,13 +150,13 @@ class UnitTestWriter:
                 isArray = message.IsArray(mem[1])
                 isStruct = interface.IsStruct(mem[0])
                 if isArray:
-                    result.append(WHITESPACE + language.For_Range('0', '50') + language.OpenBrace())
+                    result.append(WHITESPACE + language.For_Range('i','size_t','0', '50') + language.OpenBrace())
                     if not isStruct:
-                        result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('', instancename + accessor + mem[1] + '[i]', 'i')+";")
+                        result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('', instancename + accessor + mem[1] + '[i]', 'static_cast<'+mem[0]+'>(i)')+";")
                     elif isStruct:
                         structmembers = interface[mem[0]].Decompose()
                         for smem in structmembers:
-                            result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('', instancename + accessor + mem[1] + '[i].' + smem[1], 'i')+";")
+                            result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('', instancename + accessor + mem[1] + '[i].' + smem[1], 'static_cast<'+smem[0]+'>(i)')+";")
                     result.append(WHITESPACE + language.CloseBrace())
 
         # To Stream
@@ -251,7 +251,7 @@ class UnitTestWriter:
                 struct = interface[mem[0]]
                 structmembers = struct.Decompose()
                 if isArray:
-                    result.append(WHITESPACE + language.For_Range('0', '50'))
+                    result.append(WHITESPACE + language.For_Range('i','size_t','0', '50'))
                     result.append(WHITESPACE + language.OpenBrace())
                     for smem in structmembers:
                         result.append(WHITESPACE + language.WhiteSpace(0) + equality_check + ' = '+equality_check + ' && '+instancename+accessor+membername+'[i].'+smem[1]+' == '+message_variable_name_after_ser+accessor+membername+'[i].'+smem[1]+';')
@@ -261,7 +261,7 @@ class UnitTestWriter:
                         result.append(WHITESPACE + equality_check + ' = ' + equality_check + ' && '+instancename+accessor+membername+'.'+smem[1]+' == '+message_variable_name_after_ser+accessor+membername+'.'+smem[1]+';')
             else:
                 if isArray:
-                    result.append(WHITESPACE + language.For_Range('0', '50'))
+                    result.append(WHITESPACE + language.For_Range('i','size_t','0', '50'))
                     result.append(WHITESPACE + language.OpenBrace())
                     result.append(WHITESPACE + language.WhiteSpace(0) + equality_check+' = '+equality_check + ' && '+instancename+accessor+membername+'[i] == '+message_variable_name_after_ser+accessor+membername+'[i];')
                     result.append(WHITESPACE + language.CloseBrace())
@@ -946,10 +946,10 @@ class LanguageCPP(Language):
 
     '''USED'''
     # 1 means ++
-    def For_Range(self, start, stop, incr=1):
+    def For_Range(self, iterName, iterType, start, stop, incr=1) -> str:
         if incr == 1:
-            return 'for (size_t i = ' + str(start) + '; i < ' + str(stop) + '; ++i)'
-        return 'for (size_t i = ' + str(start) + '; i < ' + str(stop) + '; i+=' + str(incr) + ')'
+            return 'for (' + iterType + ' ' + iterName + ' = ' + str(start) + '; '+ iterName +' < ' + str(stop) + '; ++'+ iterName +')'
+        return 'for (' + iterType + ' ' + iterName + ' = ' + str(start) + '; '+ iterName +' < ' + str(stop) + '; '+ iterName +'+=' + str(incr) + ')'
 
     # ------------------------------ End
 

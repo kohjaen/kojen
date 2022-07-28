@@ -212,7 +212,7 @@ class Language:
         raise RuntimeError("Language Feature Not Implemented")
 
     # 1 means ++
-    def For_Range(self, start, stop, incr=1):
+    def For_Range(self, iterName, iterType, start, stop, incr=1) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     def LicenseAgreement(self):

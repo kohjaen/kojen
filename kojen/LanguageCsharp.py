@@ -360,13 +360,6 @@ class LanguageCsharp(Language):
     def This(self):
         return 'this->'
 
-    '''USED'''
-    # 1 means ++
-    def For_Range(self, start, stop, incr=1):
-        if incr == 1:
-            return 'for (size_t i = ' + str(start) + '; i < ' + str(stop) + '; ++i)'
-        return 'for (size_t i = ' + str(start) + '; i < ' + str(stop) + '; i+=' + str(incr) + ')'
-
     def LicenseAgreement(self):
         product_name = "'KoJen'"
         result = []
