@@ -368,15 +368,16 @@ namespace CDPlayerSMTest
             CDPlayerStateMachine sm = new (context);
             // {{{USER_UNIT_TEST_STATES}}}
             const ushort NO_TRACKS = 10;
+            const int temp_sleep_ms = 250;
             Assert.True(sm.IsStateStop());
             Assert.True(!context.GuardCDInside());
             // Open the CD player
             sm.TriggerEventOpen();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStateOpen());
             // Insert a CD and close the CD player
             sm.TriggerEventOpen();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             // CD player motor closes the drive...an interrupt triggers that is close
             context.SetHasCD(true);
             // Read the CD info...
@@ -393,42 +394,42 @@ namespace CDPlayerSMTest
             // Play the first track...
             context.m_expected_track_number = 1;
             sm.TriggerEventPlay(1);
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             Assert.Equal(0, context.GetCurrentTrack());
             // end of track.
             sm.TriggerEventEndOfTrack();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             Assert.Equal(1, context.GetCurrentTrack());
             // end of track.
             sm.TriggerEventEndOfTrack();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             Assert.Equal(2, context.GetCurrentTrack());
             // skip next track
             sm.TriggerEventSkipNextTrack();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             Assert.Equal(3, context.GetCurrentTrack());
             // skip previous track
             sm.TriggerEventSkipPreviousTrack();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             Assert.Equal(2, context.GetCurrentTrack());
             // Pause. Shouldn't matter what track is passed...
             sm.TriggerEventPlay(99);
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePause());
             // Resume
             context.m_expected_track_number = 5;
             sm.TriggerEventPlay(5);
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             Assert.Equal(2, context.GetCurrentTrack());
             // Stop
             sm.TriggerEventStop();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStateStop());
             // When stopping we cleared the current track...
             Assert.Equal(0, context.GetCurrentTrack());
@@ -437,21 +438,21 @@ namespace CDPlayerSMTest
             /// 
             context.m_expected_track_number = 25;
             sm.TriggerEventPlay(25);
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             Assert.Equal(0, context.GetCurrentTrack());
             // next track.
             sm.TriggerEventEndOfTrack();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             Assert.Equal(1, context.GetCurrentTrack());
             // pause. Shouldn't matter what track is played
             sm.TriggerEventPlay(99);
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePause());
             // 10 minutes go by, and a timer interrupt signals this...
             sm.TriggerEventAfter10Minutes();
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStateStop());
             // When stopping we cleared the current track...
             Assert.Equal(0, context.GetCurrentTrack());
@@ -460,7 +461,7 @@ namespace CDPlayerSMTest
             /// 
             context.m_expected_track_number = 15;
             sm.TriggerEventPlay(15);
-            Thread.Sleep(50);
+            Thread.Sleep(temp_sleep_ms);
             Assert.True(sm.IsStatePlay());
             for (ushort i = 0; i <= NO_TRACKS; i++)
             {
@@ -470,7 +471,7 @@ namespace CDPlayerSMTest
                     Assert.Equal(0, context.GetCurrentTrack());
                 // end of track.
                 sm.TriggerEventEndOfTrack();
-                Thread.Sleep(50);
+                Thread.Sleep(temp_sleep_ms);
             }
             Assert.True(sm.IsStateStop());
             // When stopping we cleared the current track...
