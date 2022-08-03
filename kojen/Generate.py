@@ -12,8 +12,8 @@ import os
 '''
 
 
-def Protocol(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec="", author = "", group="", brief="", template_dir=""):
-    protogen.Generate(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec, author, group, brief, template_dir)
+def Protocol(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec="", author = "", group="", brief="", template_dir="") -> list:
+    return protogen.Generate(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec, author, group, brief, template_dir)
 
 
 ''' Generate Entry function for State Machines
@@ -23,7 +23,7 @@ def Protocol(output_dir, pythoninterfacegeneratorfilename, namespacename, classn
 '''
 
 
-def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True):
+def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_embedded_arm")
 
@@ -37,16 +37,16 @@ def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, s
         smgenerator.vpp_filename = "Transition Table"
     else:
         smgenerator.vpp_filename = __internal
-    smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
+    return smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
 
-def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True):
+def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_cs_winlinmac")
 
     if not os.path.isdir(templatedir):
         print("Error : dir '" + templatedir + "' does not exist. Aborting.")
-        return
+        return []
 
     language = LanguageCsharp.LanguageCsharp()
     smgenerator = smgen.CStateMachineGenerator(templatedir, outputdir, eventsinterface, language, author, group, brief)
@@ -54,15 +54,15 @@ def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacen
         smgenerator.vpp_filename = "Transition Table"
     else:
         smgenerator.vpp_filename = __internal
-    smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
+    return smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
-def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True):
+def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_py")
 
     if not os.path.isdir(templatedir):
         print("Error : dir '" + templatedir + "' does not exist. Aborting.")
-        return
+        return []
 
     language = LanguagePython.LanguagePython()
     smgenerator = smgen.CStateMachineGenerator(templatedir, outputdir, eventsinterface, language, author, group, brief)
@@ -70,32 +70,32 @@ def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacen
         smgenerator.vpp_filename = "Transition Table"
     else:
         smgenerator.vpp_filename = __internal
-    smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
+    return smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
 
-def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __copy_other_files=True):
+def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __copy_other_files=True) -> list:
     transition_table = vppfs.ExtractTransitionTable(vp_statemachinename, vp_project_path)
-    StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc, author, group, brief, templatedir, os.path.basename(vp_project_path),__copy_other_files)
+    return StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc, author, group, brief, templatedir, os.path.basename(vp_project_path),__copy_other_files)
 
 
 ''' Generate Entry function for Class Diagrams
 '''
 
 
-def UML(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", group="", brief="", namespace_to_folders=False, templatefiledir=""):
+def UML(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", group="", brief="", namespace_to_folders=False, templatefiledir="") -> list:
     language = LanguageCPP.LanguageCPP()
-    umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
+    return umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
 
-def UML_CSHARP(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", group="", brief="", namespace_to_folders=False, templatefiledir=""):
+def UML_CSHARP(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", group="", brief="", namespace_to_folders=False, templatefiledir="") -> list:
     language = LanguageCsharp.LanguageCsharp()
-    umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
+    return umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
 
 ''' Generate Entry function for template files using COG
 '''
 
 
-def Cogify(output_dir, pythonfile, cog_template_FILEorDIRECTORY, namespacename, classname, author="", group="", brief="", dclspec=""):
+def Cogify(output_dir, pythonfile, cog_template_FILEorDIRECTORY, namespacename, classname, author="", group="", brief="", dclspec="") -> list:
     if os.path.isfile(cog_template_FILEorDIRECTORY):
-        coggen.GenerateFile(output_dir, pythonfile, cog_template_FILEorDIRECTORY, author, namespacename, classname, group, brief, dclspec)
+        return coggen.GenerateFile(output_dir, pythonfile, cog_template_FILEorDIRECTORY, author, namespacename, classname, group, brief, dclspec)
     else:
-        coggen.GenerateDirectory(output_dir, pythonfile, cog_template_FILEorDIRECTORY, author, namespacename, classname, group, brief, dclspec)
+        return coggen.GenerateDirectory(output_dir, pythonfile, cog_template_FILEorDIRECTORY, author, namespacename, classname, group, brief, dclspec)

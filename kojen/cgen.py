@@ -148,7 +148,7 @@ class CBASEGenerator:
                     os.makedirs(outputfiledir)
                     info("Directory '" + outputfiledir + "' does not exist...created.")
 
-    def generate_filenames_from_templates(self, file, dict_to_replace_filenames):
+    def generate_filenames_from_templates(self, file, dict_to_replace_filenames) -> str:
         for tag, desired_text in dict_to_replace_filenames.items():
             file = file.replace(tag, desired_text)
         return file
@@ -215,7 +215,7 @@ class CBASEGenerator:
         else:
             lines.append(line)
 
-    def loadtemplates_firstfiltering_FILE(self, filepath, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
+    def loadtemplates_firstfiltering_FILE(self, filepath, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = "") -> CCodeModel:
         result = CCodeModel()
         if os.path.exists(filepath):
             file_without_path = os.path.basename(filepath)
@@ -318,7 +318,7 @@ class CBASEGenerator:
 
         return desired_text
 
-    def createoutput(self, filenames_to_lines):
+    def createoutput(self, filenames_to_lines) -> list:
         for f in filenames_to_lines:
             print("+++++++++ ", f)
             filename = os.path.join(self.output_gen_file_dir, f)
@@ -327,6 +327,7 @@ class CBASEGenerator:
                 for line in filenames_to_lines[f]:
                     line = line.replace('\t',"    ") # Last filter! Convert tabs to 4 spaces...
                     writer.write(line)
+        return list(filenames_to_lines.keys())
 
     def hasTag(self, line):
         return '<<<' in line and '>>>' in line
