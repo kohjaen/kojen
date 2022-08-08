@@ -13,6 +13,8 @@ try:
 except (ModuleNotFoundError, ImportError) as e:
 	from preservative import *
 
+import os
+
 '''
 
     MIT License
@@ -402,3 +404,33 @@ def FileCopyUtil(dir_from, dir_to, list_of_filenames):
     except OSError:
         warnings.warn("Creation of the directory %s failed" % dir_to)
 
+def FilePreservationSyncUtil(file_from, file_to) -> None:
+    """
+    Will synchronize code in preservation tags from 'file_from' to 'file_to',
+    if these tags exist in 'file_to'.
+
+    Tags that exist exclusively in 'file_to' will remain untouched if they do not
+    exist in 'file_from'.
+    """
+    if not os.path.isfile(file_from):
+        error("File '" + file_from + "' does not exist. Aborting.")
+        return
+    if not os.path.isfile(file_to):
+        error("File '" + file_to + "' does not exist. Aborting.")
+        return
+
+    print("*************************************")
+    print("******* Sync (file)  ****************")
+    print("*************************************")
+    print(" From file    : " + file_from)
+    print(" To file      : " + file_to)
+    print(" Executing in : " + os.path.realpath(__file__))
+    print("*************************************")
+
+    bg = CBASEGenerator(os.path.dirname(file_from), os.path.dirname(file_to))
+    cm = bg.loadtemplates_firstfiltering_FILE(file_to, {}, {})
+    p  = Preservative(file_from)
+    p.preserved_tags_per_file[file_to]          = p.preserved_tags_per_file.pop(file_from)
+    p.preserved_tags_per_file_WAS_USED[file_to] = p.preserved_tags_per_file_WAS_USED.pop(file_from)
+    p.Emplace(cm.filenames_to_lines, True)
+    bg.createoutput(cm.filenames_to_lines)

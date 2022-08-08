@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 try:
-    from . import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython
+    from . import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython, cgen
 except:
-    import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython
+    import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython, cgen
 
 import os
 
@@ -56,6 +56,7 @@ def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacen
         smgenerator.vpp_filename = __internal
     return smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
+
 def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_py")
@@ -90,6 +91,7 @@ def UML_CSHARP(outputdir, vp_project_path, vp_classdiagramname, dclspc="", autho
     language = LanguageCsharp.LanguageCsharp()
     return umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
 
+
 ''' Generate Entry function for template files using COG
 '''
 
@@ -99,3 +101,9 @@ def Cogify(output_dir, pythonfile, cog_template_FILEorDIRECTORY, namespacename, 
         return coggen.GenerateFile(output_dir, pythonfile, cog_template_FILEorDIRECTORY, author, namespacename, classname, group, brief, dclspec)
     else:
         return coggen.GenerateDirectory(output_dir, pythonfile, cog_template_FILEorDIRECTORY, author, namespacename, classname, group, brief, dclspec)
+
+
+''' File preservation sync utility
+'''
+def FileSync(from_file, to_file) -> None:
+    cgen.FilePreservationSyncUtil(from_file, to_file)
