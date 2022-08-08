@@ -31,24 +31,13 @@ from .Language import *
 
 class LanguagePython(Language):
 
-    # ------------------------------ Begin : Language Specifics
-    # File extension
-    def DotHFile(self):
-        return '.h.py'
-
-    def DotCPPFile(self):
-        return '.py'
-
+    ## Language Specifics
     # Braces
     def OpenBrace(self):
         return ''
 
     def CloseBrace(self):
         return ''
-
-    # White space
-    def WhiteSpace(self, indentationlevels):
-        return (indentationlevels+1)*'    '
 
     # Connection type
     def ConnectionType(self):
@@ -88,31 +77,31 @@ class LanguagePython(Language):
     def TypedefRawPtrToType(self, typename, newtypename):
         return ''
 
-    def GetFactoryCreateParams(self, struct, interface):
+    def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
-            isMessage = interface.IsMessageStruct(mem[0])
-            isStruct = struct.IsStruct(mem[1])
+            #isArray = struct.IsArray(mem[1])
+            #isMessage = interface.IsMessageStruct(mem[0])
+            #isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                if (mem[0] in interface) and not isArray:
-                    factoryparams.append(("", mem[1]))
+                if with_defaults and self.HasDefault(mem):
+                    factoryparams.append(("", mem[1] + "=" + mem[2]))
                 else:
                     factoryparams.append(("", mem[1]))
         return factoryparams
 
     '''Declares the guts of a struct declaration
     '''
-    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True):
+    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True) -> list:
         arrayName = []
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
             if not struct.IsArray(mem[1]):
-                result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + '# ' + mem[0])
+                result.append(whitespace + self.InstantiateType(mem[0], mem[1], mem[2] if self.HasDefault(mem) else 'None') + ' # ' + mem[0])
             else:
-                result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + '# ' + mem[0] + '[]')
+                result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + ' # ' + mem[0] + '[]')
 
             if struct.IsArray(mem[1]):
                 arrayName.append(mem[1])
@@ -147,7 +136,7 @@ class LanguagePython(Language):
         # local variable decl/instantiation or known variable instantiation
         return instancename + ' = ' + initialevalue
 
-    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor):
+    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor) -> list:
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
@@ -159,27 +148,30 @@ class LanguagePython(Language):
             if not isArray and (not isProtocol or isStruct):
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]))
             elif not isArray and isProtocol and not isStruct:
-                s = Template("sizeof(${this}) - sizeof(${header})")
-                result.append(instance_accessor + self.InstantiateType("", mem[1], "Create_" + mem[0] + "(" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + ")"))
+                raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             elif isArray and not isProtocol and not isStruct:
-                if not IsMessageStruct(interface, struct.Name):
-                    raise RuntimeError("Only mesage structs are allowed arrays.")
-                s = Template("${payload} ${op} ${bytes}")
-                array = struct[mem[1]]
-
-                if interface.IsStruct(array.type):
-                    result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="-=", bytes="sizeof(" + array.type + ")*1"))
-                    result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="+=", bytes="sizeof(" + array.type + ")*" + array.Count()))
-                else:
-                    result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="-=", bytes="sizeof('" + array.type + "')*1"))
-                    result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="+=", bytes="sizeof('" + array.type + "')*" + array.Count()))
-                # result.append(instance_accessor + self.InstantiateArray(array.type,array.Name,array.Count()))
-                # result.append(whitespace + "if(nullptr != " + array.Name + ")")
-                result.append(whitespace + instance_accessor.replace("\t", '').replace("    ","") + array.Name + " = " + array.Name)
+                raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             else:
                 print("WTF : InstantiateStructMembers")
 
         return result
+
+    def ParameterString(self,  parameters=None) -> str:
+        if parameters is None:
+            parameters = []
+
+        if str(type(parameters)) == "<type 'list'>" or str(type(parameters)) == "<class 'list'>":  # Python2 gives the first, python3 the second!
+            parameter_string = ''
+            size = len(parameters)
+            cnt = 0
+            for param in parameters:
+                parameter_string += param[1]
+                if cnt != (size - 1):
+                    parameter_string += ', '
+                cnt += 1
+            return parameter_string
+
+        raise Exception("Please use OrderedDict when passing parameters into 'ParameterString'")
 
     # parameters need to be a list of (type, name).
     def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False):
@@ -290,10 +282,10 @@ class LanguagePython(Language):
         return 'self.'
 
     # 1 means ++
-    def For_Range(self, start, stop, incr=1):
+    def For_Range(self, iterName, iterType, start, stop, incr=1) -> str:
         if incr == 1:
-            return 'for i in range(' + str(start) + ',' + str(stop) + '):'
-        return 'for i in range (' + str(start) + ',' + str(stop) + ',' + str(incr) + '):'
+            return 'for ' + iterName + ' in range(' + str(start) + ',' + str(stop) + '):'
+        return 'for ' + iterName + ' in range (' + str(start) + ',' + str(stop) + ',' + str(incr) + '):'
 
     # Python special functions
     def DeclareDataFormatFunction(self, struct, interface, whitespace, formatfunction):

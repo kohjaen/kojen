@@ -95,7 +95,7 @@ class Preservative:
         else:
             print(outputfile_OR_dir + " does not exist, nothing to preserve")
 
-    def CollectFile(self, filename_and_path):
+    def CollectFile(self, filename_and_path) -> None:
         self.preserved_tags_per_file[filename_and_path] = {}
         self.preserved_tags_per_file_WAS_USED[filename_and_path] = {}
         with open(filename_and_path) as f:
@@ -133,25 +133,41 @@ class Preservative:
                 print(
                     "<Warning> Unknown error caught on " + filename_and_path + ". If this file is not part of the currently preserved files, then ignore.")
 
-    def Collect(self, directory):
+    def Collect(self, directory) -> None:
         for root, dirs, files in os.walk(directory):
             for file in files:
                 if file.find('.h') > -1 or file.find('.cpp') > -1 or file.find('.py') > -1 or file.find('.cs') > -1:
                     self.CollectFile(os.path.join(root, file))
 
     # filenames_to_lines is an ordereddictionary {'filename', [line1, line2 ...] ...}
-    def Emplace(self, filenames_to_lines):
+    def Emplace(self, filenames_to_lines, replace=False) -> None:
+        """
+        Will emplace previously cached code between tags into same tags found in 'filenames_to_lines'.
+        - typically the tags in the 'output' have no code in them.
+
+        If a tag is no longer in the 'output', a ".LostCode.txt" is created with the code that is no longer output.
+
+        If 'replace' is false, and tags within 'filenames_to_lines' have code in them, behaviour is undefined, as
+        two sets of preservations are merged.
+
+        If 'replace' is true, and tags within 'filenames_to_lines' have code in them, tags that are
+        previously cached will replace tags that are in 'filenames_to_lines'...essentially cloning them.
+
+        @param filenames_to_lines: treated as an 'out' parameter. Code between tags loaded when creating this object
+                                   will be placed here.
+        @param replace: will replace any code between tags in 'filenames_to_lines' with code between tags loaded when
+                        creating this object (and ignore what may be there).
+        """
         for fn, lines in filenames_to_lines.items():
-            # if fn in self.preserved_tags_per_file:  # Preferred py2/3 way of testing for a key in a dictionary.
             for outputfile, tags in self.preserved_tags_per_file.items():
                 if outputfile.find(fn) > -1:
-                    #tags = self.preserved_tags_per_file[fn]
                     new_lines = []
                     tag_found = False
                     tagline = ""
                     for line in lines:
-                        new_lines.append(line)
                         cleaned_up_line = CleanUpLine(line)
+                        if not replace or (replace and (not tag_found or (cleaned_up_line in tagline and self._TAG_PREFIX_ in cleaned_up_line))):
+                            new_lines.append(line)
                         if not tag_found and (cleaned_up_line in tags):
                             tagline = line
                             tag_found = True
@@ -160,10 +176,7 @@ class Preservative:
                                 new_lines.append(i)
                         elif tag_found and (cleaned_up_line in tags):  # 2nd tag...
                             tag_found = False
-                        elif tag_found and not (cleaned_up_line in tags):  # 2nd tag missing...add it
-                            new_lines.append(tagline)
-                            tag_found = False
-                    # replace
+                            tagline = ""
                     filenames_to_lines[fn] = new_lines
 
         for outputfile, tags in self.preserved_tags_per_file_WAS_USED.items():

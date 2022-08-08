@@ -41,14 +41,13 @@ class Language:
     def __init__(self):
         Language.Lang = self
 
+    def HasDefault(self, member_tuple) -> bool:
+        """
+        Returns true if a tuple (representing a member) has a default
+        """
+        return len(member_tuple) >= 3 and member_tuple[2]
+
     # ------------------------------ Begin : Language Specifics
-    # File extension
-    def DotHFile(self):
-        raise RuntimeError("Language Feature Not Implemented")
-
-    def DotCPPFile(self):
-        raise RuntimeError("Language Feature Not Implemented")
-
     # Braces
     def OpenBrace(self):
         raise RuntimeError("Language Feature Not Implemented")
@@ -95,13 +94,13 @@ class Language:
     def PtrToTypeName(self, typename):
         return ""
 
-    def GetFactoryCreateParams(self, struct, interface):
+    def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
         raise RuntimeError("Language Feature Not Implemented")
 
-    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True):
+    def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True) -> list:
         raise RuntimeError("Language Feature Not Implemented")
 
-    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor):
+    def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor) -> list:
         raise RuntimeError("Language Feature Not Implemented")
 
     def RawPtrToType(self, typename):
@@ -132,11 +131,11 @@ class Language:
     ''' Instantiate/declare a basic type, with optional initializer. Only declarations can use 'attribute packed' directives.
         use typename = '' to make it a known variable initialization
     '''
-    def InstantiateType(self, typename, instancename, initialevalue='', is_attr_packed=False, is_static=False, is_const=False):
+    def InstantiateType(self, typename, instancename, initialevalue='', is_attr_packed=False, is_static=False, is_const=False) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     # parameters need to be a list of (type, name).
-    def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False):
+    def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     def DeclareClass(self, classname, declspec=''):
@@ -209,25 +208,11 @@ class Language:
     def This(self):
         raise RuntimeError("Language Feature Not Implemented")
 
-    def ParameterString(self,  parameters=None):
-        if parameters is None:
-            parameters = []
-
-        if str(type(parameters)) == "<type 'list'>" or str(type(parameters)) == "<class 'list'>":  # Python2 gives the first, python3 the second!
-            parameter_string = ''
-            size = len(parameters)
-            cnt = 0
-            for param in parameters:
-                parameter_string += param[1]
-                if cnt != (size - 1):
-                    parameter_string += ', '
-                cnt += 1
-            return parameter_string
-
-        raise Exception("Please use OrderedDict when passing parameters into 'ParameterString'")
+    def ParameterString(self,  parameters=None) -> str:
+        raise RuntimeError("Language Feature Not Implemented")
 
     # 1 means ++
-    def For_Range(self, start, stop, incr=1):
+    def For_Range(self, iterName, iterType, start, stop, incr=1) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     def LicenseAgreement(self):

@@ -302,7 +302,7 @@ class CUMLGenerator(CBASEGenerator):
                 codemodel.filenames_to_lines = new_tmp_res
         return codemodel
 
-def GenerateUML(umlgenerator, classdiagram, dclspc=""):
+def GenerateUML(umlgenerator, classdiagram, dclspc="") -> list:
     cm = umlgenerator.loadtemplates_firstfiltering(classdiagram,dclspc)
     # Preserve user code.
     umlgenerator.preserve_usercode_in_files(cm)
@@ -311,14 +311,14 @@ def GenerateUML(umlgenerator, classdiagram, dclspc=""):
     preservation = Preservative(umlgenerator.output_gen_file_dir)
     preservation.Emplace(cm.filenames_to_lines)
     '''
-    # Write output to file.
-    umlgenerator.createoutput(cm.filenames_to_lines)
+    # Write output to file and return the filenames.
+    return umlgenerator.createoutput(cm.filenames_to_lines)
 
-def Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc="", templatefiledir = ""):
+def Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc="", templatefiledir = "") -> list:
 
     if not os.path.isfile(vp_project_path):
         print("Error : file '" + vp_project_path + "' does not exist. Aborting.")
-        return
+        return []
 
     print("*************************************")
     print("******* UMLGen **********************")
@@ -331,7 +331,7 @@ def Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, 
     class_diagram = ExtractClassDiagram(vp_classdiagramname, vp_project_path)
     umlGen = CUMLGenerator(outputdir, language, author, group, brief, namespace_to_folders,templatefiledir,vp_classdiagramname)
     umlGen.vpp_filename = os.path.basename(vp_project_path)
-    GenerateUML(umlGen,class_diagram,dclspc)
+    return GenerateUML(umlGen,class_diagram,dclspc)
 
 def TestCPP():
     #two class diagrams "ProtocolStack", "TestClassDiagram"

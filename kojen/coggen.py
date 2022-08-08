@@ -86,10 +86,10 @@ class CCogGenerator(CBASEGenerator):
 
         return CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, self.dict_to_replace_filenames)
 
-    def generate_filenames_from_templates(self, file):
+    def generate_filenames_from_templates(self, file) -> str:
         return CBASEGenerator.generate_filenames_from_templates(self,file, self.dict_to_replace_filenames)
 
-    def Generate(self, pythoninterfacegeneratorfilename, namespacenname, classname, group, brief, preserve_dir="",dclspc=""):
+    def Generate(self, pythoninterfacegeneratorfilename, namespacenname, classname, group, brief, preserve_dir="",dclspc="") -> list:
         sm = CCogCodeModel()
         sm.pythoninterfacegeneratorfilename = pythoninterfacegeneratorfilename
         sm.namespacename = namespacenname
@@ -103,14 +103,8 @@ class CCogGenerator(CBASEGenerator):
         # Preserve user code.
         self.preserve_usercode_in_files(self.cm,preserve_dir)
 
-        # Write output to file.
-        self.createoutput(self.cm.filenames_to_lines)
-
-        # return the filenames
-        filenames = []
-        for filename in self.cm.filenames_to_lines.keys():
-            filenames.append(filename)
-        return filenames
+        # Write output to file, and return filenames.
+        return self.createoutput(self.cm.filenames_to_lines)
 
 def PreCogCopyFileAndInsertPythonImport(file_from, file_to, python_import):
     # Need to put the correct python file for cog to import!
@@ -119,14 +113,13 @@ def PreCogCopyFileAndInsertPythonImport(file_from, file_to, python_import):
             for line in fin:
                 fout.write(line.replace(__TAG_PyIFGen_NAME__, python_import))
 
-def GenerateFile(output_dir, pythonfile, cog_template_file, author, namespacename, classname, group, brief, dclspc=""):
+def GenerateFile(output_dir, pythonfile, cog_template_file, author, namespacename, classname, group, brief, dclspc="") -> list:
     cog_template_file = cog_template_file.strip()
     if os.path.isdir(cog_template_file):
-        GenerateDirectory(output_dir, pythonfile, cog_template_file, author, namespacename, classname, group, brief, dclspc)
-        return
+        return GenerateDirectory(output_dir, pythonfile, cog_template_file, author, namespacename, classname, group, brief, dclspc)
     if not os.path.isfile(cog_template_file):
         print("Error : file '" + cog_template_file + "' does not exist. Aborting.")
-        return
+        return []
 
     print("*************************************")
     print("******* CogGen (file)****************")
@@ -159,18 +152,18 @@ def GenerateFile(output_dir, pythonfile, cog_template_file, author, namespacenam
     os.remove(tmp_python_file)
     os.remove(file_to_cog + ".PreCog")
     # Do rest...i.e. replace some stuff...preserve...
-    gen.Generate(pythonfile, namespacename, classname, group, brief, output_dir, dclspc)
+    res = gen.Generate(pythonfile, namespacename, classname, group, brief, output_dir, dclspc)
     # Finally : delete the cogged folder
     shutil.rmtree(cogged_template_dir)
+    return res
 
-def GenerateDirectory(output_dir, pythonfile, cog_template_dir, author, namespacename, classname, group, brief, dclspc=""):
+def GenerateDirectory(output_dir, pythonfile, cog_template_dir, author, namespacename, classname, group, brief, dclspc="") -> list:
     cog_template_dir = cog_template_dir.strip()
     if os.path.isfile(cog_template_dir):
-        GenerateFile(output_dir, pythonfile, cog_template_dir, author, namespacename, classname, group, brief, dclspc)
-        return
+        return GenerateFile(output_dir, pythonfile, cog_template_dir, author, namespacename, classname, group, brief, dclspc)
     if not os.path.isdir(cog_template_dir):
         print("Error : dir '" + cog_template_dir + "' does not exist. Aborting.")
-        return
+        return []
 
     print("*************************************")
     print("******* CogGen (directory) **********")
@@ -212,6 +205,7 @@ def GenerateDirectory(output_dir, pythonfile, cog_template_dir, author, namespac
     for f in files_to_cog:
         os.remove(f + ".PreCog")
     # Do rest...i.e. replace some stuff...preserve...
-    gen.Generate(pythonfile, namespacename, classname, group, brief, output_dir, dclspc)
+    res = gen.Generate(pythonfile, namespacename, classname, group, brief, output_dir, dclspc)
     # Finally : delete the cogged folder
     shutil.rmtree(cogged_template_dir)
+    return res

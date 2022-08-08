@@ -55,14 +55,14 @@ def GetFile(rootdir, file):
             matches.append(os.path.join(root, filename))
 
 
-def Generate(output_dir, pythonfile, namespacename, classname, declspec="", author="", group="", brief="", template_dir=""):
+def Generate(output_dir, pythonfile, namespacename, classname, declspec="", author="", group="", brief="", template_dir="") -> list:
 
     if not template_dir.strip():
         template_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("protocol_templates", "CPP"))
 
     if not os.path.isdir(template_dir):
         print("Error : dir '" + template_dir + "' does not exist. Aborting.")
-        return
+        return []
 
     print("*************************************")
     print("******* Protogen ********************")
@@ -153,6 +153,8 @@ def Generate(output_dir, pythonfile, namespacename, classname, declspec="", auth
         microunit_allplatformsto = os.path.join(tests_allplatformsto, "minunit")
 
         FileCopyUtil(microunit_allplatformsfrom, microunit_allplatformsto, microunit_files_to_copy)
+
+    return filenames
 
 
 if __name__ == "__main__":
