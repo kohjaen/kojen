@@ -83,7 +83,7 @@ Generate.StateMachine(outputdir, transition_table, eventsinterface, namespacenam
 # Generate Statemachine (C#)
 #
 EventPlay = Struct('EventPlay')
-EventPlay.AddType('trackNo','ushort')
+EventPlay.AddType('trackNo','ushort','1')
 
 eventsinterface = Interface('IMyIntefaceIO')
 eventsinterface.AddStruct(EventPlay)

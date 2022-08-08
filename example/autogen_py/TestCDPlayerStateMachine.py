@@ -284,6 +284,7 @@ class ConsoleRunner(threading.Thread):
         self.__runThreaded = True
         self.__fifoQueue = queue.Queue()  # threadsafe by default.
         # {{{USER_CONSOLE_RUNNER}}}
+        self.context.m_expected_track_number = 1
         # {{{USER_CONSOLE_RUNNER}}}
         self.start()
 
@@ -329,7 +330,7 @@ class ConsoleRunner(threading.Thread):
             self.sm.TriggerEventOpen()
             return
         if input == 'b':
-            self.sm.TriggerEventPlay(trackNo)
+            self.sm.TriggerEventPlay(trackNo=1)
             return
         if input == 'c':
             self.sm.TriggerEventEndOfTrack()
