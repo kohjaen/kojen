@@ -869,10 +869,11 @@ class LanguageCPP(Language):
             return 'struct ' + declspec + ' ' + structname + '\n'
         return 'struct ' + structname + '\n'
 
-    def DeclareEnum(self, enum, whitespace):
-        result = ""
-        if hasattr(enum, 'documentation'):
-            result += self.FormatComment(enum.documentation)
+    def DeclareEnum(self, enum, whitespace) -> str:
+        #result = ""
+        #if hasattr(enum, 'documentation'):
+        #    result += self.FormatComment(enum.documentation)
+        result = self.FormatComment(enum.documentation) + "\n"
         result += "enum class " + enum.Name + " : unsigned char\n"
         result += "{\n"
         for descriptionName, val in enum.items():
@@ -892,7 +893,7 @@ class LanguageCPP(Language):
     '''USED'''
     def FormatComment(self, commenttext):
         if commenttext:
-            return '// ' + commenttext + "\n"
+            return '// ' + commenttext
         return ""
 
     def FormatLongComment(self, commenttext):

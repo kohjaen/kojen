@@ -47,6 +47,7 @@ except (ModuleNotFoundError, ImportError) as e:
     from cgen import CBASEGenerator, CCodeModel, FileCopyUtil
 
 from cogapp import *
+import shutil
 
 class CCogCodeModel:
     def __init__(self):

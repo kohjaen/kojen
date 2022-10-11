@@ -217,6 +217,7 @@ class Enum(OrderedDict, Documentation):
 
     def __init__(self, enumName):
         super(Enum, self).__init__()
+        Documentation.__init__(self)
         self.Name = enumName
 
     def Add(self, descriptionName, val):

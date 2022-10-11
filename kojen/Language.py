@@ -147,7 +147,7 @@ class Language:
     def DeclareStruct(self, structname, declspec=''):
         raise RuntimeError("Language Feature Not Implemented")
 
-    def DeclareEnum(self, enum, whitespace):
+    def DeclareEnum(self, enum, whitespace) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     def DeclareHashDefine(self, name, val):
