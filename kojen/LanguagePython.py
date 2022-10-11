@@ -212,9 +212,9 @@ class LanguagePython(Language):
         result += '_fields_ = [\n'
         return result
 
-    def DeclareEnum(self, enum, whitespace):
-        result = self.FormatComment(enum.documentation)
-        result += whitespace + "@unique"
+    def DeclareEnum(self, enum, whitespace) -> str:
+        result = self.FormatComment(enum.documentation) + "\n"
+        result += whitespace + "@unique\n"
         result += whitespace + "class " + enum.Name + "(Enum):\n"
         for descriptionName, val in enum.items():
             result += whitespace*2 + str(descriptionName) + " = " + str(val) + "\n"

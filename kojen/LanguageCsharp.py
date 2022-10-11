@@ -164,7 +164,9 @@ class LanguageCsharp(Language):
             if not isArray and (not isProtocol or isStruct):
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]) + ";")
             elif not isArray and isProtocol and not isStruct:
-                raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
+                s = Template("sizeof(${this}) - sizeof(${header})")
+                result.append(instance_accessor + self.InstantiateType("", mem[1], "Create_" + mem[0] + "(" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + ")"))
+                #raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             elif isArray and not isProtocol and not isStruct:
                 raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             else:
@@ -288,13 +290,13 @@ class LanguageCsharp(Language):
             return 'struct ' + declspec + ' ' + structname + '\n'
         return 'struct ' + structname + '\n'
 
-    def DeclareEnum(self, enum, whitespace):
-        result = self.FormatComment(enum.documentation)
-        result += whitespace + "enum " + enum.Name + "{\n"
+    def DeclareEnum(self, enum, whitespace) -> str:
+        result = self.FormatComment(enum.documentation) + "\n"
+        result += "public enum " + enum.Name + " : byte {\n"
         for descriptionName, val in enum.items():
-            result += whitespace*2 + str(descriptionName) + " = " + str(val) + ",\n"
+            result += whitespace + str(descriptionName) + " = " + str(val) + ",\n"
         result = result[:len(result)-2] + "\n"  # items from the beginning through end-1 (i.e. remove last character which is a ','
-        result += whitespace + "};\n"
+        result +=  "};\n"
         return result
 
     def DeclareHashDefine(self, name, val):
