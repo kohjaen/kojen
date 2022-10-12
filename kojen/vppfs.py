@@ -36,6 +36,7 @@ http://zetcode.com/db/sqlitepythontutorial/
 import sqlite3 as lite
 from collections import OrderedDict
 import unittest
+import os
 
 #########################################################
 
@@ -799,6 +800,10 @@ class StateDiagram:
     input : path to the file
 '''
 def ExtractTransitionTable(statemachinediagramname, path_to_vpp):
+    if not os.path.isfile(path_to_vpp):
+        print("Error : file '" + path_to_vpp + "' does not exist. Aborting.")
+        return
+
     vppdiagrams = VPPDiagrams(path_to_vpp)
     vppdiagramelements = VPPDiagramElements(path_to_vpp)
     vppmodelelements = VPPModelElements(path_to_vpp)
