@@ -20,6 +20,7 @@
 #define VERBOSE <<<Verbose::1>>>
 #if VERBOSE == 1
 #define _OUT_<<<STATEMACHINENAME>>>_DISP_
+#include <cstdio>
 #endif
 
 /// {{{USER_FORWARD_DECL}}}
