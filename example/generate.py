@@ -95,3 +95,22 @@ Generate.StateMachine_PYTHON(outputdir + "_py", transition_table, eventsinterfac
 #
 # UML (C++/C# ... to do it directly from a model, please write to koh.jaen@yahoo.de)
 #
+## TODO : remove everything after this line when merging back to master!
+VPPProjectDir = os.path.abspath(os.path.join(os.getcwd(),"..\\models"))
+VPPProject = os.path.join(VPPProjectDir, "TestModels.vpp")
+
+#
+# UML (C++) (from Model)
+#
+namespace_to_folders = True # Usually in UML a 'namespace encapsulating classes is seen as a separate library. 'True' will generate them as such.
+
+#Generate.UML(outputdir + "_uml", VPPProject,"TestClassDiagram", declspec, author, group, brief, namespace_to_folders, templatedir)
+
+#
+# UML (C#) (from Model)
+#
+#Generate.UML_CSHARP(outputdir + "_uml_cs", VPPProject,"TestClassDiagram", declspec, author, group, brief, namespace_to_folders, templatedir)
+#
+# UML (Python) (from Model)
+#
+Generate.UML_PYTHON(outputdir + "_uml_py", VPPProject,"TestClassDiagram", declspec, author, group, brief, namespace_to_folders, templatedir)

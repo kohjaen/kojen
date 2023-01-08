@@ -126,6 +126,10 @@ def UML_CSHARP(outputdir, vp_project_path, vp_classdiagramname, dclspc="", autho
     return umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
 
 
+def UML_PYTHON(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", group="", brief="", namespace_to_folders=False, templatefiledir=""):
+    language = LanguagePython.LanguagePython()
+    umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
+
 ''' Generate Entry function for template files using COG
 '''
 

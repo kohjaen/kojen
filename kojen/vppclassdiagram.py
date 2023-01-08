@@ -817,14 +817,15 @@ class Class(vppfs.VPPModelElement):
                 return 'array:' + str(i)
             except ValueError:  # vector
                 return 'vector'
-        elif MULTIPLICITY.find("0") != -1:
-            return 'none'
-        elif MULTIPLICITY.find("1") != -1:
-            return 'none'
+        #elif MULTIPLICITY.find("0") != -1: Fakes out '10'!
+        #    return 'none'
+        #elif MULTIPLICITY.find("1") != -1:
+        #    return 'none'
         else:  # lastly...perhaps someone put an actual value here...then its an array.
             try:  # Array
                 i = int(MULTIPLICITY)
-                return 'array:' + str(i)
+                if i > 1:
+                    return 'array:' + str(i)
             except ValueError:
                 return 'none'
         return 'none'

@@ -104,6 +104,8 @@ class CUMLGenerator(CGenerator):
                 templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "C#"))
             elif "LanguageCPP" in str(type(language)):
                 templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "CPP"))
+            elif "LanguagePython" in str(type(language)):
+                templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "PY"))
         CGenerator.__init__(self, templatefiledir, outputfiledir, language, author, group, brief, namespace_to_folders)
         self.classdiagramname = vp_classdiagramname
 
@@ -142,6 +144,7 @@ class CUMLGenerator(CGenerator):
                     dict_to_replace_lines["<<<PUBLIC_ATTRIBUTES_DECLARE>>>"] = self.language.GetAttributeDeclarationsPerVisibility(classobj,"public")
                     dict_to_replace_lines["<<<PROTECTED_ATTRIBUTES_DECLARE>>>"] = self.language.GetAttributeDeclarationsPerVisibility(classobj,"protected")
                     dict_to_replace_lines["<<<PRIVATE_ATTRIBUTES_DECLARE>>>"] = self.language.GetAttributeDeclarationsPerVisibility(classobj,"private")
+                    # TODO : CURRENTLY HERE : UNCOMMENT '''
                     dict_to_replace_lines["<<<PUBLIC_ASSOCIATIONS_DECLARE>>>"] = self.language.GetAssociationDeclarationsPerVisibility(classobj, "public")
                     dict_to_replace_lines["<<<PROTECTED_ASSOCIATIONS_DECLARE>>>"] = self.language.GetAssociationDeclarationsPerVisibility(classobj, "protected")
                     dict_to_replace_lines["<<<PRIVATE_ASSOCIATIONS_DECLARE>>>"] = self.language.GetAssociationDeclarationsPerVisibility(classobj, "private")
@@ -155,7 +158,7 @@ class CUMLGenerator(CGenerator):
                     dict_to_replace_lines["<<<ATTRIBUTES_ASSOCIATIONS_GETTER_SETTER_IMPLEMENTATION>>>"] = self.language.GetAttributeAssociationGetterSetter(classobj, True)
                     dict_to_replace_lines["<<<CONSTRUCTORS_DECLARE>>>"] = self.language.GetConstructor(classobj, False)
                     dict_to_replace_lines["<<<CONSTRUCTORS_IMPLEMENTATION>>>"] = self.language.GetConstructor(classobj, True)
-
+                    # TODO : CURRENTLY HERE : END '''
                     dict_to_replace_filenames = {}
                     dict_to_replace_filenames["ClassTemplate"] = classobj.NAME
                     dict_to_replace_filenames['.ty'] = '.py'
@@ -179,7 +182,7 @@ class CUMLGenerator(CGenerator):
                     dict_to_replace_lines["<<<CLASS_DOCUMENTATION>>>"] = self.language.FormatLongComment(classobj.USER_COMMENTS)
                     dict_to_replace_lines["<<<CLASS_INHERITENCE_HIERARCHY>>>"] = self.language.GetFormatClassInheritence(classobj, classdiagram.inheritence)
                     dict_to_replace_lines["<<<NOT_FORWARD_DECLARABLE_HEADER_INCLUDES>>>"] = self.language.GetNotForwardDeclarableHeaderIncludes(classobj, self.NAMESPACE_TO_GO_TO_OWN_FOLDER, True, True)
-                    #dict_to_replace_lines["<<<FORWARD_DECLARABLE_HEADER_INCLUDES>>>"] = language.GetForwardDeclarableHeaderIncludes(classobj, self.NAMESPACE_TO_GO_TO_OWN_FOLDER, True)
+                    dict_to_replace_lines["<<<FORWARD_DECLARABLE_HEADER_INCLUDES>>>"] = self.language.GetForwardDeclarableHeaderIncludes(classobj, self.NAMESPACE_TO_GO_TO_OWN_FOLDER, True)
                     dict_to_replace_lines["<<<FORWARD_DECLARATIONS>>>"] = self.language.GetForwardDeclarations(classobj)
                     #dict_to_replace_lines["<<<PUBLIC_ATTRIBUTES_DECLARE>>>"] = language.GetAttributeDeclarationsPerVisibility(classobj,"public")
                     #dict_to_replace_lines["<<<PROTECTED_ATTRIBUTES_DECLARE>>>"] = language.GetAttributeDeclarationsPerVisibility(classobj,"protected")
@@ -189,13 +192,14 @@ class CUMLGenerator(CGenerator):
                     #dict_to_replace_lines["<<<PRIVATE_ASSOCIATIONS_DECLARE>>>"] = language.GetAssociationDeclarationsPerVisibility(classobj, "private")
                     #dict_to_replace_lines["<<<STATIC_ATTRIBUTES_DECLARE>>>"] = language.GetStaticAttributeDefinitions(classobj)
                     #dict_to_replace_lines["<<<STATIC_ASSOCIATIONS_DECLARE>>>"] = language.GetStaticAssociationDefinitions(classobj)
+                    # TODO : CURRENTLY HERE : UNCOMMENT '''
                     dict_to_replace_lines["<<<PUBLIC_OPERATIONS_DECLARE>>>"] = self.language.GetOperationPerVisibility(classobj, False, "public")
                     dict_to_replace_lines["<<<PROTECTED_OPERATIONS_DECLARE>>>"] = self.language.GetOperationPerVisibility(classobj, False, "protected")
                     dict_to_replace_lines["<<<PRIVATE_OPERATIONS_DECLARE>>>"] = self.language.GetOperationPerVisibility(classobj, False, "private")
                     #dict_to_replace_lines["<<<OPERATIONS_IMPLEMENTATION>>>"] = language.GetOperationPerVisibility(classobj, True, "all")
                     #dict_to_replace_lines["<<<ATTRIBUTES_ASSOCIATIONS_GETTER_SETTER_DECLARE>>>"] = language.GetAttributeAssociationGetterSetterDeclarations(classobj)
                     #dict_to_replace_lines["<<<ATTRIBUTES_ASSOCIATIONS_GETTER_SETTER_IMPLEMENTATION>>>"] = language.GetAttributeAssociationGetterSetterImplementations(classobj)
-
+                    # TODO : CURRENTLY HERE : END '''
                     dict_to_replace_filenames = {}
                     dict_to_replace_filenames["InterfaceTemplate"] = classobj.NAME
                     dict_to_replace_filenames['.ty'] = '.py'
@@ -241,10 +245,11 @@ class CUMLGenerator(CGenerator):
                     dict_to_replace_lines["<<<CLASS_DOCUMENTATION>>>"] = self.language.FormatLongComment(classobj.USER_COMMENTS)
                     dict_to_replace_lines["<<<NOT_FORWARD_DECLARABLE_HEADER_INCLUDES>>>"] = self.language.GetNotForwardDeclarableHeaderIncludes(classobj, self.NAMESPACE_TO_GO_TO_OWN_FOLDER, True, True)
                     dict_to_replace_lines["<<<FORWARD_DECLARATIONS>>>"] = self.language.GetForwardDeclarations(classobj)
+                    # TODO : CURRENTLY HERE : UNCOMMENT '''
                     dict_to_replace_lines["<<<STRUCT_EXPAND>>>"] = self.language.GetStructMembers(classobj)
                     dict_to_replace_lines["<<<PACK_BEGIN>>>"] = self.language.GetPacked(classobj, True)
                     dict_to_replace_lines["<<<PACK_END>>>"] = self.language.GetPacked(classobj, False)
-
+                    # TODO : CURRENTLY HERE : END '''
                     dict_to_replace_filenames = {}
                     dict_to_replace_filenames["StructTemplate"] = classobj.NAME
                     dict_to_replace_filenames['.ty'] = '.py'
@@ -254,6 +259,13 @@ class CUMLGenerator(CGenerator):
                     tmp_res = CGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Struct")
                     tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
+                ### INIT FILES FOR PYTHON
+                try:
+                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "init")
+                    #tmp_res = self.update_filename_path_from_namespace(namespace, tmp_res)
+                    result.filenames_to_lines.update(tmp_res.filenames_to_lines)
+                except:
+                    pass
 
             ### PROJECT FILES
             namespaces_in_project = {}
