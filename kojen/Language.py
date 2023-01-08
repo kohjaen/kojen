@@ -251,13 +251,13 @@ class Language:
 
     ''' Additions that were added for class diagram
     '''
-    def GetFormatNestedNamespaceBegin(self, classObj):
+    def GetFormatNestedNamespaceBegin(self, classObj) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
-    def GetFormatNestedNamespaceEnd(self, classObj):
+    def GetFormatNestedNamespaceEnd(self, classObj) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
-    def GetFormatClassInheritence(self, classObj, dictOfInheritance):
+    def GetFormatClassInheritence(self, classObj, dictOfInheritance) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     # Typically what goes into a H file, when the items can NOT be forward declared in H file.
@@ -265,19 +265,19 @@ class Language:
         raise RuntimeError("Language Feature Not Implemented")
 
     # Typically what goes into a CPP file, when the items can be forward declared in H file.
-    def GetForwardDeclarableHeaderIncludes(self, classObj, classDiagram):
+    def GetForwardDeclarableHeaderIncludes(self, classObj, namespace_to_folders = False, filter_out_type_not_in_model = False):
         raise RuntimeError("Language Feature Not Implemented")
 
     # Typically what goes into a H file, when the items can be forward declared in H file.
-    def GetForwardDeclarations(self, classObj, classDiagram):
+    def GetForwardDeclarations(self, classObj) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     # Typically what goes into a H file...to determine the language types to be used for multiplicity
-    def GetTypeAndNameFromMultiplicityAndModifier(self, TYPE, TYPE_MODIFIER, MULTIPLICITY, NAME):
+    def GetTypeAndNameFromMultiplicityAndModifier(self, classObj, TYPE, TYPE_MODIFIER, MULTIPLICITY, NAME) -> list:
         raise RuntimeError("Language Feature Not Implemented")
 
     # Typically what goes into a H file...Get the declaration string for all attributes of the desired visibility
-    def GetAttributeDeclarationsPerVisibility(self, classObj, visibility="all"):
+    def GetAttributeDeclarationsPerVisibility(self, classObj, visibility="all", attributes=None) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     # Typically what goes into a H file...Get the declaration string for all associations of the desired visibility
@@ -314,7 +314,7 @@ class Language:
     def GetAttributeAssociationGetterSetter(self, classObj, is_impl=False):
         raise RuntimeError("Language Feature Not Implemented")
 
-    def GetEnumLiterals(self, classObj):
+    def GetEnumLiterals(self, classObj) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     def GetStructMembers(self, classObj):

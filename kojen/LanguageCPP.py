@@ -414,7 +414,7 @@ class LanguageCPP(Language):
     ''' Additions that were added for class diagram
     '''
 
-    def GetFormatNestedNamespaceBegin(self, classObj):
+    def GetFormatNestedNamespaceBegin(self, classObj) -> str:
         """
         Returns the C++ format string for a nested namespace declaration on one line...
         @param classObj: class information from vppclassdiagram.Class
@@ -427,7 +427,7 @@ class LanguageCPP(Language):
         else:
             raise RuntimeError("Language Feature Not Implemented")
 
-    def GetFormatNestedNamespaceEnd(self, classObj):
+    def GetFormatNestedNamespaceEnd(self, classObj) -> str:
         """
          Returns the C++ format string for a nested namespace end-declaration on one line...
 
@@ -441,7 +441,7 @@ class LanguageCPP(Language):
         else:
             raise RuntimeError("classObj Not of type Class")
 
-    def GetFormatClassInheritence(self, classObj, dictOfInheritance):
+    def GetFormatClassInheritence(self, classObj, dictOfInheritance) -> str:
         """
         Returns the C++ format string for class inheritence based on objects
         returned by parsing the class diagram in e.g. our favourite UML tool.
@@ -470,7 +470,7 @@ class LanguageCPP(Language):
         return result
 
     # Typically what goes into a H file, when the items can NOT be forward declared in H file.
-    def GetNotForwardDeclarableHeaderIncludes(self, classObj, namespace_to_folders = False, filter_out_type_not_in_model = False, include_vector_if_needed = False):
+    def GetNotForwardDeclarableHeaderIncludes(self, classObj, namespace_to_folders = False, filter_out_type_not_in_model = False, include_vector_if_needed = False) -> str:
         """
             For Header files. Given a class object, and class diagram, will return a multi-line string containing all header includes
             for types that can not be forward declared (ie. to reduce include dependencies) in a header file.
@@ -499,7 +499,7 @@ class LanguageCPP(Language):
             raise RuntimeError("classObj not of type 'Class'")
 
     # Typically what goes into a CPP file, when the items can be forward declared in H file.
-    def GetForwardDeclarableHeaderIncludes(self, classObj, namespace_to_folders = False, filter_out_type_not_in_model = False):
+    def GetForwardDeclarableHeaderIncludes(self, classObj, namespace_to_folders = False, filter_out_type_not_in_model = False) -> str:
         """
             For SOURCE files. Given a class object, and class diagram, will return a multi-line string containing all header includes
             for types that can be forward declared (ie. to reduce include dependencies) in a header file.
@@ -520,7 +520,7 @@ class LanguageCPP(Language):
             raise RuntimeError("classObj not of type 'Class' OR classDiagram not of type 'ClassDiagram'")
 
     # Typically what goes into a H file, when the items can be forward declared in H file.
-    def GetForwardDeclarations(self, classObj):
+    def GetForwardDeclarations(self, classObj) -> str:
         """
         For HEADER files. Given a class object, and class diagram, will return a multi-line string containing all forward declares
         for types that can be forward declared (ie. to reduce include dependencies) in a header file.
@@ -543,7 +543,7 @@ class LanguageCPP(Language):
         else:
             raise RuntimeError("classObj not of type 'Class' OR classDiagram not of type 'ClassDiagram'")
 
-    def GetTypeAndNameFromMultiplicityAndModifier(self, classObj, TYPE, TYPE_MODIFIER, MULTIPLICITY, NAME):
+    def GetTypeAndNameFromMultiplicityAndModifier(self, classObj, TYPE, TYPE_MODIFIER, MULTIPLICITY, NAME) -> list:
         '''
         https://www.researchgate.net/figure/Mappings-from-C-declarations-to-UML-multiplicity-ranges-depend-on-pointer-reference_tbl1_4207986
         http://www.cs.kent.edu/~jmaletic/papers/JIST07.pdf
@@ -786,7 +786,7 @@ class LanguageCPP(Language):
                 result = "/// @{ Accessor declarations\n" + result + "/// @}"
         return result.rstrip("\n")
 
-    def GetEnumLiterals(self, classObj):
+    def GetEnumLiterals(self, classObj) -> str:
         if not classObj.IS_ENUM:
             raise RuntimeError("Can't get enum literals from a non-Enum")
         result = ""
@@ -795,7 +795,6 @@ class LanguageCPP(Language):
             result = result + literal + " = " + str(cnt) + ",\n"
             cnt = cnt + 1
         result = result.rstrip(",\n")
-
         return result
 
     def GetStructMembers(self, classObj):
@@ -851,7 +850,7 @@ def _filterOutTypesNotInModel(namespace_to_classes, classDiagram):
     return namespace_to_classes_only_in_model
 
 
-def _getFormatNestedNamespaceBegin(fullyQualifiedNamespace):
+def _getFormatNestedNamespaceBegin(fullyQualifiedNamespace) -> str:
     """
     Returns the C++ format string for a nested namespace declaration on one line...
     @param fullyQualifiedNamespace: a string i.e. "XNamespace1::XNamespace2::CClass"
@@ -866,7 +865,7 @@ def _getFormatNestedNamespaceBegin(fullyQualifiedNamespace):
     return result
 
 
-def _getFormatNestedNamespaceEnd(fullyQualifiedNamespace):
+def _getFormatNestedNamespaceEnd(fullyQualifiedNamespace) -> str:
     """
     Returns the C++ format string for a nested namespace end-declaration on one line...
     @param fullyQualifiedNamespace: a string i.e. "XNamespace1::XNamespace2::CClass"
