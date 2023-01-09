@@ -20,6 +20,7 @@
 #define VERBOSE 1
 #if VERBOSE == 1
 #define _OUT_CDPlayer_DISP_
+#include <cstdio>
 #endif
 
 /// {{{USER_FORWARD_DECL}}}
