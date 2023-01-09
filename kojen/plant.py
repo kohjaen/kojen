@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-def FromTransitionTable(TransitionTable, outputPath):
+def TTToDot(TransitionTable):
     assert len(TransitionTable) >= 1
     assert len(TransitionTable[0]) == 5
 
@@ -8,10 +8,10 @@ def FromTransitionTable(TransitionTable, outputPath):
     plantUml.append("@startuml")
     plantUml.append("hide empty description")
     plantUml.append("")
-    #plantUml.append("top to bottom direction")
-    #plantUml.append("left to right direction")
-    #plantUml.append("top to bottom direction")
-    #plantUml.append("skinparam nodesep 10")
+    # plantUml.append("top to bottom direction")
+    # plantUml.append("left to right direction")
+    # plantUml.append("top to bottom direction")
+    # plantUml.append("skinparam nodesep 10")
     plantUml.append("skinparam ranksep 150")
     plantUml.append("")
 
@@ -36,8 +36,11 @@ def FromTransitionTable(TransitionTable, outputPath):
 
         plantUml.append(Start + " --> " + Next + " : " + Event + Guard_Action)
 
-
     plantUml.append("@enduml")
+    return plantUml
+
+def FromTransitionTable(TransitionTable, outputPath):
+    plantUml = TTToDot(TransitionTable)
     with open(outputPath, mode='wt', encoding='utf-8') as myfile:
         myfile.write('\n'.join(plantUml))
 

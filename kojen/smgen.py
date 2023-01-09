@@ -84,15 +84,11 @@ __TAG_123__                         = '<<<NUM>>>'
 __TAG_INIT_STATE__                  = '<<<STATE_0>>>'              # As given
 __TAG_INIT_STATE_SMALL_CAMEL__      = '<<<state_0>>>'              # camelCaps
 
-__TAG_TTT_BEGIN__                   = '<<<TTT_BEGIN>>>'
-__TAG_TTT_END___                    = '<<<TTT_END>>>'
-
-__TAG_TTT_LITE_BEGIN__              = '<<<TTT_LITE_BEGIN>>>'
-__TAG_TTT_LITE_END__                = '<<<TTT_LITE_END>>>'
-
-__TAG_TTT_SML_BEGIN__               = '<<<TTT_SML_BEGIN>>>'
-__TAG_TTT_SML_BEGIN_ENTRYEXIT__     = '<<<TTT_SML_BEGIN_ENTRYEXIT>>>'
-__TAG_TTT_SML_END__                 = '<<<TTT_SML_END>>>'
+__TAG_TTT_BOOST_MSM__               = '<<<TTT_BOOST_MSM>>>'
+__TAG_TTT_BOOST_MSMLITE__           = '<<<TTT_BOOST_MSMLITE>>>'
+__TAG_TTT_PLANT_UML__               = '<<<TTT_PLANT_UML>>>'
+__TAG_TTT_BOOST_SML__               = '<<<TTT_BOOST_SML>>>'
+__TAG_TTT_BOOST_SML_ENTRYEXIT__     = '<<<TTT_BOOST_SML_ENTRY_EXIT>>>'
 
 __TAG_DECLSPEC_DLL_EXPORT__         = "<<<DLL_EXPORT>>>"
 
@@ -116,6 +112,11 @@ try:
     from LanguageCPP import LanguageCPP
 except  (ModuleNotFoundError, ImportError) as e:
     from .LanguageCPP import LanguageCPP
+
+try:
+    from plant import TTToDot
+except  (ModuleNotFoundError, ImportError) as e:
+    from .plant import TTToDot
 
 import re
 
@@ -379,11 +380,11 @@ class CStateMachineGenerator(CBASEGenerator):
             cnt = cnt + 1
             alpha = get_next_alphabet()
 
-    def innerexpand_msm(self, smmodel, puthere):
+    def innerexpand_msm(self, smmodel, whitespace, puthere):
         len_tt = len(smmodel.transition_table)
-        tt_out = "        // " + len("msmf::Row < ") * ' ' + even_space("Start") + even_space("Event") + even_space("Next") + even_space("Action") + even_space("Guard") + '\n'
+        tt_out = whitespace + "// " + len("msmf::Row < ") * ' ' + even_space("Start") + even_space("Event") + even_space("Next") + even_space("Action") + even_space("Guard") + '\n'
         for i, ttline in enumerate(smmodel.transition_table):
-            tt_out += '        msmf::Row < '
+            tt_out += whitespace + 'msmf::Row < '
             tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.START_STATE])) + ','
             tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.EVENT])) + ','
             tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.NEXT_STATE])) + ','
@@ -395,14 +396,14 @@ class CStateMachineGenerator(CBASEGenerator):
             puthere.append(tt_out)
             tt_out = ""
 
-    def innerexpand_msmlite(self, smmodel, puthere):
-        tt_out = "                // " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
+    def innerexpand_msmlite(self, smmodel, whitespace, puthere):
+        tt_out = whitespace + "// " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
         startStateHasEntryExit = {}
         for i, ttline in enumerate(smmodel.transition_table):
             if i == 0:  # initial state
-                tt_out += "                 *"
+                tt_out += whitespace + " *"
             else:
-                tt_out += "                , "
+                tt_out += whitespace + ", "
             tt_out += even_space(self.transitiontable_replace_NONE(ttline[smmodel.START_STATE])) + '+'
             tt_out += even_space('event<' + self.transitiontable_replace_NONE(ttline[smmodel.EVENT]) + ">") + ' '
             tt_out += even_space('[' + self.transitiontableLITE_guard_replace_NONE('__' + ttline[smmodel.GUARD]) + ']') + ' / '
@@ -416,12 +417,17 @@ class CStateMachineGenerator(CBASEGenerator):
             # State entry/exit, once only
             if not (ttline[smmodel.START_STATE] in startStateHasEntryExit):
                 startStateHasEntryExit[ttline[smmodel.START_STATE]] = True
-                tt_out += "                , " + ttline[smmodel.START_STATE] + " + msm::on_entry / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
-                tt_out += "                , " + ttline[smmodel.START_STATE] + " + msm::on_exit / __" + ttline[smmodel.START_STATE] + 'OnExit'
+                tt_out += whitespace + ", " + ttline[smmodel.START_STATE] + " + msm::on_entry / __" + ttline[smmodel.START_STATE] + 'OnEntry\n'
+                tt_out += whitespace + ", " + ttline[smmodel.START_STATE] + " + msm::on_exit / __" + ttline[smmodel.START_STATE] + 'OnExit'
                 tt_out = tt_out.rstrip()
                 tt_out += '\n'
                 puthere.append(tt_out)
                 tt_out = ""
+
+    def innerexpand_plant(self, smmodel, whitespace, puthere):
+        lines = TTToDot(smmodel.transition_table)
+        for l in lines:
+            puthere.append(whitespace + l + "\n")
 
     def innerexpand_sml(self, smmodel, whitespace, sml_entry_exit, puthere):
         tt_out = whitespace + "// " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
@@ -545,75 +551,72 @@ class CStateMachineGenerator(CBASEGenerator):
             ex_actionsig   = False
             ex_transition  = False
             ex_guard       = False
-            ex_tt          = False
-            ex_tt_lite     = False
-            ex_tt_lite_sml = False
-            sml_entry_exit = False
 
             snipped_to_expand = []
             alllinesexpanded = []
             for line in cmmodel.filenames_to_lines[file]:
-                begin          = line.find(__TAG_PS_BEGIN__) > -1 or \
-                                 line.find(__TAG_PE_BEGIN__) > -1 or \
-                                 line.find(__TAG_PA_BEGIN__) > -1 or \
-                                 line.find(__TAG_PASIG_BEGIN__) > -1 or \
-                                 line.find(__TAG_PST_BEGIN__) > -1 or \
-                                 line.find(__TAG_PG_BEGIN__) > -1 or \
-                                 line.find(__TAG_TTT_BEGIN__) > -1 or \
-                                 line.find(__TAG_TTT_LITE_BEGIN__) > -1 or \
-                                 line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1
-
-                ex_state       = line.find(__TAG_PS_BEGIN__) > -1 or ex_state
-                ex_event       = line.find(__TAG_PE_BEGIN__) > -1 or ex_event
-                ex_action      = line.find(__TAG_PA_BEGIN__) > -1 or ex_action
-                ex_actionsig   = line.find(__TAG_PASIG_BEGIN__) > -1 or ex_actionsig
-                ex_transition  = line.find(__TAG_PST_BEGIN__) > -1 or ex_transition
-                ex_guard       = line.find(__TAG_PG_BEGIN__) > -1 or ex_guard
-                ex_tt          = line.find(__TAG_TTT_BEGIN__) > -1 or ex_tt
-                ex_tt_lite     = line.find(__TAG_TTT_LITE_BEGIN__) > -1 or ex_tt_lite
-                ex_tt_lite_sml = line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1 or ex_tt_lite_sml
-                sml_entry_exit = line.find(__TAG_TTT_SML_BEGIN_ENTRYEXIT__) > -1 or sml_entry_exit
-
-                if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_transition and not ex_guard and not ex_tt and not ex_tt_lite and not ex_tt_lite_sml:
-                    alllinesexpanded.append(line.replace(__TAG_INIT_STATE__, smmodel.getfirststate()).replace(__TAG_INIT_STATE_SMALL_CAMEL__, camel_case_small(smmodel.getfirststate())))
-
-                if ex_state and line.find(__TAG_PS_END__) > -1:
-                    self.innerexpand_secondfiltering(smmodel.states, snipped_to_expand, alllinesexpanded)
-                    snipped_to_expand = []
-                    ex_state = False
-                if ex_event and line.find(__TAG_PE_END__) > -1:
-                    self.innerexpand_secondfiltering(smmodel.events, snipped_to_expand, alllinesexpanded)
-                    snipped_to_expand = []
-                    ex_event = False
-                if ex_action and line.find(__TAG_PA_END__) > -1:
-                    self.innerexpand_secondfiltering(smmodel.actions, snipped_to_expand, alllinesexpanded)
-                    snipped_to_expand = []
-                    ex_action = False
-                if ex_actionsig and line.find(__TAG_PASIG_END__) > -1:
-                    self.innerexpand_actionsignatures(smmodel.actionsignatures, snipped_to_expand, alllinesexpanded)
-                    snipped_to_expand = []
-                    ex_actionsig = False
-                if ex_transition and line.find(__TAG_PST_END__) > -1:
-                    self.innerexpand_transitionsperstate(smmodel.transitionsperstate, snipped_to_expand, alllinesexpanded)
-                    snipped_to_expand = []
-                    ex_transition = False
-                if ex_guard and line.find(__TAG_PG_END__) > -1:
-                    self.innerexpand_secondfiltering(smmodel.guards, snipped_to_expand, alllinesexpanded)
-                    snipped_to_expand = []
-                    ex_guard = False
-                if ex_tt and line.find(__TAG_TTT_END___) > -1:
-                    self.innerexpand_msm(smmodel, alllinesexpanded)
-                    ex_tt = False
-                if ex_tt_lite and line.find(__TAG_TTT_LITE_END__) > -1:
-                    self.innerexpand_msmlite(smmodel, alllinesexpanded)
-                    ex_tt_lite = False
-                if ex_tt_lite_sml and line.find(__TAG_TTT_SML_END__) > -1:
+                # Single line replace tags
+                if line.find(__TAG_TTT_PLANT_UML__) > -1:
                     whitespace = line[0:line.find("<<<")]
-                    self.innerexpand_sml(smmodel, whitespace, sml_entry_exit, alllinesexpanded)
-                    ex_tt_lite_sml = False
+                    self.innerexpand_plant(smmodel, whitespace, alllinesexpanded)
+                elif line.find(__TAG_TTT_BOOST_MSM__) > -1:
+                    whitespace = line[0:line.find("<<<")]
+                    self.innerexpand_msm(smmodel, whitespace, alllinesexpanded)
+                elif line.find(__TAG_TTT_BOOST_MSMLITE__) > -1:
+                    whitespace = line[0:line.find("<<<")]
+                    self.innerexpand_msmlite(smmodel, whitespace, alllinesexpanded)
+                elif line.find(__TAG_TTT_BOOST_SML__) > -1:
+                    whitespace = line[0:line.find("<<<")]
+                    self.innerexpand_sml(smmodel, whitespace, False, alllinesexpanded)
+                elif line.find(__TAG_TTT_BOOST_SML_ENTRYEXIT__) > -1:
+                    whitespace = line[0:line.find("<<<")]
+                    self.innerexpand_sml(smmodel, whitespace, True, alllinesexpanded)
+                else:
+                # Begin/end replace tags
+                    begin          = line.find(__TAG_PS_BEGIN__) > -1 or \
+                                     line.find(__TAG_PE_BEGIN__) > -1 or \
+                                     line.find(__TAG_PA_BEGIN__) > -1 or \
+                                     line.find(__TAG_PASIG_BEGIN__) > -1 or \
+                                     line.find(__TAG_PST_BEGIN__) > -1 or \
+                                     line.find(__TAG_PG_BEGIN__) > -1
 
-                if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard or ex_tt or ex_tt_lite or ex_tt_lite_sml) and not begin:
-                    snipped_to_expand.append(line)
+                    ex_state       = line.find(__TAG_PS_BEGIN__) > -1 or ex_state
+                    ex_event       = line.find(__TAG_PE_BEGIN__) > -1 or ex_event
+                    ex_action      = line.find(__TAG_PA_BEGIN__) > -1 or ex_action
+                    ex_actionsig   = line.find(__TAG_PASIG_BEGIN__) > -1 or ex_actionsig
+                    ex_transition  = line.find(__TAG_PST_BEGIN__) > -1 or ex_transition
+                    ex_guard       = line.find(__TAG_PG_BEGIN__) > -1 or ex_guard
+
+                    if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_transition and not ex_guard:
+                        alllinesexpanded.append(line.replace(__TAG_INIT_STATE__, smmodel.getfirststate()).replace(__TAG_INIT_STATE_SMALL_CAMEL__, camel_case_small(smmodel.getfirststate())))
+
+                    if ex_state and line.find(__TAG_PS_END__) > -1:
+                        self.innerexpand_secondfiltering(smmodel.states, snipped_to_expand, alllinesexpanded)
+                        snipped_to_expand = []
+                        ex_state = False
+                    if ex_event and line.find(__TAG_PE_END__) > -1:
+                        self.innerexpand_secondfiltering(smmodel.events, snipped_to_expand, alllinesexpanded)
+                        snipped_to_expand = []
+                        ex_event = False
+                    if ex_action and line.find(__TAG_PA_END__) > -1:
+                        self.innerexpand_secondfiltering(smmodel.actions, snipped_to_expand, alllinesexpanded)
+                        snipped_to_expand = []
+                        ex_action = False
+                    if ex_actionsig and line.find(__TAG_PASIG_END__) > -1:
+                        self.innerexpand_actionsignatures(smmodel.actionsignatures, snipped_to_expand, alllinesexpanded)
+                        snipped_to_expand = []
+                        ex_actionsig = False
+                    if ex_transition and line.find(__TAG_PST_END__) > -1:
+                        self.innerexpand_transitionsperstate(smmodel.transitionsperstate, snipped_to_expand, alllinesexpanded)
+                        snipped_to_expand = []
+                        ex_transition = False
+                    if ex_guard and line.find(__TAG_PG_END__) > -1:
+                        self.innerexpand_secondfiltering(smmodel.guards, snipped_to_expand, alllinesexpanded)
+                        snipped_to_expand = []
+                        ex_guard = False
+
+                    if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard) and not begin:
+                        snipped_to_expand.append(line)
 
             cmmodel.filenames_to_lines[file] = alllinesexpanded
 
