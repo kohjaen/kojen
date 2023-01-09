@@ -101,8 +101,7 @@ namespace <<<NAMESPACE>>>
             <<<PER_GUARD_END>>>
             /// Transition table
             return make_transition_table(
-                <<<TTT_SML_BEGIN_ENTRYEXIT>>>
-                <<<TTT_SML_END>>>
+                <<<TTT_BOOST_SML_ENTRY_EXIT>>>
             );
         }
     };

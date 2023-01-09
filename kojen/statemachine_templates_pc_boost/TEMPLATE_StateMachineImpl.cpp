@@ -129,8 +129,7 @@ namespace <<<NAMESPACE>>>
 
         /// Transition table
         struct transition_table:boost::mpl::vector<
-            <<<TTT_BEGIN>>>
-            <<<TTT_END>>>
+            <<<TTT_BOOST_MSM>>>
         > {};
 
         typedef msm::back::state_machine<C<<<STATEMACHINENAME>>>StateMachine> BackEnd;

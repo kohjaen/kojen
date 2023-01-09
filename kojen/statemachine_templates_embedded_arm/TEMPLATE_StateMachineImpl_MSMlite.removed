@@ -116,8 +116,7 @@ namespace <<<NAMESPACE>>>
             <<<PER_GUARD_END>>>
             /// Transition table
             return make_transition_table(
-                <<<TTT_LITE_BEGIN>>>
-                <<<TTT_LITE_END>>>
+                <<<TTT_BOOST_MSMLITE>>>
             );
         }
     };
