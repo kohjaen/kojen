@@ -90,6 +90,9 @@ __TAG_TTT_END___                    = '<<<TTT_END>>>'
 __TAG_TTT_LITE_BEGIN__              = '<<<TTT_LITE_BEGIN>>>'
 __TAG_TTT_LITE_END__                = '<<<TTT_LITE_END>>>'
 
+__TAG_TTT_PLANT_BEGIN__              = '<<<TTT_PLANT_BEGIN>>>'
+__TAG_TTT_PLANT_END__                = '<<<TTT_PLANT_END>>>'
+
 __TAG_TTT_SML_BEGIN__               = '<<<TTT_SML_BEGIN>>>'
 __TAG_TTT_SML_BEGIN_ENTRYEXIT__     = '<<<TTT_SML_BEGIN_ENTRYEXIT>>>'
 __TAG_TTT_SML_END__                 = '<<<TTT_SML_END>>>'
@@ -116,6 +119,11 @@ try:
     from LanguageCPP import LanguageCPP
 except  (ModuleNotFoundError, ImportError) as e:
     from .LanguageCPP import LanguageCPP
+
+try:
+    from plant import TTToDot
+except  (ModuleNotFoundError, ImportError) as e:
+    from .plant import TTToDot
 
 import re
 
@@ -423,6 +431,11 @@ class CStateMachineGenerator(CBASEGenerator):
                 puthere.append(tt_out)
                 tt_out = ""
 
+    def innerexpand_plant(self, smmodel, whitespace, puthere):
+        lines = TTToDot(smmodel.transition_table)
+        for l in lines:
+            puthere.append(whitespace + l + "\n")
+
     def innerexpand_sml(self, smmodel, whitespace, sml_entry_exit, puthere):
         tt_out = whitespace + "// " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
         startStateHasEntryExit = {}
@@ -547,6 +560,7 @@ class CStateMachineGenerator(CBASEGenerator):
             ex_guard       = False
             ex_tt          = False
             ex_tt_lite     = False
+            ex_tt_plant    = False
             ex_tt_lite_sml = False
             sml_entry_exit = False
 
@@ -561,6 +575,7 @@ class CStateMachineGenerator(CBASEGenerator):
                                  line.find(__TAG_PG_BEGIN__) > -1 or \
                                  line.find(__TAG_TTT_BEGIN__) > -1 or \
                                  line.find(__TAG_TTT_LITE_BEGIN__) > -1 or \
+                                 line.find(__TAG_TTT_PLANT_BEGIN__) > -1 or \
                                  line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1
 
                 ex_state       = line.find(__TAG_PS_BEGIN__) > -1 or ex_state
@@ -571,10 +586,11 @@ class CStateMachineGenerator(CBASEGenerator):
                 ex_guard       = line.find(__TAG_PG_BEGIN__) > -1 or ex_guard
                 ex_tt          = line.find(__TAG_TTT_BEGIN__) > -1 or ex_tt
                 ex_tt_lite     = line.find(__TAG_TTT_LITE_BEGIN__) > -1 or ex_tt_lite
+                ex_tt_plant    = line.find(__TAG_TTT_PLANT_BEGIN__) > -1 or ex_tt_plant
                 ex_tt_lite_sml = line.find(__TAG_TTT_SML_BEGIN__.replace(">","")) > -1 or ex_tt_lite_sml
                 sml_entry_exit = line.find(__TAG_TTT_SML_BEGIN_ENTRYEXIT__) > -1 or sml_entry_exit
 
-                if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_transition and not ex_guard and not ex_tt and not ex_tt_lite and not ex_tt_lite_sml:
+                if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_transition and not ex_guard and not ex_tt and not ex_tt_lite and not ex_tt_plant and not ex_tt_lite_sml:
                     alllinesexpanded.append(line.replace(__TAG_INIT_STATE__, smmodel.getfirststate()).replace(__TAG_INIT_STATE_SMALL_CAMEL__, camel_case_small(smmodel.getfirststate())))
 
                 if ex_state and line.find(__TAG_PS_END__) > -1:
@@ -607,12 +623,16 @@ class CStateMachineGenerator(CBASEGenerator):
                 if ex_tt_lite and line.find(__TAG_TTT_LITE_END__) > -1:
                     self.innerexpand_msmlite(smmodel, alllinesexpanded)
                     ex_tt_lite = False
+                if ex_tt_plant and line.find(__TAG_TTT_PLANT_END__) > -1:
+                    whitespace = line[0:line.find("<<<")]
+                    self.innerexpand_plant(smmodel, whitespace, alllinesexpanded)
+                    ex_tt_plant = False
                 if ex_tt_lite_sml and line.find(__TAG_TTT_SML_END__) > -1:
                     whitespace = line[0:line.find("<<<")]
                     self.innerexpand_sml(smmodel, whitespace, sml_entry_exit, alllinesexpanded)
                     ex_tt_lite_sml = False
 
-                if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard or ex_tt or ex_tt_lite or ex_tt_lite_sml) and not begin:
+                if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard or ex_tt or ex_tt_lite or ex_tt_plant or ex_tt_lite_sml) and not begin:
                     snipped_to_expand.append(line)
 
             cmmodel.filenames_to_lines[file] = alllinesexpanded
