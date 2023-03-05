@@ -583,6 +583,9 @@ class CStateMachineGenerator(CGenerator):
         if self.events_interface != None:
             self.do_user_tags(cm, self.events_interface.UserTags())
 
+        # For processing
+        self.do_for(cm)
+
         # Preserve user code.
         self.preserve_usercode_in_files(cm)
         '''

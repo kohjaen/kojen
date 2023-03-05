@@ -54,6 +54,9 @@ __TAG_EXTENDS__            = '<<<EXTENDS>>>'
 __TAG_EXCLUDE__            = '<<<EXCLUDE>>>'
 __TAG_FOR_BEGIN__          = "<<<FOR_BEGIN>>>"
 __TAG_EACH__               = "<<<EACH>>>"
+__TAG_EACH_CAMELCAPS__     = "<<<each>>>"
+__TAG_FIRST__              = "<<<FIRST>>>"
+__TAG_LAST__               = "<<<LAST>>>"
 __TAG_FOR_END__            = "<<<FOR_END>>>"
 __TAG_ABC__                = '<<<ALPH>>>'
 __TAG_123__                = '<<<NUM>>>'
@@ -214,6 +217,12 @@ def removeDefault(a):
     return a.replace(default, "")
 
 
+def replaceDefault(a, b):
+    default = a[a.find("::", a.find("<<<")):a.rfind(">>>")]
+    default = default.strip("::")
+    return a.replace(default, b)
+
+
 def getWhitespace(a):
     return a[0:a.find("<<<")]
 
@@ -270,12 +279,34 @@ class CGenerator:
         def __process(csv_item_str, to_expand, output):
             alpha = reset_alphabet()
             cnt = 0
+            first_processed = False
+            last_processed = False
+            first = None
+            last = None
             items = csv_item_str.strip().lstrip(",").rstrip(",").split(',')
+            to_add = []
             for i in items:
                 for l in to_expand:
-                    output.append(l.replace(__TAG_EACH__, i.strip()).replace(__TAG_123__, str(cnt)).replace(__TAG_ABC__, alpha))
+                    has_first = hasSpecificTag(l, __TAG_FIRST__)
+                    has_last = hasSpecificTag(l, __TAG_LAST__)
+                    if has_first and not first_processed:
+                        first = l.replace(__TAG_FIRST__, items[0].strip())
+                        first_processed = True
+                    elif has_last and not last_processed:
+                        last = l.replace(__TAG_LAST__, items[-1].strip())
+                        last_processed = True
+                    elif not has_first and not has_last:
+                        to_add.append(l.replace(__TAG_EACH__, i.strip())
+                                  .replace(__TAG_EACH_CAMELCAPS__, camel_case_small(i.strip()))
+                                  .replace(__TAG_123__, str(cnt))
+                                  .replace(__TAG_ABC__, alpha))
                 cnt = cnt + 1
                 alpha = get_next_alphabet()
+            if first:
+                to_add.insert(0, first)
+            if last:
+                to_add.append(last)
+            output.extend(to_add)
 
         is_csv = for_loop_param.find(",") > -1
         is_numeric = for_loop_param.strip().isnumeric()
@@ -385,7 +416,6 @@ class CGenerator:
                         if l.find(ext_fn) > -1:
                             lines[i] = ''
 
-
                 # Replace the key:value pairs per filename...
                 for tag, desired_text in dict_to_replace_filenames.items():
                     file_without_path = file_without_path.replace(tag, desired_text)
@@ -460,7 +490,15 @@ class CGenerator:
             new_lines = []
             # this should be called last, so at this point any tags should be user defined.
             for line in lines:
-                if hasTag(line):
+                has_tag      = hasTag(line)
+                #has_user_tag = False
+                has_for      = hasSpecificTag(line, __TAG_FOR_BEGIN__)
+                #for k,v in dict_key_vals.items():
+                #    if not has_user_tag:
+                #        has_user_tag = hasSpecificTag(line, k)
+                #        has_tag = False
+                #        break
+                if has_tag and not has_for:
                     taganddefault    = extractDefaultAndTag(line)
                     line             = removeDefault(line)
                     taganddefault[0] = removeDefault(taganddefault[0])
@@ -469,7 +507,18 @@ class CGenerator:
                         line = line.replace(taganddefault[0], str(dict_key_vals[tagnoprepostfix]))
                     elif taganddefault[1].strip():
                         line = line.replace(taganddefault[0], taganddefault[1])
+                elif has_tag and has_for:
+                    taganddefault = extractDefaultAndTag(line)
+                    line = replaceDefault(line, dict_key_vals[taganddefault[1]])
+
                 new_lines.append(line)
+            # replace
+            codemodel.filenames_to_lines[fn] = new_lines
+
+
+    def do_for(self, codemodel):
+        for fn, lines in codemodel.filenames_to_lines.items():
+            new_lines = PairExpander(__TAG_FOR_BEGIN__, __TAG_FOR_END__).Expand(lines, self.innerexpand_for_loop)
             # replace
             codemodel.filenames_to_lines[fn] = new_lines
 
