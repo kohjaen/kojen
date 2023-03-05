@@ -3,7 +3,7 @@ import os
 import shutil
 
 from kojen.LanguagePython import LanguagePython
-from kojen.cgen import CBASEGenerator, reset_alphabet, get_next_alphabet
+from kojen.cgen import *
 
 class TestFeatures(unittest.TestCase):
 
@@ -27,40 +27,40 @@ class TestFeatures(unittest.TestCase):
     @classmethod
     def get_test_gen(cls):
         TestFeatures.create_template_file(["Dummy"])
-        return CBASEGenerator(TestFeatures.workingfolder, TestFeatures.workingfolder, LanguagePython())
+        return CGenerator(TestFeatures.workingfolder, TestFeatures.workingfolder, LanguagePython())
 
     def test_has_TAG(self):
-        test = TestFeatures.get_test_gen()
+        #test = TestFeatures.get_test_gen()
         a = "XXX::blabla<<<something::1>>>"
         b = "XXX::blabla<<something>>"
-        self.assertTrue(test.hasTag(a), "Failed to pick up tag")
-        self.assertFalse(test.hasTag(b), "Failed to ignore tag")
+        self.assertTrue(hasTag(a), "Failed to pick up tag")
+        self.assertFalse(hasTag(b), "Failed to ignore tag")
 
     def test_has_specific_TAG(self):
-        test = TestFeatures.get_test_gen()
+        #test = TestFeatures.get_test_gen()
         a = "XXX::blabla<<<something::1>>>"
         b = "XXX::blabla<<something>>"
-        self.assertTrue(test.hasSpecificTag(a, "<<<something>>>"), "Failed to pick up specific tag")
-        self.assertFalse(test.hasSpecificTag(b, "<<<something>>>"), "Failed to ignore specific tag")
-        self.assertFalse(test.hasSpecificTag(a, "<<<nothing>>>"), "Failed to ignore specific tag")
-        self.assertFalse(test.hasSpecificTag(b, "<<<nothing>>>"), "Failed to ignore specific tag")
+        self.assertTrue(hasSpecificTag(a, "<<<something>>>"), "Failed to pick up specific tag")
+        self.assertFalse(hasSpecificTag(b, "<<<something>>>"), "Failed to ignore specific tag")
+        self.assertFalse(hasSpecificTag(a, "<<<nothing>>>"), "Failed to ignore specific tag")
+        self.assertFalse(hasSpecificTag(b, "<<<nothing>>>"), "Failed to ignore specific tag")
 
 
     def test_TAG_has_default(self):
-        test = TestFeatures.get_test_gen()
+        #test = TestFeatures.get_test_gen()
         a = "XXX::blabla<<<something::1>>>"
         b = "XXX::blabla<<<something>>>"
-        self.assertTrue(test.hasDefault(a), "Failed to pick up default")
-        self.assertFalse(test.hasDefault(b), "Failed to pick up default")
+        self.assertTrue(hasDefault(a), "Failed to pick up default")
+        self.assertFalse(hasDefault(b), "Failed to pick up default")
 
     def test_extract_default_and_TAG(self):
-        test = TestFeatures.get_test_gen()
+        #test = TestFeatures.get_test_gen()
         a = "XXX::blabla<<<something::1>>>"
         b = "XXX::blabla<<<something>>>"
         c = "XXX::blabla<<something>>"
-        res_a = test.extractDefaultAndTag(a)
-        res_b = test.extractDefaultAndTag(b)
-        res_c = test.extractDefaultAndTag(c)
+        res_a = extractDefaultAndTag(a)
+        res_b = extractDefaultAndTag(b)
+        res_c = extractDefaultAndTag(c)
         self.assertEqual(res_a[0],"<<<something::1>>>", "Wrong tag")
         self.assertEqual(res_a[1],"1", "Wrong default")
         self.assertEqual(res_b[0], "<<<something>>>", "Wrong tag")
@@ -69,11 +69,11 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_c[1], "", "Wrong default")
 
     def test_remove_default(self):
-        test = TestFeatures.get_test_gen()
+        #test = TestFeatures.get_test_gen()
         a = "XXX::blabla<<<something::1>>>"
         b = "XXX::blabla<<<something>>>"
-        res_a = test.removeDefault(a)
-        res_b = test.removeDefault(b)
+        res_a = removeDefault(a)
+        res_b = removeDefault(b)
         self.assertEqual(res_a,res_b, "Failed to remove default")
         self.assertEqual(res_b,res_b, "Failed to remove default")
 
@@ -83,6 +83,89 @@ class TestFeatures(unittest.TestCase):
             for j in range(26*2-1):
                 s+=get_next_alphabet()
             self.assertEqual(s,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+
+    def test_getWhitespace(self):
+        a = "  <<<"
+        b = "           <<<"
+        res_a = getWhitespace(a)
+        res_b = getWhitespace(b)
+        self.assertEqual(res_a, "  ", "Failed to extract whitespace")
+        self.assertEqual(res_b, "           ", "Failed to extract whitespace")
+
+
+    def test_SingleExpander(self):
+        all_lines = []
+        all_lines.append("First")
+        all_lines.append("      <<<MAGIC>>>")
+        all_lines.append("Last")
+
+        def basicExpansionFunction(output, whitespace):
+            output.append(whitespace + "|||")
+            output.append(whitespace + "---")
+            output.append(whitespace + "***")
+
+        se = SingleExpander("<<<MAGIC>>>")
+        all_lines = se.Expand(all_lines, basicExpansionFunction)
+
+        self.assertEqual(len(all_lines), 5, "unexpected input")
+        self.assertEqual(all_lines[0], "First", "Unexpected output (1)")
+        self.assertEqual(all_lines[1], "      |||", "Unexpected output (2)")
+        self.assertEqual(all_lines[2], "      ---", "Unexpected output (3)")
+        self.assertEqual(all_lines[3], "      ***", "Unexpected output (4)")
+        self.assertEqual(all_lines[4], "Last", "Unexpected output (5)")
+
+    def test_PairExpanderBasic(self):
+        all_lines = []
+        all_lines.append("First")
+        all_lines.append("<<<BEGIN>>>")
+        all_lines.append("---")
+        all_lines.append(">>>")
+        all_lines.append("<<<END>>>")
+        all_lines.append("Last")
+
+        def basicExpansionFunction(snippets, output):
+            for s in snippets:
+                output.append(s + "|||")
+                output.append(s + "<<<")
+
+        pe = PairExpander("<<<BEGIN>>>", "<<<END>>>")
+        all_lines = pe.Expand(all_lines, basicExpansionFunction)
+
+        self.assertEqual(len(all_lines), 6, "unexpected input")
+        self.assertEqual(all_lines[0], "First", "Unexpected output (1)")
+        self.assertEqual(all_lines[1], "---|||", "Unexpected output (2)")
+        self.assertEqual(all_lines[2], "---<<<", "Unexpected output (3)")
+        self.assertEqual(all_lines[3], ">>>|||", "Unexpected output (4)")
+        self.assertEqual(all_lines[4], ">>><<<", "Unexpected output (5)")
+        self.assertEqual(all_lines[5], "Last", "Unexpected output (6)")
+
+    def test_PairExpanderExtraParam(self):
+        all_lines = []
+        all_lines.append("First")
+        all_lines.append("<<<BEGIN::42>>>")
+        all_lines.append("---")
+        all_lines.append(">>>")
+        all_lines.append("<<<END>>>")
+        all_lines.append("Last")
+
+        def extraParamExpansionFunction(snippets, output, extraParam):
+            output.append("in : " + extraParam)
+            for s in snippets:
+                output.append(s + "|||")
+                output.append(s + "<<<")
+
+        pe = PairExpander("<<<BEGIN>>>", "<<<END>>>")
+        all_lines = pe.Expand(all_lines, extraParamExpansionFunction)
+
+        self.assertEqual(len(all_lines), 7, "unexpected input")
+        self.assertEqual(all_lines[0], "First", "Unexpected output (1)")
+        self.assertEqual(all_lines[1], "in : 42", "Unexpected output (2)")
+        self.assertEqual(all_lines[2], "---|||", "Unexpected output (3)")
+        self.assertEqual(all_lines[3], "---<<<", "Unexpected output (4)")
+        self.assertEqual(all_lines[4], ">>>|||", "Unexpected output (5)")
+        self.assertEqual(all_lines[5], ">>><<<", "Unexpected output (6)")
+        self.assertEqual(all_lines[6], "Last", "Unexpected output (7)")
 
     ''' TODO : Testing
         - template extending and excluding.

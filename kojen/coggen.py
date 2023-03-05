@@ -42,9 +42,9 @@ except (ModuleNotFoundError, ImportError) as e:
     from preservative import *
 
 try:
-    from .cgen import CBASEGenerator, CCodeModel, FileCopyUtil
+    from .cgen import CGenerator, CCodeModel, FileCopyUtil
 except (ModuleNotFoundError, ImportError) as e:
-    from cgen import CBASEGenerator, CCodeModel, FileCopyUtil
+    from cgen import CGenerator, CCodeModel, FileCopyUtil
 
 from cogapp import *
 import shutil
@@ -58,9 +58,9 @@ class CCogCodeModel:
         self.group = ""
         self.brief = ""
 
-class CCogGenerator(CBASEGenerator):
+class CCogGenerator(CGenerator):
     def __init__(self, inputfiledir, outputfiledir,  classname, language=None, author='Anonymous', group='', brief=''):
-        CBASEGenerator.__init__(self, inputfiledir, outputfiledir, language, author, group, brief)
+        CGenerator.__init__(self, inputfiledir, outputfiledir, language, author, group, brief)
         self.dict_to_replace_filenames = {}
         self.dict_to_replace_filenames["TEMPLATE_"] = classname
         #self.dict_to_replace_filenames['.ty'] = '.py'
@@ -85,10 +85,10 @@ class CCogGenerator(CBASEGenerator):
         dict_to_replace_lines[__TAG_GROUP__] = ccmodel.group
         dict_to_replace_lines[__TAG_BRIEF__] = ccmodel.brief
 
-        return CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, self.dict_to_replace_filenames)
+        return CGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, self.dict_to_replace_filenames)
 
     def generate_filenames_from_templates(self, file) -> str:
-        return CBASEGenerator.generate_filenames_from_templates(self,file, self.dict_to_replace_filenames)
+        return CGenerator.generate_filenames_from_templates(self,file, self.dict_to_replace_filenames)
 
     def Generate(self, pythoninterfacegeneratorfilename, namespacenname, classname, group, brief, preserve_dir="",dclspc="") -> list:
         sm = CCogCodeModel()

@@ -70,14 +70,14 @@ Step 3) Search for the following pairs of tags replacing each tag with the all t
 '''
 
 try:
-    from cgen import CBASEGenerator, CCodeModel, get_next_alphabet, reset_alphabet, even_space
+    from cgen import *
 except (ModuleNotFoundError, ImportError) as e:
-    from .cgen import CBASEGenerator, CCodeModel, get_next_alphabet, reset_alphabet, even_space
+    from .cgen import *
 
 try:
-    from vppclassdiagram import  ExtractClassDiagram, ExtractAllClassDiagrams, ClassDiagram, Class, ClassOperation, ClassAttribute, Package, Association, Inheritance
+    from vppclassdiagram import  *
 except  (ModuleNotFoundError, ImportError) as e:
-    from .vppclassdiagram import ExtractClassDiagram, ExtractAllClassDiagrams, ClassDiagram, Class, ClassOperation, ClassAttribute, Package, Association, Inheritance
+    from .vppclassdiagram import *
 
 try:
     from LanguageCPP import LanguageCPP
@@ -96,7 +96,7 @@ except (ModuleNotFoundError, ImportError) as e:
 
 import os
 
-class CUMLGenerator(CBASEGenerator):
+class CUMLGenerator(CGenerator):
 
     def __init__(self, outputfiledir, language=None, author='Anonymous', group='', brief='', namespace_to_folders = False, templatefiledir="", vp_classdiagramname=""):
         if not templatefiledir.strip():
@@ -104,7 +104,7 @@ class CUMLGenerator(CBASEGenerator):
                 templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "C#"))
             elif "LanguageCPP" in str(type(language)):
                 templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "CPP"))
-        CBASEGenerator.__init__(self, templatefiledir, outputfiledir, language, author, group, brief, namespace_to_folders)
+        CGenerator.__init__(self, templatefiledir, outputfiledir, language, author, group, brief, namespace_to_folders)
         self.classdiagramname = vp_classdiagramname
 
     # Load Template and do 1st round of filtering.
@@ -162,7 +162,7 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames['.t'] = '.h'
                     dict_to_replace_filenames['.hpp'] = '.cpp'
 
-                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Class")
+                    tmp_res = CGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Class")
                     tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
                 # INTERFACE
@@ -202,7 +202,7 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames['.t'] = '.h'
                     dict_to_replace_filenames['.hpp'] = '.cpp'
 
-                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames, "Interface")
+                    tmp_res = CGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames, "Interface")
                     tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
                 # ENUM
@@ -224,7 +224,7 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames['.ty'] = '.py'
                     dict_to_replace_filenames['.t'] = '.h'
                     dict_to_replace_filenames['.hpp'] = '.cpp'
-                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Enum")
+                    tmp_res = CGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Enum")
                     tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
                 # STRUCT
@@ -251,7 +251,7 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames['.t'] = '.h'
                     dict_to_replace_filenames['.hpp'] = '.cpp'
 
-                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Struct")
+                    tmp_res = CGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Struct")
                     tmp_res = self.update_filename_path_from_namespace(classobj.NAMESPACE, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
 
@@ -273,7 +273,7 @@ class CUMLGenerator(CBASEGenerator):
                     dict_to_replace_filenames = {}
                     dict_to_replace_lines["<<<PROJECT_REFERENCE_INCLUDES>>>"] = self.language.GetProjectIncludes(dependency_set)
                     dict_to_replace_filenames["Project"] = namespace
-                    tmp_res = CBASEGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Project")
+                    tmp_res = CGenerator.loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, "Project")
                     tmp_res = self.update_filename_path_from_namespace(namespace, tmp_res)
                     result.filenames_to_lines.update(tmp_res.filenames_to_lines)
                 except:

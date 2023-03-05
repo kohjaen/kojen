@@ -104,9 +104,9 @@ except (ModuleNotFoundError, ImportError) as e:
     from preservative import *
 
 try:
-    from .cgen import CBASEGenerator, CCodeModel, get_next_alphabet, reset_alphabet, even_space, FileCopyUtil, caps, camel_case_small, camel_case
+    from .cgen import *
 except (ModuleNotFoundError, ImportError) as e:
-    from cgen import CBASEGenerator, CCodeModel, get_next_alphabet, reset_alphabet, even_space, FileCopyUtil, caps, camel_case_small, camel_case
+    from cgen import *
 
 try:
     from LanguageCPP import LanguageCPP
@@ -233,10 +233,10 @@ class CTransitionTableModel(CStateMachineModel):
         return self.transition_table[0][0]
 
 
-class CStateMachineGenerator(CBASEGenerator):
+class CStateMachineGenerator(CGenerator):
 
     def __init__(self, inputfiledir, outputfiledir, events_interface=None, language=None, author='Anonymous', group='', brief=''):
-        CBASEGenerator.__init__(self,inputfiledir,outputfiledir,language, author, group, brief)
+        CGenerator.__init__(self,inputfiledir,outputfiledir,language, author, group, brief)
         self.events_interface = events_interface
         self.vpp_filename = ""
 
@@ -273,7 +273,7 @@ class CStateMachineGenerator(CBASEGenerator):
         dict_to_replace_filenames = {}
         dict_to_replace_filenames["TEMPLATE_"] = smmodel.statemachinename
 
-        return CBASEGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames)
+        return CGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames)
 
     def get_event_signature(self,name, with_defaults):
         if self.events_interface is None or self.language is None:
@@ -313,11 +313,11 @@ class CStateMachineGenerator(CBASEGenerator):
                 return result.rsplit('\n', 1)[0]
         return ""
 
-    def innerexpand_secondfiltering(self, names2x, lines2x, puthere):
+    def innerexpand_secondfiltering(self, snippet_to_expand, alllinesexpanded, items):
         alpha = reset_alphabet()
         cnt = 0
-        for name in names2x:
-            for line in lines2x:
+        for name in items:
+            for line in snippet_to_expand:
                 newline = line
                 newline = newline.replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_STATENAME__, name)
@@ -330,11 +330,11 @@ class CStateMachineGenerator(CBASEGenerator):
                 newline = newline.replace(__TAG_ABC__, alpha)
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
-                if self.hasSpecificTag(newline,__TAG_EVENT_SIGNATURE__):
+                if hasSpecificTag(newline,__TAG_EVENT_SIGNATURE__):
                     has_signature_defaults = __TAG_EVENT_SIGNATURE_DEF__ in newline
-                    if self.hasDefault(newline):
+                    if hasDefault(newline):
                         # Has user params
-                        user_params = self.extractDefaultAndTag(newline)
+                        user_params = extractDefaultAndTag(newline)
                         signature = self.get_event_signature(name, False) + ", " + user_params[1]
                         signature = signature.strip(',').strip(' ')
                         newline = newline.replace(user_params[0], signature)
@@ -343,34 +343,34 @@ class CStateMachineGenerator(CBASEGenerator):
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
                 # __TAG_EVENT_MEMBERINST__ -> PTR
-                if self.hasSpecificTag(newline,__TAG_EVENT_MEMBERINST__) and self.hasDefault(newline):
-                    line_member = self.extractDefaultAndTag(newline)
+                if hasSpecificTag(newline,__TAG_EVENT_MEMBERINST__) and hasDefault(newline):
+                    line_member = extractDefaultAndTag(newline)
                     newline = newline.replace(line_member[0],self.instantiate_event_struct_member(name, tabcnt, True, line_member[1]))
                 else:
                     newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, True))        # PTR
                 # __TAG_LITE_EVENT_MEMBERINST__ -> NO PTR
-                if self.hasSpecificTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and self.hasDefault(newline):
-                    line_member = self.extractDefaultAndTag(newline)
+                if hasSpecificTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and hasDefault(newline):
+                    line_member = extractDefaultAndTag(newline)
                     newline = newline.replace(line_member[0],self.instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
                 else:
                     newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
                 newline = newline.replace(__TAG_EVENT_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt))
                 if newline == '\n' or newline == '' or newline == '\r\n' or newline.replace(' ','') == "" or newline.replace(' ','').replace('\n','').replace('\r','') == "":
                     continue
-                puthere.append(newline)
+                alllinesexpanded.append(newline)
             cnt = cnt + 1
             alpha = get_next_alphabet()
 
-    def innerexpand_actionsignatures(self, states2x, lines2x, puthere):
+    def innerexpand_actionsignatures(self, snippet_to_expand, alllinesexpanded, states):
         alpha = reset_alphabet()
         cnt = 0
-        for key, (actionname, eventname) in states2x.items():
+        for key, (actionname, eventname) in states.items():
             if eventname == "" or eventname.lower() == 'none':
                 eventname = "NONE"
             elif eventname.lower() == 'any':
                 eventname = "ANY"
-            for line in lines2x:
-                puthere.append(line
+            for line in snippet_to_expand:
+                alllinesexpanded.append(line
                             .replace(__TAG_ACTIONNAME_SMALL_CAMEL__, camel_case_small(actionname))
                             .replace(__TAG_ACTIONNAME__, actionname)
                             .replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventname))
@@ -380,7 +380,7 @@ class CStateMachineGenerator(CBASEGenerator):
             cnt = cnt + 1
             alpha = get_next_alphabet()
 
-    def innerexpand_msm(self, smmodel, whitespace, puthere):
+    def innerexpand_msm(self, output, whitespace, smmodel):
         len_tt = len(smmodel.transition_table)
         tt_out = whitespace + "// " + len("msmf::Row < ") * ' ' + even_space("Start") + even_space("Event") + even_space("Next") + even_space("Action") + even_space("Guard") + '\n'
         for i, ttline in enumerate(smmodel.transition_table):
@@ -393,10 +393,10 @@ class CStateMachineGenerator(CBASEGenerator):
             if i != len_tt - 1:
                 tt_out += ","
             tt_out += "    // " + str(i) + '\n'
-            puthere.append(tt_out)
+            output.append(tt_out)
             tt_out = ""
 
-    def innerexpand_msmlite(self, smmodel, whitespace, puthere):
+    def innerexpand_msmlite(self, output, whitespace, smmodel):
         tt_out = whitespace + "// " + even_space("Start + ") + even_space("Event") + even_space("[ Guard ] ") + even_space("/ Action") + even_space(" = Next") + '\n'
         startStateHasEntryExit = {}
         for i, ttline in enumerate(smmodel.transition_table):
@@ -412,7 +412,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 tt_out += ' = ' + even_space(self.transitiontableLITE_nextstate_replace_NONE(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]))
             tt_out = tt_out.rstrip()
             tt_out += '\n'
-            puthere.append(tt_out)
+            output.append(tt_out)
             tt_out = ""
             # State entry/exit, once only
             if not (ttline[smmodel.START_STATE] in startStateHasEntryExit):
@@ -421,15 +421,15 @@ class CStateMachineGenerator(CBASEGenerator):
                 tt_out += whitespace + ", " + ttline[smmodel.START_STATE] + " + msm::on_exit / __" + ttline[smmodel.START_STATE] + 'OnExit'
                 tt_out = tt_out.rstrip()
                 tt_out += '\n'
-                puthere.append(tt_out)
+                output.append(tt_out)
                 tt_out = ""
 
-    def innerexpand_plant(self, smmodel, whitespace, puthere):
+    def innerexpand_plant(self, output, whitespace, smmodel):
         lines = TTToDot(smmodel.transition_table)
         for l in lines:
-            puthere.append(whitespace + l + "\n")
+            output.append(whitespace + l + "\n")
 
-    def innerexpand_sml(self, smmodel, whitespace, sml_entry_exit, puthere):
+    def innerexpand_sml(self, output, whitespace, smmodel, sml_entry_exit):
         tt_out = whitespace + "// " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
         startStateHasEntryExit = {}
         for i, ttline in enumerate(smmodel.transition_table):
@@ -445,7 +445,7 @@ class CStateMachineGenerator(CBASEGenerator):
                 tt_out += ' = ' + even_space('state<' + self.transitiontableLITE_nextstate_replace_NONE(ttline[smmodel.NEXT_STATE], ttline[smmodel.START_STATE]) + '>', 0)
             tt_out = tt_out.rstrip()
             tt_out += '\n'
-            puthere.append(tt_out)
+            output.append(tt_out)
             tt_out = ""
             # State entry/exit, once only
             if not (ttline[smmodel.START_STATE] in startStateHasEntryExit) and sml_entry_exit:
@@ -454,67 +454,67 @@ class CStateMachineGenerator(CBASEGenerator):
                 tt_out += whitespace + ", state<" + ttline[smmodel.START_STATE] + "> + boost::sml::on_exit<_> / " + camel_case_small(ttline[smmodel.START_STATE]) + 'OnExit'
                 tt_out = tt_out.rstrip()
                 tt_out += '\n'
-                puthere.append(tt_out)
+                output.append(tt_out)
                 tt_out = ""
 
-    def innerexpand_transitionsperstate(self, transitionperstate, lines2x, puthere):
-        for state, dict in transitionperstate.items():
-            ex_transition = False
-            snipped_to_expand = []
-            for line in lines2x:
-                begin = line.find(__TAG_PET_BEGIN__) > -1
-                ex_transition = begin  or ex_transition
+    def filterInitialState(self, all_lines, smmodel):
+        output = []
+        for l in all_lines:
+            output.append(l.replace(__TAG_INIT_STATE__, smmodel.getfirststate()).replace(__TAG_INIT_STATE_SMALL_CAMEL__, camel_case_small(smmodel.getfirststate())))
+        return output
 
-                if ex_transition and line.find(__TAG_PET_END__) > -1:
-                    # ----
-                    # Should now have all the Event repeats.
-                    for ev, transitionList in dict.items():
-                        # guard/action/next state repeats
-                        self.innerexpand_transitionsperguard(ev, state, transitionList, snipped_to_expand, puthere)
-                    # ----
-                    ex_transition = False
 
-                if ex_transition:
-                    if not begin:
-                        snipped_to_expand.append(line)
-                else:
-                    if line.find(__TAG_PET_END__) == -1:
-                        puthere.append(line.replace(__TAG_STATENAME__, state).replace(__TAG_STATENAME_SMALL_CAMEL__, state))
+    def filterStateName(self, lines, stateName):
+        result = []
+        for l in lines:
+            result.append(l.replace(__TAG_STATENAME__, stateName).replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(stateName)))
+        return result
 
-    def innerexpand_transitionsperguard(self, eventName, stateName, transitionList, lines2x, puthere):
-        ex_transition = False
-        snipped_to_expand = []
-        for line in lines2x:
-            begin = line.find(__TAG_PGT_BEGIN__) > -1
-            ex_transition = begin or ex_transition
-            if ex_transition and line.find(__TAG_PGT_END__) > -1:
-                # Should now have all the guard/action/next repeats.
-                #----
-                for transitionDict in transitionList:
-                    for l in snipped_to_expand:
-                        for k, v in transitionDict.items():
-                            # for those that are present but who have alternate text when not present.
-                            if self.hasSpecificTag(l, k):
-                                l = self.removeDefault(l)
-                            l = l.replace(k, v)
-                        l = l.replace(__TAG_EVENTNAME__, eventName)
-                        l = l.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
-                        # If there is no guard, or no next state, or no action, just remove it (or replace it with the alternative text). Leave no hanging code.
-                        if self.hasSpecificTag(l,__TAG_GUARDNAME_SMALL_CAMEL__) or self.hasSpecificTag(l,__TAG_GUARDNAME__) or self.hasSpecificTag(l, __TAG_NEXTSTATENAME__) or self.hasSpecificTag(l, __TAG_ACTIONNAME__) or self.hasSpecificTag(l,__TAG_STATENAME_IF_NEXTSTATE__) or self.hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__):
-                            line_member = self.extractDefaultAndTag(l)
-                            if line_member[1]: # alternative text is embedded in the tag.
-                                whitespace = len(l) - len(l.lstrip())
-                                puthere.append(whitespace*' ' + line_member[1] + '\n')
-                        elif l.find(__TAG_GUARDNAME_SMALL_CAMEL__) == -1 and l.find(__TAG_GUARDNAME__) == -1 and l.find(__TAG_NEXTSTATENAME__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__) == -1:
-                            puthere.append(l)
-                #----
-                ex_transition = False
-            if ex_transition:
-                if not begin:
-                    snipped_to_expand.append(line)
-            else:
-                if line.find(__TAG_PGT_END__) == -1:
-                    puthere.append(line.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName)))
+
+    def filterEventName(self, lines, eventName):
+        result = []
+        for l in lines:
+            result.append(l.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName)))
+        return result
+
+
+    def innerexpand_transitionsperstate(self, snippet_to_expand, all_lines_expanded, transitionperstate):
+
+        def __expansion(to_expand, output, object, state, transition_dict):
+            for ev, transitionList in transition_dict.items():
+                # guard/action/next state repeats
+                object.innerexpand_transitionsperguard(to_expand, output, ev, state, transitionList)
+
+        for state, transition_dict in transitionperstate.items():
+            all_lines_snippet = self.filterStateName(snippet_to_expand, state)
+            all_lines_snippet = PairExpander(__TAG_PET_BEGIN__, __TAG_PET_END__).Expand(all_lines_snippet, __expansion, self, state, transition_dict)
+            all_lines_expanded.extend(all_lines_snippet)
+
+
+    def innerexpand_transitionsperguard(self, snippet_to_expand, all_lines_expanded, eventName, stateName, transitionList):
+
+        def __expansion(to_expand, output, transitionList):
+            for transitionDict in transitionList:
+                for l in to_expand:
+                    for k, v in transitionDict.items():
+                        # for those that are present but who have alternate text when not present.
+                        if hasSpecificTag(l, k):
+                            l = removeDefault(l)
+                        l = l.replace(k, v)
+                    # l = l.replace(__TAG_EVENTNAME__, eventName)
+                    # l = l.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
+                    # If there is no guard, or no next state, or no action, just remove it (or replace it with the alternative text). Leave no hanging code.
+                    if hasSpecificTag(l, __TAG_GUARDNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_GUARDNAME__) or hasSpecificTag(l, __TAG_NEXTSTATENAME__) or hasSpecificTag(l, __TAG_ACTIONNAME__) or hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE__) or hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__):
+                        line_member = extractDefaultAndTag(l)
+                        if line_member[1]:  # alternative text is embedded in the tag.
+                            whitespace = len(l) - len(l.lstrip())
+                            output.append(whitespace * ' ' + line_member[1] + '\n')
+                    elif l.find(__TAG_GUARDNAME_SMALL_CAMEL__) == -1 and l.find(__TAG_GUARDNAME__) == -1 and l.find(__TAG_NEXTSTATENAME__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__) == -1:
+                        output.append(l)
+
+        all_lines_snippet = self.filterEventName(snippet_to_expand, eventName)
+        all_lines_snippet = PairExpander(__TAG_PGT_BEGIN__, __TAG_PGT_END__).Expand(all_lines_snippet, __expansion, transitionList)
+        all_lines_expanded.extend(all_lines_snippet)
 
     def transitiontable_replace_NONE(self, val):
         if val == "" or val.lower() == 'none':
@@ -544,81 +544,19 @@ class CStateMachineGenerator(CBASEGenerator):
 
     def expand_secondfiltering(self, smmodel, cmmodel):
         for file in cmmodel.filenames_to_lines:
-
-            ex_state       = False
-            ex_event       = False
-            ex_action      = False
-            ex_actionsig   = False
-            ex_transition  = False
-            ex_guard       = False
-
-            snipped_to_expand = []
-            alllinesexpanded = []
-            for line in cmmodel.filenames_to_lines[file]:
-                # Single line replace tags
-                if line.find(__TAG_TTT_PLANT_UML__) > -1:
-                    whitespace = line[0:line.find("<<<")]
-                    self.innerexpand_plant(smmodel, whitespace, alllinesexpanded)
-                elif line.find(__TAG_TTT_BOOST_MSM__) > -1:
-                    whitespace = line[0:line.find("<<<")]
-                    self.innerexpand_msm(smmodel, whitespace, alllinesexpanded)
-                elif line.find(__TAG_TTT_BOOST_MSMLITE__) > -1:
-                    whitespace = line[0:line.find("<<<")]
-                    self.innerexpand_msmlite(smmodel, whitespace, alllinesexpanded)
-                elif line.find(__TAG_TTT_BOOST_SML__) > -1:
-                    whitespace = line[0:line.find("<<<")]
-                    self.innerexpand_sml(smmodel, whitespace, False, alllinesexpanded)
-                elif line.find(__TAG_TTT_BOOST_SML_ENTRYEXIT__) > -1:
-                    whitespace = line[0:line.find("<<<")]
-                    self.innerexpand_sml(smmodel, whitespace, True, alllinesexpanded)
-                else:
-                # Begin/end replace tags
-                    begin          = line.find(__TAG_PS_BEGIN__) > -1 or \
-                                     line.find(__TAG_PE_BEGIN__) > -1 or \
-                                     line.find(__TAG_PA_BEGIN__) > -1 or \
-                                     line.find(__TAG_PASIG_BEGIN__) > -1 or \
-                                     line.find(__TAG_PST_BEGIN__) > -1 or \
-                                     line.find(__TAG_PG_BEGIN__) > -1
-
-                    ex_state       = line.find(__TAG_PS_BEGIN__) > -1 or ex_state
-                    ex_event       = line.find(__TAG_PE_BEGIN__) > -1 or ex_event
-                    ex_action      = line.find(__TAG_PA_BEGIN__) > -1 or ex_action
-                    ex_actionsig   = line.find(__TAG_PASIG_BEGIN__) > -1 or ex_actionsig
-                    ex_transition  = line.find(__TAG_PST_BEGIN__) > -1 or ex_transition
-                    ex_guard       = line.find(__TAG_PG_BEGIN__) > -1 or ex_guard
-
-                    if not ex_state and not ex_event and not ex_action and not ex_actionsig and not ex_transition and not ex_guard:
-                        alllinesexpanded.append(line.replace(__TAG_INIT_STATE__, smmodel.getfirststate()).replace(__TAG_INIT_STATE_SMALL_CAMEL__, camel_case_small(smmodel.getfirststate())))
-
-                    if ex_state and line.find(__TAG_PS_END__) > -1:
-                        self.innerexpand_secondfiltering(smmodel.states, snipped_to_expand, alllinesexpanded)
-                        snipped_to_expand = []
-                        ex_state = False
-                    if ex_event and line.find(__TAG_PE_END__) > -1:
-                        self.innerexpand_secondfiltering(smmodel.events, snipped_to_expand, alllinesexpanded)
-                        snipped_to_expand = []
-                        ex_event = False
-                    if ex_action and line.find(__TAG_PA_END__) > -1:
-                        self.innerexpand_secondfiltering(smmodel.actions, snipped_to_expand, alllinesexpanded)
-                        snipped_to_expand = []
-                        ex_action = False
-                    if ex_actionsig and line.find(__TAG_PASIG_END__) > -1:
-                        self.innerexpand_actionsignatures(smmodel.actionsignatures, snipped_to_expand, alllinesexpanded)
-                        snipped_to_expand = []
-                        ex_actionsig = False
-                    if ex_transition and line.find(__TAG_PST_END__) > -1:
-                        self.innerexpand_transitionsperstate(smmodel.transitionsperstate, snipped_to_expand, alllinesexpanded)
-                        snipped_to_expand = []
-                        ex_transition = False
-                    if ex_guard and line.find(__TAG_PG_END__) > -1:
-                        self.innerexpand_secondfiltering(smmodel.guards, snipped_to_expand, alllinesexpanded)
-                        snipped_to_expand = []
-                        ex_guard = False
-
-                    if (ex_state or ex_event or ex_action or ex_actionsig or ex_transition or ex_guard) and not begin:
-                        snipped_to_expand.append(line)
-
-            cmmodel.filenames_to_lines[file] = alllinesexpanded
+            all_lines_expanded = self.filterInitialState(cmmodel.filenames_to_lines[file], smmodel)
+            all_lines_expanded = SingleExpander(__TAG_TTT_PLANT_UML__).Expand(all_lines_expanded, self.innerexpand_plant, smmodel)
+            all_lines_expanded = SingleExpander(__TAG_TTT_BOOST_MSM__).Expand(all_lines_expanded, self.innerexpand_msm, smmodel)
+            all_lines_expanded = SingleExpander(__TAG_TTT_BOOST_MSMLITE__).Expand(all_lines_expanded, self.innerexpand_msmlite, smmodel)
+            all_lines_expanded = SingleExpander(__TAG_TTT_BOOST_SML_ENTRYEXIT__).Expand(all_lines_expanded, self.innerexpand_sml, smmodel, True)
+            all_lines_expanded = SingleExpander(__TAG_TTT_BOOST_SML__).Expand(all_lines_expanded, self.innerexpand_sml, smmodel, False)
+            all_lines_expanded = PairExpander(__TAG_PS_BEGIN__, __TAG_PS_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering, smmodel.states)
+            all_lines_expanded = PairExpander(__TAG_PE_BEGIN__, __TAG_PE_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering, smmodel.events)
+            all_lines_expanded = PairExpander(__TAG_PA_BEGIN__, __TAG_PA_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering, smmodel.actions)
+            all_lines_expanded = PairExpander(__TAG_PASIG_BEGIN__, __TAG_PASIG_END__).Expand(all_lines_expanded, self.innerexpand_actionsignatures, smmodel.actionsignatures)
+            all_lines_expanded = PairExpander(__TAG_PST_BEGIN__, __TAG_PST_END__).Expand(all_lines_expanded, self.innerexpand_transitionsperstate, smmodel.transitionsperstate)
+            all_lines_expanded = PairExpander(__TAG_PG_BEGIN__, __TAG_PG_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering, smmodel.guards)
+            cmmodel.filenames_to_lines[file] = all_lines_expanded
 
     ''' Used for State Machine Generation
     '''
