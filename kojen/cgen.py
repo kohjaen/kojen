@@ -53,7 +53,10 @@ __TAG_PLATFORM__           = '<<<PLATFORM>>>'
 __TAG_EXTENDS__            = '<<<EXTENDS>>>'
 __TAG_EXCLUDE__            = '<<<EXCLUDE>>>'
 __TAG_FOR_BEGIN__          = "<<<FOR_BEGIN>>>"
+__TAG_EACH__               = "<<<EACH>>>"
 __TAG_FOR_END__            = "<<<FOR_END>>>"
+__TAG_ABC__                = '<<<ALPH>>>'
+__TAG_123__                = '<<<NUM>>>'
 
 
 '''------------------------------------------------------------------------------------------------------'''
@@ -261,30 +264,31 @@ class CGenerator:
                 last = current
         return list_of_lines_in_file
 
-    def innerexpand_for_loop(self, lines2x, puthere):
-        pass
 
-    def process_for_loops(self, list_of_lines_in_file):
-        # TODO : this could be refactored to a 'pair expander'
-        alllinesexpanded = []
-        in_for_loop = False
-        snippet_to_expand = []
-        for line in list_of_lines_in_file:
+    def innerexpand_for_loop(self, to_expand, output, for_loop_param):
 
-            begin       = hasSpecificTag(line, __TAG_FOR_BEGIN__)#line.find(__TAG_FOR_BEGIN__) > -1
-            in_for_loop = hasSpecificTag(line, __TAG_FOR_BEGIN__) or in_for_loop#line.find(__TAG_FOR_BEGIN__) > -1 or in_for_loop
+        def __process(csv_item_str, to_expand, output):
+            alpha = reset_alphabet()
+            cnt = 0
+            items = csv_item_str.strip().lstrip(",").rstrip(",").split(',')
+            for i in items:
+                for l in to_expand:
+                    output.append(l.replace(__TAG_EACH__, i.strip()).replace(__TAG_123__, str(cnt)).replace(__TAG_ABC__, alpha))
+                cnt = cnt + 1
+                alpha = get_next_alphabet()
 
-            if not in_for_loop:
-                alllinesexpanded.append(line)
-
-            if in_for_loop and line.find(__TAG_FOR_END__) > -1:
-                self.innerexpand_for_loop(snippet_to_expand, alllinesexpanded)
-                snippet_to_expand = []
-                in_for_loop = False
-
-            if in_for_loop and not begin:
-                snippet_to_expand.append(line)
-        return alllinesexpanded
+        is_csv = for_loop_param.find(",") > -1
+        is_numeric = for_loop_param.strip().isnumeric()
+        if is_csv and not is_numeric:
+            __process(for_loop_param, to_expand, output)
+        elif not is_csv and is_numeric:
+            number = int(for_loop_param.strip())
+            new_for_loop_params = ""
+            for i in range(number):
+                new_for_loop_params += "_" + str(i) + "_" + ","
+            __process(new_for_loop_params, to_expand, output)
+        else:
+            raise Exception("Unsupported FOR args.")
 
 
     def processExtends(self, path_to_parent_folder, inner_template_file, ignore_lines_with, ignore_lines_between):
@@ -381,8 +385,6 @@ class CGenerator:
                         if l.find(ext_fn) > -1:
                             lines[i] = ''
 
-                # For Loop processing
-                lines = self.process_for_loops(lines)
 
                 # Replace the key:value pairs per filename...
                 for tag, desired_text in dict_to_replace_filenames.items():
