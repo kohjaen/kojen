@@ -52,15 +52,19 @@ class TestFeatures(unittest.TestCase):
         a = "XXX::blabla<<<something::1>>>"
         b = "XXX::blabla<<<something>>>"
         c = "XXX::blabla<<something>>"
+        d = "XXX::blabla<<<something::this::and::this>>>"
         res_a = extractDefaultAndTag(a)
         res_b = extractDefaultAndTag(b)
         res_c = extractDefaultAndTag(c)
+        res_d = extractDefaultAndTag(d)
         self.assertEqual(res_a[0],"<<<something::1>>>", "Wrong tag")
         self.assertEqual(res_a[1],"1", "Wrong default")
         self.assertEqual(res_b[0], "<<<something>>>", "Wrong tag")
         self.assertEqual(res_b[1], "", "Wrong default")
         self.assertEqual(res_c[0], "", "Wrong tag")
         self.assertEqual(res_c[1], "", "Wrong default")
+        self.assertEqual(res_d[0], "<<<something::this::and::this>>>", "Wrong tag")
+        self.assertEqual(res_d[1], "this::and::this", "Wrong default")
 
     def test_remove_default(self):
         a = "XXX::blabla<<<something::1>>>"

@@ -223,6 +223,10 @@ def replaceDefault(a, b):
     return a.replace(default, b)
 
 
+def cleanTag(a):
+    return a.replace("<<<","").replace(">>>","")
+
+
 def getWhitespace(a):
     return a[0:a.find("<<<")]
 
@@ -489,8 +493,27 @@ class CGenerator:
 
 
     def do_user_tags(self, codemodel, dict_key_vals):
+        # get defaults : for loop processing introduces multiple uses of tags across multiple files.
+        # first is the law!
+        defaults_in_files_FOR = {}
+        for fn, lines in codemodel.filenames_to_lines.items():
+            for line in lines:
+                has_tag = hasTag(line)
+                has_for = hasSpecificTag(line, __TAG_FOR_BEGIN__)
+                if has_tag and has_for:
+                    fortaganddefault = extractDefaultAndTag(line)
+                    if fortaganddefault[1].find("::") > -1:
+                        hack = cleanTag(__TAG_FOR_BEGIN__)
+                        hack = fortaganddefault[0].replace(hack+"::","")
+                        if hasDefault(hack):
+                            taganddefault = extractDefaultAndTag(hack)
+                            key = cleanTag(removeDefault(taganddefault[0]))
+                            if not taganddefault[1] in defaults_in_files_FOR:
+                                defaults_in_files_FOR[key] = taganddefault[1]
+
         for fn, lines in codemodel.filenames_to_lines.items():
             new_lines = []
+
             # this should be called last, so at this point any tags should be user defined.
             for line in lines:
                 has_tag      = hasTag(line)
@@ -512,7 +535,13 @@ class CGenerator:
                         line = line.replace(taganddefault[0], taganddefault[1])
                 elif has_tag and has_for:
                     taganddefault = extractDefaultAndTag(line)
-                    line = replaceDefault(line, dict_key_vals[taganddefault[1]])
+                    key = cleanTag(removeDefault("<<<" + taganddefault[1] + ">>>"))
+                    if key in dict_key_vals:
+                       line = replaceDefault(line, dict_key_vals[key])
+                    elif key in defaults_in_files_FOR:
+                        line = replaceDefault(line, defaults_in_files_FOR[key])
+                    else:
+                        line = "//POO"
 
                 new_lines.append(line)
             # replace
