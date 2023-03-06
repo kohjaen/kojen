@@ -207,7 +207,7 @@ def hasDefault(a):
 
 
 def extractDefaultAndTag(a):
-    default = a[a.find("::", a.find("<<<")):a.rfind(">>>")].replace("::","")
+    default = a[a.find("::", a.find("<<<")):a.rfind(">>>")].replace("::","", 1)
     tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
     return [tag, default]
 
@@ -422,6 +422,9 @@ class CGenerator:
                 # Remove multiple newlines
                 lines = self.filter_multiple_newlines(lines)
                 result.filenames_to_lines[file_without_path] = lines
+
+                # would be great if user-tags and for loop processing could happen here
+                # but that has problems with user-tags-without defaults
         return result
 
     def loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
