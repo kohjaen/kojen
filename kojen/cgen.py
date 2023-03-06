@@ -52,8 +52,20 @@ __TAG_DATETIME__           = '<<<DATETIME>>>'
 __TAG_PLATFORM__           = '<<<PLATFORM>>>'
 __TAG_EXTENDS__            = '<<<EXTENDS>>>'
 __TAG_EXCLUDE__            = '<<<EXCLUDE>>>'
+__TAG_FOR_BEGIN__          = "<<<FOR_BEGIN>>>"
+__TAG_EACH__               = "<<<EACH>>>"
+__TAG_EACH_CAMELCAPS__     = "<<<each>>>"
+__TAG_FIRST__              = "<<<FIRST>>>"
+__TAG_LAST__               = "<<<LAST>>>"
+__TAG_FOR_END__            = "<<<FOR_END>>>"
+__TAG_ABC__                = '<<<ALPH>>>'
+__TAG_123__                = '<<<NUM>>>'
 
-class bcolors:
+
+'''------------------------------------------------------------------------------------------------------'''
+
+
+class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -64,14 +76,21 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 def warning(text) -> None:
-    print(bcolors.WARNING + "Warning : " + text + bcolors.ENDC)
+    print(Colors.WARNING + "Warning : " + text + Colors.ENDC)
+
 
 def info(text) -> None:
-    print(bcolors.OKGREEN + "Info : " + text + bcolors.ENDC)
+    print(Colors.OKGREEN + "Info : " + text + Colors.ENDC)
+
 
 def error(text) -> None:
-    print(bcolors.FAIL + "Error : " + text + bcolors.ENDC)
+    print(Colors.FAIL + "Error : " + text + Colors.ENDC)
+
+
+'''------------------------------------------------------------------------------------------------------'''
+
 
 class CCodeModel:
     def __init__(self):
@@ -87,7 +106,55 @@ class CCodeModel:
 
 
 '''------------------------------------------------------------------------------------------------------'''
+
+
+class SingleExpander:
+    def __init__(self, tag):
+        self.tag = tag
+
+    def Expand(self, all_lines, expansion_func, *args):
+        all_lines_expanded = []
+        for line in all_lines:
+            if hasSpecificTag(line, self.tag):
+                expansion_func(all_lines_expanded, getWhitespace(line), *args)
+            else:
+                all_lines_expanded.append(line)
+        return all_lines_expanded
+
+
+class PairExpander:
+    def __init__(self, start_tag, end_tag):
+        self.start_tag = start_tag
+        self.end_tag = end_tag
+
+    def Expand(self,  all_lines, expansion_func, *args):
+        all_lines_expanded = []
+        within_tags        = False
+        snippet_to_expand  = []
+        param              = None
+        for line in all_lines:
+            begin       = hasSpecificTag(line, self.start_tag)
+            end         = hasSpecificTag(line, self.end_tag)
+            within_tags = begin or within_tags
+            if begin and hasDefault(line):
+                param = extractDefaultAndTag(line)[1]
+            if not within_tags and not end:
+                all_lines_expanded.append(line)
+            if within_tags and end:
+                if param:
+                    expansion_func(snippet_to_expand, all_lines_expanded, *args, param)
+                else:
+                    expansion_func(snippet_to_expand, all_lines_expanded, *args)
+                snippet_to_expand = []
+                within_tags = False
+            if within_tags and not begin:
+                snippet_to_expand.append(line)
+        return all_lines_expanded
+
+
+'''------------------------------------------------------------------------------------------------------'''
 alpha = 97
+
 
 def get_next_alphabet() -> str:
     global alpha
@@ -105,28 +172,69 @@ def reset_alphabet() -> str:
     return chr(alpha)
 
 
-def even_space(str, nospaces=35) -> str:
-    return str + (nospaces - len(str)) * " "
+def even_space(a, nospaces=35) -> str:
+    return a + (nospaces - len(a)) * " "
 
 
 def camel_case(str) -> str:
     return str.title()
 
 
-def camel_case_small(str) -> str:
-    if str:
-        return str[0].lower() + str[1:]
+def camel_case_small(a) -> str:
+    if a:
+        return a[0].lower() + a[1:]
     return ""
 
 
-def caps(str) -> str:
-    return str.upper()
+def caps(a) -> str:
+    return a.upper()
+
+
+def hasTag(a):
+    return '<<<' in a and '>>>' in a
+
+
+def hasSpecificTag(a, tag):
+    # allows for defaults : BEWARE also allows for partial matching so order is important in such a case.
+    res = hasTag(a)
+    if res:
+        res = tag.replace("<<<", "").replace(">>>", "") in a
+    return res
+
+
+def hasDefault(a):
+    return a.find("::", a.find("<<<")) >= 0
+
+
+def extractDefaultAndTag(a):
+    default = a[a.find("::", a.find("<<<")):a.rfind(">>>")].replace("::","", 1)
+    tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
+    return [tag, default]
+
+
+def removeDefault(a):
+    default = a[a.find("::", a.find("<<<")):a.rfind(">>>")]
+    return a.replace(default, "")
+
+
+def replaceDefault(a, b):
+    default = a[a.find("::", a.find("<<<")):a.rfind(">>>")]
+    default = default.strip("::")
+    return a.replace(default, b)
+
+
+def cleanTag(a):
+    return a.replace("<<<","").replace(">>>","")
+
+
+def getWhitespace(a):
+    return a[0:a.find("<<<")]
 
 
 '''------------------------------------------------------------------------------------------------------'''
 
 
-class CBASEGenerator:
+class CGenerator:
 
     def __init__(self, inputfiledir, outputfiledir, language=None, author='Anonymous', group='', brief='',namespace_to_folders = False):
         self.input_template_file_dir = inputfiledir
@@ -169,6 +277,55 @@ class CBASEGenerator:
                 last = current
         return list_of_lines_in_file
 
+
+    def innerexpand_for_loop(self, to_expand, output, for_loop_param):
+
+        def __process(csv_item_str, to_expand, output):
+            alpha = reset_alphabet()
+            cnt = 0
+            first_processed = False
+            last_processed = False
+            first = None
+            last = None
+            items = csv_item_str.strip().lstrip(",").rstrip(",").split(',')
+            to_add = []
+            for i in items:
+                for l in to_expand:
+                    has_first = hasSpecificTag(l, __TAG_FIRST__)
+                    has_last = hasSpecificTag(l, __TAG_LAST__)
+                    if has_first and not first_processed:
+                        first = l.replace(__TAG_FIRST__, items[0].strip())
+                        first_processed = True
+                    elif has_last and not last_processed:
+                        last = l.replace(__TAG_LAST__, items[-1].strip())
+                        last_processed = True
+                    elif not has_first and not has_last:
+                        to_add.append(l.replace(__TAG_EACH__, i.strip())
+                                  .replace(__TAG_EACH_CAMELCAPS__, camel_case_small(i.strip()))
+                                  .replace(__TAG_123__, str(cnt))
+                                  .replace(__TAG_ABC__, alpha))
+                cnt = cnt + 1
+                alpha = get_next_alphabet()
+            if first:
+                to_add.insert(0, first)
+            if last:
+                to_add.append(last)
+            output.extend(to_add)
+
+        is_csv = for_loop_param.find(",") > -1
+        is_numeric = for_loop_param.strip().isnumeric()
+        if is_csv and not is_numeric:
+            __process(for_loop_param, to_expand, output)
+        elif not is_csv and is_numeric:
+            number = int(for_loop_param.strip())
+            new_for_loop_params = ""
+            for i in range(number):
+                new_for_loop_params += "_" + str(i) + "_" + ","
+            __process(new_for_loop_params, to_expand, output)
+        else:
+            raise Exception("Unsupported FOR args.")
+
+
     def processExtends(self, path_to_parent_folder, inner_template_file, ignore_lines_with, ignore_lines_between):
         result = []
 
@@ -190,8 +347,8 @@ class CBASEGenerator:
                                 isBetween_end = end
                                 break
                     if not isBetween:
-                        if self.hasSpecificTag(l, __TAG_EXTENDS__): # nested extension
-                            [unused, ext_rel_filepath] = self.extractDefaultAndTag(l)
+                        if hasSpecificTag(l, __TAG_EXTENDS__): # nested extension
+                            [unused, ext_rel_filepath] = extractDefaultAndTag(l)
                             if ext_rel_filepath:
                                 nested_ext = self.processExtends(os.path.dirname(templateFilePath),ext_rel_filepath,ignore_lines_with, ignore_lines_between)
                                 extended_lines.extend(nested_ext)
@@ -229,8 +386,8 @@ class CBASEGenerator:
 
                 # Get all exclude tags...no matter what order they exist in the file.
                 for line in f:
-                    if self.hasSpecificTag(line, __TAG_EXCLUDE__):
-                        [unused, exclude_line_with] = self.extractDefaultAndTag(line)
+                    if hasSpecificTag(line, __TAG_EXCLUDE__):
+                        [unused, exclude_line_with] = extractDefaultAndTag(line)
                         if exclude_line_with:
                             start_begin = exclude_line_with.split(",")
                             if len(start_begin) < 2:
@@ -241,8 +398,8 @@ class CBASEGenerator:
                                 warnings.warn("Tags '" + exclude_line_with + "' is not supported. Ignoring.")
                 f.seek(0)
                 for line in f:
-                    if self.hasSpecificTag(line, __TAG_EXTENDS__):
-                        [unused, ext_rel_filepath] = self.extractDefaultAndTag(line)
+                    if hasSpecificTag(line, __TAG_EXTENDS__):
+                        [unused, ext_rel_filepath] = extractDefaultAndTag(line)
                         if ext_rel_filepath:
                             extension = self.processExtends(os.path.dirname(filepath), ext_rel_filepath, ignore_lines_with, ignore_lines_between)
                             for ex_l in extension:
@@ -251,7 +408,7 @@ class CBASEGenerator:
                             if extension:
                                 # Replace the key:value pairs per filename...
                                 self.processLine(dict_to_replace_filenames, extended_filenames, os.path.basename(ext_rel_filepath))
-                    elif self.hasSpecificTag(line, __TAG_EXCLUDE__):
+                    elif hasSpecificTag(line, __TAG_EXCLUDE__):
                         pass
                     else:
                         # Replace the key:value pairs per line...
@@ -269,6 +426,9 @@ class CBASEGenerator:
                 # Remove multiple newlines
                 lines = self.filter_multiple_newlines(lines)
                 result.filenames_to_lines[file_without_path] = lines
+
+                # would be great if user-tags and for loop processing could happen here
+                # but that has problems with user-tags-without defaults
         return result
 
     def loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
@@ -331,43 +491,66 @@ class CBASEGenerator:
                     writer.write(line)
         return list(filenames_to_lines.keys())
 
-    def hasTag(self, line):
-        return '<<<' in line and '>>>' in line
-
-    def hasSpecificTag(self, line, tag):
-        # allows for defaults
-        res = self.hasTag(line)
-        if res:
-            res = tag.replace("<<<", "").replace(">>>", "") in line
-        return res
-
-    def hasDefault(self, a):
-        return a.find("::", a.find("<<<")) >= 0
-
-    def extractDefaultAndTag(self, a):
-        default = a[a.find("::", a.find("<<<")):a.rfind(">>>")].replace("::","")
-        tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
-        return [tag, default]
-
-    def removeDefault(self, a):
-        default = a[a.find("::", a.find("<<<")):a.rfind(">>>")]
-        return a.replace(default, "")
 
     def do_user_tags(self, codemodel, dict_key_vals):
+        # get defaults : for loop processing introduces multiple uses of tags across multiple files.
+        # first is the law!
+        defaults_in_files_FOR = {}
+        for fn, lines in codemodel.filenames_to_lines.items():
+            for line in lines:
+                has_tag = hasTag(line)
+                has_for = hasSpecificTag(line, __TAG_FOR_BEGIN__)
+                if has_tag and has_for:
+                    fortaganddefault = extractDefaultAndTag(line)
+                    if fortaganddefault[1].find("::") > -1:
+                        hack = cleanTag(__TAG_FOR_BEGIN__)
+                        hack = fortaganddefault[0].replace(hack+"::","")
+                        if hasDefault(hack):
+                            taganddefault = extractDefaultAndTag(hack)
+                            key = cleanTag(removeDefault(taganddefault[0]))
+                            if not taganddefault[1] in defaults_in_files_FOR:
+                                defaults_in_files_FOR[key] = taganddefault[1]
+
         for fn, lines in codemodel.filenames_to_lines.items():
             new_lines = []
+
             # this should be called last, so at this point any tags should be user defined.
             for line in lines:
-                if self.hasTag(line):
-                    taganddefault    = self.extractDefaultAndTag(line)
-                    line             = self.removeDefault(line)
-                    taganddefault[0] = self.removeDefault(taganddefault[0])
+                has_tag      = hasTag(line)
+                #has_user_tag = False
+                has_for      = hasSpecificTag(line, __TAG_FOR_BEGIN__)
+                #for k,v in dict_key_vals.items():
+                #    if not has_user_tag:
+                #        has_user_tag = hasSpecificTag(line, k)
+                #        has_tag = False
+                #        break
+                if has_tag and not has_for:
+                    taganddefault    = extractDefaultAndTag(line)
+                    line             = removeDefault(line)
+                    taganddefault[0] = removeDefault(taganddefault[0])
                     tagnoprepostfix  = taganddefault[0].replace('<<<','').replace('>>>','')
                     if tagnoprepostfix in dict_key_vals:
                         line = line.replace(taganddefault[0], str(dict_key_vals[tagnoprepostfix]))
                     elif taganddefault[1].strip():
                         line = line.replace(taganddefault[0], taganddefault[1])
+                elif has_tag and has_for:
+                    taganddefault = extractDefaultAndTag(line)
+                    key = cleanTag(removeDefault("<<<" + taganddefault[1] + ">>>"))
+                    if key in dict_key_vals:
+                       line = replaceDefault(line, dict_key_vals[key])
+                    elif key in defaults_in_files_FOR:
+                        line = replaceDefault(line, defaults_in_files_FOR[key])
+                    else:
+                        line = "//POO"
+
                 new_lines.append(line)
+            # replace
+            codemodel.filenames_to_lines[fn] = new_lines
+
+
+    def do_for(self, codemodel):
+        for fn, lines in codemodel.filenames_to_lines.items():
+            new_lines = PairExpander(__TAG_FOR_BEGIN__, __TAG_FOR_END__).Expand(lines, self.innerexpand_for_loop)
             # replace
             codemodel.filenames_to_lines[fn] = new_lines
 
@@ -427,7 +610,7 @@ def FilePreservationSyncUtil(file_from, file_to) -> None:
     print(" Executing in : " + os.path.realpath(__file__))
     print("*************************************")
 
-    bg = CBASEGenerator(os.path.dirname(file_from), os.path.dirname(file_to))
+    bg = CGenerator(os.path.dirname(file_from), os.path.dirname(file_to))
     cm = bg.loadtemplates_firstfiltering_FILE(file_to, {}, {})
     p  = Preservative(file_from)
     p.preserved_tags_per_file[file_to]          = p.preserved_tags_per_file.pop(file_from)
