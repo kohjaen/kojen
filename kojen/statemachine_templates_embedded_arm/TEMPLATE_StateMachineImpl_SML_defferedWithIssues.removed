@@ -212,7 +212,7 @@ namespace <<<NAMESPACE>>>
             m_sm->process_event(data);
 #endif
         }
-        virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override{}
+        virtual void Trigger<<<EVENTNAME>>>(<<<SIGNATURE>>>) override{}
         <<<PER_EVENT_END>>>
         */
 

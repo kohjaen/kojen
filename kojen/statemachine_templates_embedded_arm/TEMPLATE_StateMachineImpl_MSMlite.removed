@@ -147,10 +147,10 @@ namespace <<<NAMESPACE>>>
 
         // Event triggering
         <<<PER_EVENT_BEGIN>>>
-        //virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override
+        //virtual void Trigger<<<EVENTNAME>>>(<<<SIGNATURE>>>) override
         /*{
             <<<EVENTNAME>>> data;
-            <<<EVENTMEMBERSLITEINSTANTIATE>>>
+            <<<MEMBERSLITEINSTANTIATE>>>
             m_sm->process_event(data);
         }*/
         virtual void Trigger<<<EVENTNAME>>>(<<<EVENTNAME>>> *data) override

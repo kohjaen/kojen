@@ -37,7 +37,7 @@ namespace <<<NAMESPACE>>>
 
         // Event triggering
         <<<PER_EVENT_BEGIN>>>
-        virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) = 0;
+        virtual void Trigger<<<EVENTNAME>>>(<<<SIGNATURE>>>) = 0;
         <<<PER_EVENT_END>>>
 
         /// {{{USER_PUBLIC_MEMBERS}}}

@@ -74,8 +74,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature2(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTSIGNATURE>>>")
-        input.append("<<<EVENTSIGNATUREWITHDEFAULTS>>>")
+        input.append("<<<SIGNATURE>>>")
+        input.append("<<<SIGNATUREWITHDEFAULTS>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga","bungaBunga", "0x66")
@@ -91,8 +91,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature3(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(some, <<<EVENTSIGNATURE>>>)")
-        input.append("(some, <<<EVENTSIGNATUREWITHDEFAULTS>>>)")
+        input.append("(some, <<<SIGNATURE>>>)")
+        input.append("(some, <<<SIGNATUREWITHDEFAULTS>>>)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         i = Interface('')
@@ -107,8 +107,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature4(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(<<<EVENTSIGNATURE>>> , other)")
-        input.append("(<<<EVENTSIGNATUREWITHDEFAULTS>>> , other)")
+        input.append("(<<<SIGNATURE>>> , other)")
+        input.append("(<<<SIGNATUREWITHDEFAULTS>>> , other)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         i = Interface('')
@@ -123,8 +123,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature5(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(some, <<<EVENTSIGNATURE>>>)")
-        input.append("(some, <<<EVENTSIGNATUREWITHDEFAULTS>>>)")
+        input.append("(some, <<<SIGNATURE>>>)")
+        input.append("(some, <<<SIGNATUREWITHDEFAULTS>>>)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         s.AddType("binga","bungaBunga", "0x66")
@@ -140,8 +140,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature6(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(<<<EVENTSIGNATURE>>>, yo)")
-        input.append("(<<<EVENTSIGNATUREWITHDEFAULTS>>>, yo)")
+        input.append("(<<<SIGNATURE>>>, yo)")
+        input.append("(<<<SIGNATUREWITHDEFAULTS>>>, yo)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         s.AddType("binga","bungaBunga", "0x66")
@@ -157,7 +157,7 @@ class TestFeatures(unittest.TestCase):
     def test_event_members_declare(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTMEMBERSDECLARE>>>")
+        input.append("<<<MEMBERSDECLARE>>>")
         input.append("<<<PER_EVENT_END>>>")
 
         s = Struct("s")
@@ -189,7 +189,7 @@ class TestFeatures(unittest.TestCase):
     def test_event_members_instantiate_no_custom_name(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTMEMBERSLITEINSTANTIATE>>>")
+        input.append("<<<MEMBERSLITEINSTANTIATE>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga", "bungaBunga")
@@ -273,6 +273,27 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(len(output), 2)
         self.assertEqual(output[1], "hello\n")
         self.assertEqual(output[0], "how ya doin'\n")
+
+    def test_aggregate_initialization_events(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("<<<AGGREGATEINITIALIZATION>>>")
+        input.append("<<<PER_EVENT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga","size_t")
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], "{binga, bunga}\n")
+        self.assertEqual(output[1], "{bla, blabla}\n")
 
     '''
     def test_split(self):

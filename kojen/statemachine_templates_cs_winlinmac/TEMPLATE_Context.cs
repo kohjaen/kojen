@@ -17,7 +17,7 @@ namespace <<<NAMESPACE>>>
     /// </summary>
     <<<PER_EVENT_BEGIN>>>
     public partial class <<<EVENTNAME>>> : IDispatchable {
-    <<<EVENTMEMBERSDECLARE>>>
+    <<<MEMBERSDECLARE>>>
     };
     <<<PER_EVENT_END>>>
 

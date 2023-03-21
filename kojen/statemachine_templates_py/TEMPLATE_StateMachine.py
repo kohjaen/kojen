@@ -57,8 +57,8 @@ class <<<STATEMACHINENAME>>>StateMachine(threading.Thread):
     #
     #@{
     <<<PER_EVENT_BEGIN>>>
-    def Trigger<<<EVENTNAME>>>(self, <<<EVENTSIGNATURE>>>) -> None:
-        event = <<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>)
+    def Trigger<<<EVENTNAME>>>(self, <<<SIGNATURE>>>) -> None:
+        event = <<<EVENTNAME>>>(<<<SIGNATURE>>>)
         if self.__runThreaded:
             self.__fifoQueue.put(event)
         else:

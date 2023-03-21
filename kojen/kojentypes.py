@@ -244,14 +244,18 @@ class Struct(OrderedDict, Query, DefaultVal, Documentation):
         self[memberName]          = memberType
         self.defaults[memberName] = str(default) if default else default
 
-    def Decompose(self) -> list:
-        """
-        Returns a list of tuples:
-            (memberType, memberName, memberDefault) -> memberDefault = None if there is no default.
-        """
+    def AddStruct(self, memberName, struct):
+        self[memberName] = struct
+
+    def Decompose(self):
         result = []
         for memberName in self:
-            result.append((self[memberName], memberName, self.defaults[memberName]))
+            if hasattr(self[memberName], 'Decompose'):
+                if self.IsStruct(memberName):
+                    nested = self[memberName].Decompose()
+                    result.append((self[memberName].Name, memberName, nested))
+            else:
+                result.append((self[memberName], memberName, self.defaults[memberName]))
         return result
 
 
@@ -280,9 +284,6 @@ class Array(OrderedDict, Query, Documentation):
         return result
 
 
-MessageMap = {}
-
-
 class Message(OrderedDict, Query, DefaultVal, Documentation):
     """
     Message.
@@ -299,11 +300,7 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
         DefaultVal.__init__(self)
         self.Name            = messageName
         self.MessageTypeID   = messageTypeID
-        if messageTypeID in MessageMap:
-            if self.Name != MessageMap[messageTypeID].Name:
-                raise RuntimeError("Message [%s] already defined." % messageTypeID)
         self[self.HeaderName()] = MessageHeader(0, self.MessageTypeID)
-        MessageMap[messageTypeID] = self
 
     # done by Interface.
     def SetPreamble(self, preamble):
@@ -335,7 +332,10 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
         result = []
         for memberName in self:
             if hasattr(self[memberName], 'Decompose'):
-                if self.IsStruct(memberName) or self.IsProtocolStruct(memberName):  # Recursive decomposition if we dont do this
+                if self.IsStruct(memberName):
+                    nested = self[memberName].Decompose()
+                    result.append((self[memberName].Name, memberName, nested))
+                elif self.IsProtocolStruct(memberName):
                     result.append((self[memberName].Name, memberName))
                 else:
                     kid = self[memberName].Decompose()
@@ -366,13 +366,19 @@ class Interface(OrderedDict, Query):
         self.enums = OrderedDict()
         self.hashdefines = OrderedDict()
         self.usertags = OrderedDict()
+        self.MessageMap = {}
 
     def AddStruct(self, struct):
         self[struct.Name] = struct
 
     def AddMessage(self, message):
         message.SetPreamble(self.InterfacePreamble)
+        if message.MessageTypeID in self.MessageMap:
+            added = message.Name
+            existing = self.MessageMap[message.MessageTypeID].Name
+            raise RuntimeError("Error when adding (%s) : Message with id [%s] (%s) already defined." % (added , message.MessageTypeID , existing))
         self[message.Name] = message
+        self.MessageMap[message.MessageTypeID] = message
 
     def AddEnum(self, enum):
         self.enums[enum.Name] = enum
@@ -389,7 +395,7 @@ class Interface(OrderedDict, Query):
         result.extend(self.Messages())
         return result
 
-    def Messages(self):
+    def Messages(self) -> list:
         result = []
         for key in self:
             typeof = str(type(self[key]))
@@ -397,7 +403,15 @@ class Interface(OrderedDict, Query):
                 result.append(self[key])
         return result
 
-    def Structs(self):
+    def MessageNames(self) -> list:
+        result = []
+        for key in self:
+            typeof = str(type(self[key]))
+            if typeof.find('class') > -1 and typeof.find('Struct') == -1 and typeof.find('Message') > -1 and typeof.find('MessageHeader') == -1:
+                result.append(key)
+        return result
+
+    def Structs(self) -> list:
         result = []
         for key in self:
             typeof = str(type(self[key]))
@@ -405,7 +419,15 @@ class Interface(OrderedDict, Query):
                 result.append(self[key])
         return result
 
-    def ProtocolStructs(self):
+    def StructNames(self) -> list:
+        result = []
+        for key in self:
+            typeof = str(type(self[key]))
+            if typeof.find('class') > -1 and typeof.find('Struct') > -1 and typeof.find('Message') == -1 and typeof.find('MessageHeader') == -1:
+                result.append(key)
+        return result
+
+    def ProtocolStructs(self) -> list:
         result = []
         for key in self:
             typeof = str(type(self[key]))
@@ -413,13 +435,21 @@ class Interface(OrderedDict, Query):
                 result.append(self[key])
         return result
 
-    def Enums(self):
+    def ProtocolStructNames(self) -> list:
+        result = []
+        for key in self:
+            typeof = str(type(self[key]))
+            if typeof.find('class') > -1 and typeof.find('Struct') == -1 and typeof.find('MessageHeader') > -1:
+                result.append(key)
+        return result
+
+    def Enums(self) -> list:
         result = []
         for n, e in self.enums.items():
             result.append(e)
         return result
 
-    def HashDefines(self):
+    def HashDefines(self) -> list:
         result = []
         for k, v in self.hashdefines.items():
             result.append((k, v))
@@ -435,8 +465,8 @@ class Interface(OrderedDict, Query):
         return result
 
     def GetMessageTypeIDStr(self, struct):
-        for a in MessageMap:
-            if MessageMap[a].Name == struct.Name:
+        for a in self.MessageMap:
+            if self.MessageMap[a].Name == struct.Name:
                 return str(a).replace("[", "").replace("]", "").replace("'", "").replace("(", "").replace(")", "")
         return ""
 

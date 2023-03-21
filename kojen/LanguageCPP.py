@@ -503,8 +503,6 @@ class LanguageCPP(Language):
 
     # parameters need to be a list of (type, name).
     def ParameterString(self, parameters=None) -> str:
-        # def ParameterString(self, parameters = []):
-        # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
             parameters = []
 
@@ -513,7 +511,10 @@ class LanguageCPP(Language):
             size = len(parameters)
             cnt = 0
             for param in parameters:
-                parameter_string += param[0] + ' ' + param[1]
+                if HasDefault(param):
+                    parameter_string += param[0] + ' ' + param[1] + "=" + param[2]
+                else:
+                    parameter_string += param[0] + ' ' + param[1]
                 if cnt != (size - 1):
                     parameter_string += ', '
                 cnt += 1
@@ -544,6 +545,19 @@ class LanguageCPP(Language):
 
     '''USED'''
     def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
+        def _processDefaults(default) -> str:
+            res = ""
+            if str(type(default))=="<class 'list'>":
+                res += "{"
+                for i in default:
+                    if HasDefault(i):
+                        res += _processDefaults(i[2]) + ","
+                res = res.rstrip(",")
+                res += "}"
+            else:
+                res += default
+            return res
+
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
@@ -555,9 +569,12 @@ class LanguageCPP(Language):
                 ref = " const&" if isStruct or isMessage else ""
                 if (mem[0] in interface) and not isArray:
                     factoryparams.append(((self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref,
-                                          (mem[1] + "{" + mem[2] + "}") if (with_defaults and self.HasDefault(mem)) else mem[1]))
+                                          (mem[1] + "=" + _processDefaults(mem[2])) if (with_defaults and HasDefault(mem)) else mem[1]))
                 else:
-                    factoryparams.append((mem[0] + ptr + ref, mem[1]))
+                    if (with_defaults and HasDefault(mem)):
+                        factoryparams.append((mem[0] + ptr + ref, mem[1], _processDefaults(mem[2])))
+                    else:
+                        factoryparams.append((mem[0] + ptr + ref, mem[1]))
         return factoryparams
 
     '''USED
@@ -575,7 +592,7 @@ class LanguageCPP(Language):
                 result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
                 result.append(whitespace + self.InstantiateType(mem[0] + ptr, mem[1],
-                                                                "" if (not self.HasDefault(mem) or attr_packed) else mem[2],
+                                                                "" if (not HasDefault(mem) or attr_packed) else mem[2],
                                                                 attr_packed) + ";")
 
             if struct.IsArray(mem[1]):
@@ -601,7 +618,9 @@ class LanguageCPP(Language):
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]) + ";")
             elif not isArray and isProtocol and not isStruct:
                 s = Template("sizeof(${this}) - sizeof(${header})")
-                result.append(instance_accessor + self.InstantiateType("", mem[1], "Create_" + mem[0] + "(" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + ");"))
+                # Aggregate initializer
+                new = instance_accessor +  self.InstantiateType("", mem[1], "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "};")
+                result.append(new)
             elif isArray and not isProtocol and not isStruct:
                 if not IsMessageStruct(interface, struct.Name):
                     raise RuntimeError("Only message structs are allowed arrays.")
@@ -617,6 +636,28 @@ class LanguageCPP(Language):
             else:
                 print("WTF : InstantiateStructMembers")
         return result
+
+    def InstantiateStructWithAggregateInitializer(self, struct, interface) -> str:
+        structmembers = struct.Decompose()
+        result = ""
+        for mem in structmembers:
+            isArray = struct.IsArray(mem[0])
+            isStruct = interface.IsStruct(mem[0])
+            isProtocol = interface.IsProtocolStruct(mem[0])
+            if not isArray and (not isProtocol or isStruct):
+                result += mem[1] + ", "
+            elif isProtocol:
+                s = Template("sizeof(${this}) - sizeof(${header})")
+                result += "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "}, "
+            else:
+                raise Exception("InstantiateStructWithAggregateInitializer unhandled!")
+                #result += self.InstantiateStructWithAggregateInitializer(interface[mem[0]], interface)
+        return "{" + result.rstrip(", ") + "}"
+
+    def DefaultAggregateInitializer(self) -> str:
+        return "{}"
+
+
     '''USED
     All custom structs, protocol structs and message structs.
     '''

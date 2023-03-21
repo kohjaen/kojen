@@ -85,7 +85,7 @@ class LanguagePython(Language):
             #isMessage = interface.IsMessageStruct(mem[0])
             #isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                if with_defaults and self.HasDefault(mem):
+                if with_defaults and HasDefault(mem):
                     factoryparams.append(("", mem[1] + "=" + mem[2]))
                 else:
                     factoryparams.append(("", mem[1]))
@@ -99,7 +99,7 @@ class LanguagePython(Language):
         result = []
         for mem in structmembers:
             if not struct.IsArray(mem[1]):
-                result.append(whitespace + self.InstantiateType(mem[0], mem[1], mem[2] if self.HasDefault(mem) else 'None') + ' # ' + mem[0])
+                result.append(whitespace + self.InstantiateType(mem[0], mem[1], mem[2] if HasDefault(mem) else 'None') + ' # ' + mem[0])
             else:
                 result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + ' # ' + mem[0] + '[]')
 

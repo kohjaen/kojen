@@ -79,8 +79,6 @@ class LanguageCsharp(Language):
 
     # parameters need to be a list of (type, name).
     def ParameterString(self, parameters=None) -> str:
-        # def ParameterString(self, parameters = []):
-        # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
             parameters = []
 
@@ -98,8 +96,6 @@ class LanguageCsharp(Language):
         raise Exception("Please use OrderedDict when passing parameters into 'ParameterString'")
     '''USED'''
     def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False) -> str:
-        # def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=[], virtual=False):
-        # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
             parameters = []
 
@@ -127,7 +123,7 @@ class LanguageCsharp(Language):
             isMessage = interface.IsMessageStruct(mem[0])
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                factoryparams.append((mem[0], (mem[1] + "=" + mem[2]) if (with_defaults and self.HasDefault(mem)) else mem[1]))
+                factoryparams.append((mem[0], (mem[1] + "=" + mem[2]) if (with_defaults and HasDefault(mem)) else mem[1]))
         return factoryparams
 
     '''USED
@@ -144,7 +140,7 @@ class LanguageCsharp(Language):
             if (mem[0] in interface) and not struct.IsArray(mem[1]):
                 result.append(whitespace + "public " + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
-                result.append(whitespace + "public " + self.InstantiateType(mem[0] + ptr, mem[1], mem[2] if self.HasDefault(mem) else "", is_attr_packed=False) + ";")
+                result.append(whitespace + "public " + self.InstantiateType(mem[0] + ptr, mem[1], mem[2] if HasDefault(mem) else "", is_attr_packed=False) + ";")
 
             if struct.IsArray(mem[1]):
                 arrayName.append(mem[1])
