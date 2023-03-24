@@ -33,16 +33,13 @@ import os
 author = "yourname@yourdomain.com"
 group  = "GROUP_EXAMPLE"
 brief  = "An example demonstrating code-generation abilities."
+outputdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "autogen")
+
 #
 # Generate Protocol
 #
-namespacename = "ExampleIO"
-classname = "CExampleIF"
-declspec = ""
-outputdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "autogen")
-templatedir = "" # defaults
-protocolfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), "example_protocol.py")
-Generate.Protocol(outputdir, protocolfile, namespacename, classname, declspec, author, group, brief)
+import example_protocol
+example_protocol.generate()
 
 #
 # Generate Statemachine (C++)
