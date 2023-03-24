@@ -16,11 +16,6 @@
 #include "<<<CLASSNAME>>>.h"
 using namespace <<<NAMESPACE>>>;
 
-// Packed struct
-// Payload Size
-// To/From Bytestream
-
-
 /**
  * @brief Packedness Tests
  * 
@@ -30,7 +25,7 @@ MU_TEST(<<<PROTOMSGNAME>>>PackedNess)
 {
     size_t sizeOf<<<PROTOMSGNAME>>> = sizeof(<<<PROTOMSGNAME>>>);
     size_t sizeAccumulated = 0;
-    sizeAccumulated += sizeof(<<<ATTRTYPE>>>); // <<<ATTRNAME>>>
+    sizeAccumulated += sizeof(<<<ATTRIBUTETYPE>>>); // <<<ATTRIBUTENAME>>>
     mu_assert(sizeOf<<<PROTOMSGNAME>>> == sizeAccumulated, "ERROR : Size of <<<PROTOMSGNAME>>> does not equal the sum of its separate parts.");
 }
 <<<PER_PROTOMSG_END>>>
@@ -40,7 +35,7 @@ MU_TEST(<<<STRUCTNAME>>>PackedNess)
 {
     size_t sizeOf<<<STRUCTNAME>>> = sizeof(<<<STRUCTNAME>>>);
     size_t sizeAccumulated = 0;
-    sizeAccumulated += sizeof(<<<ATTRTYPE>>>); // <<<ATTRNAME>>>
+    sizeAccumulated += sizeof(<<<ATTRIBUTETYPE>>>); // <<<ATTRIBUTENAME>>>
     mu_assert(sizeOf<<<STRUCTNAME>>> == sizeAccumulated, "ERROR : Size of <<<STRUCTNAME>>> does not equal the sum of its separate parts.");
 }
 <<<PER_STRUCT_END>>>
@@ -50,7 +45,7 @@ MU_TEST(<<<MSGNAME>>>PackedNess)
 {
     size_t sizeOf<<<MSGNAME>>> = sizeof(<<<MSGNAME>>>);
     size_t sizeAccumulated = 0;
-    sizeAccumulated += sizeof(<<<ATTRTYPE>>>); // <<<ATTRNAME>>>
+    sizeAccumulated += sizeof(<<<ATTRIBUTETYPE>>>); // <<<ATTRIBUTENAME>>>
     mu_assert(sizeOf<<<MSGNAME>>> == sizeAccumulated, "ERROR : Size of <<<MSGNAME>>> does not equal the sum of its separate parts.");
 }
 <<<PER_MSG_END>>>
@@ -64,7 +59,7 @@ MU_TEST(<<<MSGNAME>>>PayloadSize)
 {
     auto msg = Create<<<MSGNAME>>>();
     size_t sizePayload = 0;
-    sizePayload += sizeof(<<<PAYLTYPE>>>); // <<<PAYLNAME>>>
+    sizePayload += sizeof(<<<PAYLOADTYPE>>>); // <<<PAYLOADNAME>>>
     mu_assert(msg.Header.PayloadSize == sizePayload, "ERROR : Size of <<<MSGNAME>>> payload size does not equal the sum of its separate parts (less pointers to data).");
 }
 <<<PER_MSG_END>>>

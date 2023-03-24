@@ -94,6 +94,10 @@ __TAG_MSGID__                       = '<<<MSGID>>>'
 __TAG_MSGNAME_SMALL_CAMEL__         = '<<<msgName>>>'           # camelCaps
 __TAG_PROTOMSGNAME__                = '<<<PROTOMSGNAME>>>'      # As given
 __TAG_PROTOMSGNAME_SMALL_CAMEL__    = '<<<protoMsgName>>>'      # camelCaps
+__TAG_ATTRIBUTE_TYPE__              = "<<<ATTRIBUTETYPE>>>"
+__TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
+__TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
+__TAG_PAYLOAD_NAME__                = "<<<PAYLOADNAME>>>"
 
 __TAG_STRUCT_BEGIN__                = "<<<PER_STRUCT_BEGIN>>>"
 __TAG_STRUCT_END__                  = "<<<PER_STRUCT_END>>>"
@@ -382,6 +386,15 @@ class CStateMachineGenerator(CGenerator):
                 # Aggregate initialization
                 if hasSpecificTag(newline, __TAG_AGGREGATE_INIT__):
                     newline = newline.replace(__TAG_AGGREGATE_INIT__, self.instantiate_event_aggregate_initializer(name))
+                # Member attributes ... all structs (msgs, protocols, structs)
+                if hasSpecificTag(newline, __TAG_ATTRIBUTE_TYPE__) or hasSpecificTag(newline, __TAG_ATTRIBUTE_NAME__):
+                    struct_or_msg = self.events_interface[name]
+                    members = struct_or_msg.Decompose(False)
+                    for mem in members:
+                        membername = mem[1]
+                        membertype = mem[0]
+                        alllinesexpanded.append(newline.replace(__TAG_ATTRIBUTE_TYPE__, membertype).replace(__TAG_ATTRIBUTE_NAME__, membername))
+                    continue
                 newline = newline.replace(__TAG_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt))
                 if newline == '\n' or newline == '' or newline == '\r\n' or newline.replace(' ','') == "" or newline.replace(' ','').replace('\n','').replace('\r','') == "":
                     continue
@@ -435,6 +448,28 @@ class CStateMachineGenerator(CGenerator):
                 if hasSpecificTag(newline, __TAG_MSGID__):
                     newline = newline.replace(__TAG_MSGID__, str(self.events_interface[name].MessageTypeID))
                 newline = newline.replace(__TAG_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt, True))
+                # Member attributes ... all structs (msgs, protocols, structs)
+                if hasSpecificTag(newline, __TAG_ATTRIBUTE_TYPE__) or hasSpecificTag(newline, __TAG_ATTRIBUTE_NAME__):
+                    struct_or_msg = self.events_interface[name]
+                    members = struct_or_msg.Decompose(False)
+                    for mem in members:
+                        membername = mem[1]
+                        membertype = mem[0]
+                        alllinesexpanded.append(newline.replace(__TAG_ATTRIBUTE_TYPE__,membertype).replace(__TAG_ATTRIBUTE_NAME__, membername))
+                    continue
+                # Payload attributes only
+                if hasSpecificTag(newline, __TAG_PAYLOAD_TYPE__) or hasSpecificTag(newline, __TAG_PAYLOAD_NAME__):
+                    struct_or_msg = self.events_interface[name]
+                    structmembers = struct_or_msg.Decompose(False)
+                    for mem in structmembers:
+                        membername = mem[1]
+                        membertype = mem[0]
+                        #isArray = struct_or_msg.IsArray(membername)
+                        #isStruct = struct_or_msg.IsStruct(membername)
+                        isProtocol = struct_or_msg.IsProtocolStruct(membername)
+                        if not isProtocol:
+                            alllinesexpanded.append(newline.replace(__TAG_PAYLOAD_TYPE__, membertype).replace(__TAG_PAYLOAD_NAME__, membername))
+                    continue
                 if newline == '\n' or newline == '' or newline == '\r\n' or newline.replace(' ','') == "" or newline.replace(' ','').replace('\n','').replace('\r','') == "":
                     continue
                 alllinesexpanded.append(newline)

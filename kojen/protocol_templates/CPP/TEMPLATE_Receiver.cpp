@@ -27,12 +27,12 @@ namespace <<<NAMESPACE>>>
         case <<<MSGID>>>: On<<<MSGNAME>>>Received(reinterpret_cast<const <<<MSGNAME>>>*>(&data_buffer[0])); break;
         <<<PER_MSG_END>>>
         default:
+#ifdef DEBUG_OUT
+            printf("Message (%i) not supported.\r\n", TypeID);
+#endif
             if(unhandledReceiver != nullptr)
                 unhandledReceiver->OnNotHandledMessageReceived(data_buffer,number_of_bytes);
             break;
         }
-#ifdef DEBUG_OUT
-        printf("Message (%i) not supported.\r\n", TypeID);
-#endif
     }
 }

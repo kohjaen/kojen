@@ -194,7 +194,7 @@ class MessageHeader(OrderedDict, Query, DefaultVal):
     def PayloadSize(self):
         return 'PayloadSize'
 
-    def Decompose(self):
+    def Decompose(self, recursive = True):
         result = []
         for memberName in self:
             result.append((self[memberName], memberName, self.defaults[memberName]))
@@ -247,15 +247,21 @@ class Struct(OrderedDict, Query, DefaultVal, Documentation):
     def AddStruct(self, memberName, struct):
         self[memberName] = struct
 
-    def Decompose(self):
+    def Decompose(self, recursive = True):
         result = []
         for memberName in self:
-            if hasattr(self[memberName], 'Decompose'):
+            if hasattr(self[memberName], 'Decompose') and recursive:
                 if self.IsStruct(memberName):
                     nested = self[memberName].Decompose()
                     result.append((self[memberName].Name, memberName, nested))
             else:
-                result.append((self[memberName], memberName, self.defaults[memberName]))
+                if self.IsStruct(memberName):
+                    if memberName in self.defaults:
+                        result.append((self[memberName].Name, memberName, self.defaults[memberName]))
+                    else:
+                        result.append((self[memberName].Name, memberName))
+                else:
+                    result.append((self[memberName], memberName, self.defaults[memberName]))
         return result
 
 
@@ -316,11 +322,11 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
     def AddStruct(self, memberName, struct):
         self[memberName] = struct
 
-    def AddArrayOfType(self, memberName, membertype):
-        self[memberName] = Array(memberName, membertype)
+    #def AddArrayOfType(self, memberName, membertype):
+    #    self[memberName] = Array(memberName, membertype)
 
-    def AddArrayOfStruct(self, memberName, struct):
-        self[memberName] = Array(memberName, struct.Name)
+    #def AddArrayOfStruct(self, memberName, struct):
+    #    self[memberName] = Array(memberName, struct.Name)
 
     def HasArray(self):
         for memberName in self:
@@ -328,10 +334,10 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
                 return True
         return False
 
-    def Decompose(self):
+    def Decompose(self, recursive = True):
         result = []
         for memberName in self:
-            if hasattr(self[memberName], 'Decompose'):
+            if hasattr(self[memberName], 'Decompose') and recursive:
                 if self.IsStruct(memberName):
                     nested = self[memberName].Decompose()
                     result.append((self[memberName].Name, memberName, nested))
@@ -341,7 +347,13 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
                     kid = self[memberName].Decompose()
                     result.extend(kid)
             else:
-                result.append((self[memberName], memberName, self.defaults[memberName]))
+                if self.IsStruct(memberName) or self.IsProtocolStruct(memberName):
+                    if memberName in self.defaults:
+                        result.append((self[memberName].Name, memberName, self.defaults[memberName]))
+                    else:
+                        result.append((self[memberName].Name, memberName))
+                else:
+                    result.append((self[memberName], memberName, self.defaults[memberName]))
         return result
 
 
