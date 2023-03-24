@@ -10,6 +10,7 @@
  */
 #include <array>
 #include <variant>
+#include <cstring>
 #include "allplatforms/testsuite/minunit/minunit.h"
 #pragma warning( disable : 4244 )
 
