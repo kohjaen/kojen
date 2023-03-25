@@ -29,13 +29,6 @@ __author__ = 'eugene'
 from collections import OrderedDict
 
 
-class MsgIDType:
-
-    def __init__(self, msg_id, msg_type):
-        self.m_msg_id = msg_id
-        self.m_msg_type = msg_type
-
-
 def IsStruct(container, instancename):
     if instancename in container:
         typeof = str(type(container[instancename]))
