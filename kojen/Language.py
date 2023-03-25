@@ -30,6 +30,11 @@ import time
 import datetime
 import sys
 
+"""
+Returns true if a tuple (representing a member) has a default
+"""
+def HasDefault(member_tuple) -> bool:
+    return len(member_tuple) >= 3 and member_tuple[2]
 
 class Language:
 
@@ -40,12 +45,6 @@ class Language:
     # The last created language is the currently generated one...
     def __init__(self):
         Language.Lang = self
-
-    def HasDefault(self, member_tuple) -> bool:
-        """
-        Returns true if a tuple (representing a member) has a default
-        """
-        return len(member_tuple) >= 3 and member_tuple[2]
 
     # ------------------------------ Begin : Language Specifics
     # Braces
@@ -101,6 +100,12 @@ class Language:
         raise RuntimeError("Language Feature Not Implemented")
 
     def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor) -> list:
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def InstantiateStructWithAggregateInitializer(self, struct, interface) -> str:
+        raise RuntimeError("Language Feature Not Implemented")
+
+    def DefaultAggregateInitializer(self) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     def RawPtrToType(self, typename):
@@ -209,10 +214,6 @@ class Language:
         raise RuntimeError("Language Feature Not Implemented")
 
     def ParameterString(self,  parameters=None) -> str:
-        raise RuntimeError("Language Feature Not Implemented")
-
-    # 1 means ++
-    def For_Range(self, iterName, iterType, start, stop, incr=1) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
     def LicenseAgreement(self):

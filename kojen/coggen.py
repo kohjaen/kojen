@@ -63,9 +63,6 @@ class CCogGenerator(CGenerator):
         CGenerator.__init__(self, inputfiledir, outputfiledir, language, author, group, brief)
         self.dict_to_replace_filenames = {}
         self.dict_to_replace_filenames["TEMPLATE_"] = classname
-        #self.dict_to_replace_filenames['.ty'] = '.py'
-        #self.dict_to_replace_filenames['.t#'] = '.cs'
-        #self.dict_to_replace_filenames['.tpp'] = '.cpp'  # there are no '.hpp' templates...but search and replace will apply '.t -> .h' first so '.tpp' becomes '.hpp'...grrr
 
     def loadtemplates_firstfiltering(self, ccmodel):
         """

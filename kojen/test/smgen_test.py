@@ -5,7 +5,7 @@ from kojen.LanguagePython import LanguagePython
 from kojen.LanguageCPP import LanguageCPP
 from kojen.LanguageCsharp import LanguageCsharp
 from kojen.smgen import CStateMachineGenerator
-from kojen.kojentypes import Interface, Struct
+from kojen.kojentypes import Interface, Struct, Message, MessageHeader
 
 class TestFeatures(unittest.TestCase):
 
@@ -74,8 +74,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature2(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTSIGNATURE>>>")
-        input.append("<<<EVENTSIGNATUREWITHDEFAULTS>>>")
+        input.append("<<<SIGNATURE>>>")
+        input.append("<<<SIGNATUREWITHDEFAULTS>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga","bungaBunga", "0x66")
@@ -91,8 +91,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature3(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(some, <<<EVENTSIGNATURE>>>)")
-        input.append("(some, <<<EVENTSIGNATUREWITHDEFAULTS>>>)")
+        input.append("(some, <<<SIGNATURE>>>)")
+        input.append("(some, <<<SIGNATUREWITHDEFAULTS>>>)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         i = Interface('')
@@ -107,8 +107,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature4(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(<<<EVENTSIGNATURE>>> , other)")
-        input.append("(<<<EVENTSIGNATUREWITHDEFAULTS>>> , other)")
+        input.append("(<<<SIGNATURE>>> , other)")
+        input.append("(<<<SIGNATUREWITHDEFAULTS>>> , other)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         i = Interface('')
@@ -123,8 +123,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature5(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(some, <<<EVENTSIGNATURE>>>)")
-        input.append("(some, <<<EVENTSIGNATUREWITHDEFAULTS>>>)")
+        input.append("(some, <<<SIGNATURE>>>)")
+        input.append("(some, <<<SIGNATUREWITHDEFAULTS>>>)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         s.AddType("binga","bungaBunga", "0x66")
@@ -140,8 +140,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature6(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(<<<EVENTSIGNATURE>>>, yo)")
-        input.append("(<<<EVENTSIGNATUREWITHDEFAULTS>>>, yo)")
+        input.append("(<<<SIGNATURE>>>, yo)")
+        input.append("(<<<SIGNATUREWITHDEFAULTS>>>, yo)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         s.AddType("binga","bungaBunga", "0x66")
@@ -154,10 +154,81 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[0], "(binga, yo)\n") # Python
         self.assertEqual(output[1], "(binga=0x66, yo)\n")
 
+    def createMsgInputWithDefaults(self):
+        input = []
+        input.append("<<<PER_MSG_BEGIN>>>")
+        input.append("<<<SIGNATURE>>>")
+        input.append("<<<SIGNATUREWITHDEFAULTS>>>")
+        input.append("<<<PER_MSG_END>>>")
+        return input
+    def createIfNestedMsgWithDefalts(self, allDefaults = True):
+        s = Struct("s")
+        s.AddType("myApple", "apple", 1)
+        s.AddType("myOrange", "orange", 2)
+        s.AddType("myBanana", "banana", 3)
+        s1 = Struct("FruitSalad")
+        s1.AddStruct("myFruits", s)
+        s1.AddType("myCustard", "custard", 4 if allDefaults else None)
+        s2 = Struct("Breakfast")
+        s2.AddStruct("myEdibles", s1)
+        s2.AddType("myCoffee", "coffee", 5)
+        s2.AddType("myOJ", "OJ", 6 if allDefaults else None)
+        m = Message('ThisMorning', 0x02)
+        m.AddStruct('myBreakfast', s2)
+        m.AddType('myKnife', 'knife', 7)
+        m.AddType('myFork', 'fork', 8 if allDefaults else None)
+        m.AddType('myNapkin', 'napkin', 9 if allDefaults else None)
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s1)
+        i.AddStruct(s2)
+        i.AddMessage(m)
+        return i
+
+    def test_event_params_signature_all_defaults(self):
+        input = self.createMsgInputWithDefaults()
+        i = self.createIfNestedMsgWithDefalts(True)
+        r = {}
+        r[LanguageCPP()] = [
+            'Breakfast const& myBreakfast, knife myKnife, fork myFork, napkin myNapkin\n',
+            'Breakfast const& myBreakfast={{{1,2,3},4},5,6}, knife myKnife=7, fork myFork=8, napkin myNapkin=9\n'
+        ]
+        #r[LanguagePython()] = None
+        r[LanguageCsharp()] = [
+            'Breakfast myBreakfast, knife myKnife, fork myFork, napkin myNapkin\n',
+            'Breakfast myBreakfast={{{1,2,3},4},5,6}, knife myKnife=7, fork myFork=8, napkin myNapkin=9\n'
+        ]
+
+        for lan, res in r.items():
+            output = TestFeatures.do_magic(input, i, [], lan)
+            self.assertEqual(len(output), 2)
+            self.assertEqual(output[0], res[0])
+            self.assertEqual(output[1], res[1])
+
+    def test_event_params_signature_some_defaults(self):
+        input = self.createMsgInputWithDefaults()
+        i = self.createIfNestedMsgWithDefalts(False)
+        r = {}
+        r[LanguageCPP()] = [
+            'Breakfast const& myBreakfast, knife myKnife, fork myFork, napkin myNapkin\n',
+            'Breakfast const& myBreakfast={{{1,2,3},{}},5,{}}, knife myKnife=7, fork myFork={}, napkin myNapkin={}\n'
+        ]
+        #r[LanguagePython()] = None
+        r[LanguageCsharp()] = [
+            'Breakfast myBreakfast, knife myKnife, fork myFork, napkin myNapkin\n',
+            'Breakfast myBreakfast={{{1,2,3},{}},5,{}}, knife myKnife=7, fork myFork={}, napkin myNapkin={}\n'
+        ]
+
+        for lan, res in r.items():
+            output = TestFeatures.do_magic(input, i, [], lan)
+            self.assertEqual(len(output), 2)
+            self.assertEqual(output[0], res[0])
+            self.assertEqual(output[1], res[1])
+
     def test_event_members_declare(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTMEMBERSDECLARE>>>")
+        input.append("<<<MEMBERSDECLARE>>>")
         input.append("<<<PER_EVENT_END>>>")
 
         s = Struct("s")
@@ -189,7 +260,7 @@ class TestFeatures(unittest.TestCase):
     def test_event_members_instantiate_no_custom_name(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTMEMBERSLITEINSTANTIATE>>>")
+        input.append("<<<MEMBERSLITEINSTANTIATE>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga", "bungaBunga")
@@ -273,6 +344,49 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(len(output), 2)
         self.assertEqual(output[1], "hello\n")
         self.assertEqual(output[0], "how ya doin'\n")
+
+    def test_aggregate_initialization_events(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("<<<AGGREGATEINITIALIZATION>>>")
+        input.append("<<<PER_EVENT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga","size_t")
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], "{binga, bunga}\n")
+        self.assertEqual(output[1], "{bla, blabla}\n")
+
+    def test_pyattr(self):
+        input = []
+        input.append("<<<PER_STRUCT_BEGIN>>>")
+        input.append("<<<PyAttr::bla>>>")
+        input.append("<<<PER_STRUCT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga", "size_t")
+        s.bla = "here"
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        s2.bla = 36
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], "here\n")
+        self.assertEqual(output[1], "36\n")
 
     '''
     def test_split(self):

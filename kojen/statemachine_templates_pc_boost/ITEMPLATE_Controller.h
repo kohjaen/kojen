@@ -38,7 +38,7 @@ namespace <<<NAMESPACE>>>
         <<<PER_EVENT_BEGIN>>>
         CGEN_DECL_STRUCT_PTR(<<<EVENTNAME>>>);
         struct <<<EVENTNAME>>> : EventData {
-        <<<EVENTMEMBERSDECLARE>>>
+        <<<MEMBERSDECLARE>>>
         };
         <<<PER_EVENT_END>>>
         /// @}

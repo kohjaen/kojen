@@ -175,9 +175,9 @@ namespace <<<NAMESPACE>>>
 #endif
         }
         <<<PER_EVENT_BEGIN>>>
-        virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override {
+        virtual void Trigger<<<EVENTNAME>>>(<<<SIGNATURE>>>) override {
             auto data = std::make_unique<<<<EVENTNAME>>>>(<<<EVENTNAME>>>());
-            <<<EVENTMEMBERSINSTANTIATE>>>
+            <<<MEMBERSINSTANTIATE>>>
             TriggerEvent(std::move(data));
         }
         <<<PER_EVENT_END>>>

@@ -50,7 +50,7 @@ namespace <<<NAMESPACE>>>
         /// <summary>
         /// Triggers the <<<EVENTNAME>>> event.
         /// </summary>
-        public void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>)
+        public void Trigger<<<EVENTNAME>>>(<<<SIGNATURE>>>)
         {
             <<<EVENTNAME>>> evt = new ();
             <<<EVENTMEMBERSLITEINSTANTIATE::evt>>>

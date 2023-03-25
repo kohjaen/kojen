@@ -79,8 +79,6 @@ class LanguageCsharp(Language):
 
     # parameters need to be a list of (type, name).
     def ParameterString(self, parameters=None) -> str:
-        # def ParameterString(self, parameters = []):
-        # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
             parameters = []
 
@@ -89,7 +87,10 @@ class LanguageCsharp(Language):
             size = len(parameters)
             cnt = 0
             for param in parameters:
-                parameter_string += param[0] + ' ' + param[1]
+                if HasDefault(param):
+                    parameter_string += param[0] + ' ' + param[1] + "=" + param[2]
+                else:
+                    parameter_string += param[0] + ' ' + param[1]
                 if cnt != (size - 1):
                     parameter_string += ', '
                 cnt += 1
@@ -98,8 +99,6 @@ class LanguageCsharp(Language):
         raise Exception("Please use OrderedDict when passing parameters into 'ParameterString'")
     '''USED'''
     def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=None, virtual=False, is_static=False, is_const=False) -> str:
-        # def DeclareFunction(self, returntype, classname, functionname, is_impl, parameters=[], virtual=False):
-        # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
             parameters = []
 
@@ -120,79 +119,74 @@ class LanguageCsharp(Language):
 
     '''USED'''
     def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
+        # C++ copy/paste
+        def _processDefaults(default) -> str:
+            res = ""
+            if str(type(default)) == "<class 'list'>":
+                res += "{"
+                for i in default:
+                    if HasDefault(i):
+                        res += _processDefaults(i[2]) + ","
+                    else:
+                        res += "{},"
+                res = res.rstrip(",")
+                res += "}"
+            else:
+                res += default
+            return res
+
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isMessage = interface.IsMessageStruct(mem[0])
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                factoryparams.append((mem[0], (mem[1] + "=" + mem[2]) if (with_defaults and self.HasDefault(mem)) else mem[1]))
+                ref = ""#" const&" if isStruct or isMessage else ""
+                if mem[0] in interface:
+                    factoryparams.append(((self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref,
+                                          (mem[1] + "=" + _processDefaults(mem[2])) if (with_defaults and HasDefault(mem)) else mem[1]))
+                else:
+                    if with_defaults:
+                        if HasDefault(mem):
+                            factoryparams.append((mem[0] + ref, mem[1], _processDefaults(mem[2])))
+                        else:
+                            factoryparams.append((mem[0] + ref, mem[1], "{}"))
+                    else:
+                        factoryparams.append((mem[0] + ref, mem[1]))
         return factoryparams
 
     '''USED
     Declares the guts of a struct declaration
     '''
     def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True) -> list:
-        arrayName = []
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
             ptr = ""
-            #if struct.IsArray(mem[1]):
-            #    ptr = "*"
-            if (mem[0] in interface) and not struct.IsArray(mem[1]):
+            if mem[0] in interface:
                 result.append(whitespace + "public " + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
-                result.append(whitespace + "public " + self.InstantiateType(mem[0] + ptr, mem[1], mem[2] if self.HasDefault(mem) else "", is_attr_packed=False) + ";")
-
-            if struct.IsArray(mem[1]):
-                arrayName.append(mem[1])
-        if len(arrayName) != 0:
-            raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
+                result.append(whitespace + "public " + self.InstantiateType(mem[0] + ptr, mem[1], mem[2] if HasDefault(mem) else "", is_attr_packed=False) + ";")
         return result
     '''USED'''
     def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor = ".") -> list:
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isStruct = interface.IsStruct(mem[1])
             isProtocol = interface.IsProtocolStruct(mem[0])
             instance_accessor = whitespace + instancename + accessor
 
-            if not isArray and (not isProtocol or isStruct):
+            if not isProtocol or isStruct:
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]) + ";")
-            elif not isArray and isProtocol and not isStruct:
+            elif isProtocol and not isStruct:
                 s = Template("sizeof(${this}) - sizeof(${header})")
-                result.append(instance_accessor + self.InstantiateType("", mem[1], "Create_" + mem[0] + "(" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + ")"))
-                #raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
-            elif isArray and not isProtocol and not isStruct:
-                raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
+                # Aggregate initializer
+                new = instance_accessor + self.InstantiateType("", mem[1], "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "};")
+                result.append(new)
             else:
                 print("WTF : InstantiateStructMembers")
 
-        return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructToByteStream(self, struct, interface, whitespace, outname, inname, inacessor, is_arm=False) -> list:
-        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
-        result = []
-        return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructIntoByteStream(self, struct, interface, whitespace, inname, streamname, cntname, inacessor) -> list:
-        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
-        result = []
-        return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructFromByteStream(self, functioname, struct, interface, whitespace, streamname, cntname, outname, outaccessor) -> list:
-        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
-        result = []
         return result
 
     '''USED'''

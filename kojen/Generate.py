@@ -7,19 +7,24 @@ except:
 import os
 
 ''' Generate Entry function for Protocols. 
-
-    The python-interface-generator file used to define the structs etc, is passed in, and called by COG in the second stage.
 '''
 
 
-def Protocol(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec="", author = "", group="", brief="", template_dir="") -> list:
-    return protogen.Generate(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec, author, group, brief, template_dir)
+#def Protocol(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec="", author = "", group="", brief="", template_dir="") -> list:
+#    return protogen.Generate(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec, author, group, brief, template_dir)
+
+def Protocol(outputdir, eventsinterface, namespacenname, classname, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
+    if not templatedir.strip():
+        templatedir = os.path.join(os.path.join(os.path.abspath(os.path.dirname(__file__)), "protocol_templates"), "CPP")
+    res =  StateMachine(outputdir, [], eventsinterface, namespacenname, classname, dclspc, author, group, brief, templatedir, __internal, False)
+    if __copy_other_files:
+        protogen.CopyFrameworkFiles_CPP(outputdir)
+    return res
+
+
 
 
 ''' Generate Entry function for State Machines
-
-    COG is not used here...so even though a python-interface-generator file is used by the event structs/parameterization, it needs
-    to be called by the callee, and the events interface passed in.
 '''
 
 

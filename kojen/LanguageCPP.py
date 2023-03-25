@@ -47,426 +47,6 @@ try:
 except (ModuleNotFoundError, ImportError) as e:
     from .Language import *
 
-class UnitTestFramework:
-    NO_FW, BOOST, CPPuTEST, MINUNIT = range(4)
-
-
-class UnitTestWriter:
-
-    def __init__(self, interface, message, language, instancename):
-        self.message = message
-        self.interface = interface
-        self.language = language
-        self.instancename = instancename
-        self.bytestream_of_message_variable_name = instancename + '_stream'
-
-    ''' Returns a tuple([list of lines],[list of pointers to delete after])
-    '''
-    def WRITE_CREATE_MESSAGE(self, WHITESPACE='        '):
-
-        if not self.interface.IsMessageStruct(self.message.Name):
-            raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
-
-        result = []
-        result_delete = []
-        creation_string = ''
-        message = self.message
-        interface = self.interface
-        language = self.language
-        instancename = self.instancename
-
-        hasArray = message.HasArray()
-        ignoreArrayCntName = ""
-        if hasArray:
-            for mem in message:
-                if message.IsArray(mem):
-                    ignoreArrayCntName = message[mem].Count()
-
-        messagemembers = message.Decompose()
-        for i in range(len(messagemembers)):
-            mem = messagemembers[i]
-            isArray = message.IsArray(mem[1])
-            isStruct = message.IsStruct(mem[1])
-            # Also ignore this member size, as its compensated for
-            # in the payload (we send the data, not the pointer...
-            isProtocol = message.IsProtocolStruct(mem[1])
-
-            ''' Embedded struct support (i.e. user typed data)
-                Don't create a declaration for the protocol...this we can do automatically with
-                provided info
-            '''
-            if isStruct and not isArray:
-                # Decompose by the message struct
-                struct = interface[mem[0]]
-                struct_instance_name = language.PtrToTypeName(message.Name) + '__' + mem[1]
-                # result_delete.append(struct_instance_name) -> this wont be a pointer.
-                struct_creation_string = ''
-                struct_creation_string += 'Create_' + struct.Name + '('
-                structmembers = struct.Decompose()
-                for j in range(len(structmembers)):
-                    smem = structmembers[j]
-                    struct_creation_string += '(' + smem[0] + ') 1'
-                    if j != len(structmembers) - 1:
-                        struct_creation_string += ","
-                struct_creation_string += ')'
-                # Write embedded type creation string before interface type creation string
-                result.append(WHITESPACE + language.InstantiateType(struct.Name, struct_instance_name, struct_creation_string) + ";")
-                creation_string += struct_instance_name
-            elif isArray:
-                array = message[mem[1]]
-                creation_string += '(' + array[array.Count()] + ' )50,' + language.NullPtr()  # Don't copy, just create empty buffer...
-            elif isProtocol:
-                pass
-            elif mem[1] == ignoreArrayCntName:
-                pass
-            else:  # Normal type
-                creation_string = creation_string + '(' + mem[0] + ') 1'
-
-            if not isProtocol and not mem[1] == ignoreArrayCntName:
-                if i != len(messagemembers) - 1:
-                    creation_string = creation_string + ","
-
-        # Write interface type creation string
-        result_delete.append(instancename)
-        result.append(WHITESPACE + language.InstantiateType(language.PtrToTypeName(message.Name), instancename, 'Create_' + message.Name + '(' + creation_string + ');'))
-        return result, result_delete
-
-    def WRITE_MESSAGE_TO_STREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
-        if not self.interface.IsMessageStruct(self.message.Name):
-            raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
-
-        result = []
-        message = self.message
-        interface = self.interface
-        language = self.language
-        instancename = self.instancename
-        accessor = language.Accessor(True)
-        bytestream_of_message_variable_name = instancename + '_stream'
-        # Array require pre-initialization
-        if message.HasArray():
-            result.append(WHITESPACE + language.FormatComment('Has array data needing testing.'))
-            messagemembers = message.Decompose()
-            for mem in messagemembers:
-                isArray = message.IsArray(mem[1])
-                isStruct = interface.IsStruct(mem[0])
-                if isArray:
-                    result.append(WHITESPACE + language.For_Range('i','size_t','0', '50') + language.OpenBrace())
-                    if not isStruct:
-                        result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('', instancename + accessor + mem[1] + '[i]', 'static_cast<'+mem[0]+'>(i)')+";")
-                    elif isStruct:
-                        structmembers = interface[mem[0]].Decompose()
-                        for smem in structmembers:
-                            result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('', instancename + accessor + mem[1] + '[i].' + smem[1], 'static_cast<'+smem[0]+'>(i)')+";")
-                    result.append(WHITESPACE + language.CloseBrace())
-
-        # To Stream
-        if is_arm:
-            result.append(WHITESPACE + 'uint8 ' + bytestream_of_message_variable_name + "[sizeof(" + message.Name + ")];")
-            result.append(WHITESPACE + 'size_t serialized_size = ToByteStream_' + message.Name + '(' + instancename + ', ' + bytestream_of_message_variable_name + ')' + ";")
-            if unittestfw == UnitTestFramework.NO_FW:
-                result.append(WHITESPACE + 'assert(serialized_size == sizeof('+message.Name+'));')
-            elif unittestfw == UnitTestFramework.MINUNIT:
-                result.append(WHITESPACE + 'mu_check(serialized_size == sizeof(' + message.Name + '));')
-            elif unittestfw == UnitTestFramework.BOOST:
-                result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE(serialized_size == sizeof('+message.Name+'), "ERROR : Serialized size of ' + message.Name + ' is not as expected.");')
-            elif unittestfw == UnitTestFramework.CPPuTEST:
-                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(serialized_size,sizeof('+message.Name+'), "ERROR : Serialized size of ' + message.Name + ' is not as expected.");')
-            else:
-                result.append(WHITESPACE + "// Incorrect option " + str(unittestfw) + " for TOBYTESTREAM, please see options in class UnitTestFramework")
-
-        else:
-            result.append(WHITESPACE + language.InstantiateType(language.ByteStreamTypeSharedPtr(), bytestream_of_message_variable_name, 'ToByteStream_' + message.Name + '(' + instancename + ')')+";")
-        return result
-
-    ''' Returns a tuple([list of lines],[list of pointers to delete after])
-    '''
-    def WRITE_MESSAGE_FROM_STREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
-
-        if not self.interface.IsMessageStruct(self.message.Name):
-            raise RuntimeError("Wrong type error. Must be message (" + self.message.Name)
-
-        result = []
-        result_delete = []
-        message = self.message
-        interface = self.interface
-        language = self.language
-        instancename = self.instancename
-        bytestream_of_message_variable_name = self.bytestream_of_message_variable_name
-        message_variable_name_after_ser = instancename + '_fromstream'
-        result_delete.append(message_variable_name_after_ser)
-        accessor = language.Accessor(True)
-
-        # From Stream
-        indexer = 'i_'+bytestream_of_message_variable_name
-        result.append(WHITESPACE + language.InstantiateType('size_t', indexer, '0') + ";")
-        if is_arm:
-            result.append(WHITESPACE + language.InstantiateType(language.PtrToTypeName(message.Name), message_variable_name_after_ser, 'FromByteStream_' + message.Name + '( &' + bytestream_of_message_variable_name + '[0], serialized_size, ' + indexer + ')') + ";")
-        else:
-            result.append(WHITESPACE + language.InstantiateType(language.PtrToTypeName(message.Name), message_variable_name_after_ser, 'FromByteStream_' + message.Name + '( &(*'+bytestream_of_message_variable_name + ')[0], ' + bytestream_of_message_variable_name + '->size(), '+indexer+')')+";")
-        # Make sure the indexer matches the streamsize
-        result.append(WHITESPACE + language.FormatComment('Index should be at next (non existant) place (thus streamsize).'))
-        if is_arm:
-            if unittestfw == UnitTestFramework.NO_FW:
-                result.append(WHITESPACE + language.If(indexer + ' != serialized_size'))
-                result.append(WHITESPACE + language.OpenBrace())
-                result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Indexing count %i not match the stream %i ..." ,' + indexer + ',serialized_size"'))
-            elif unittestfw == UnitTestFramework.MINUNIT:
-                result.append(WHITESPACE + 'mu_assert('+indexer+' == serialized_size, "ERROR : Indexing count does not match the stream size.");')
-            elif unittestfw == UnitTestFramework.BOOST:
-                result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE('+indexer+' == serialized_size, "ERROR : Indexing count does not match the stream size.");')
-            elif unittestfw == UnitTestFramework.CPPuTEST:
-                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT('+indexer+',serialized_size, "ERROR : Indexing count does not match the stream size.");')
-            else:
-                result.append(WHITESPACE + "// Incorrect option " + str(unittestfw) + " for FROMBYTESTREAMINDEX, please see options in class UnitTestFramework")
-        else:
-            if unittestfw == UnitTestFramework.NO_FW:
-                result.append(WHITESPACE + language.If(indexer+' != '+bytestream_of_message_variable_name+'->size()'))
-                result.append(WHITESPACE + language.OpenBrace())
-                result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Indexing count %i not match the stream %i ..." ,' + indexer + ',' + bytestream_of_message_variable_name + '->size()"'))
-            elif unittestfw == UnitTestFramework.MINUNIT:
-                result.append(WHITESPACE + 'mu_assert('+indexer+' == '+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.");')
-            elif unittestfw == UnitTestFramework.BOOST:
-                result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE('+indexer+' == '+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.");')
-            elif unittestfw == UnitTestFramework.CPPuTEST:
-                result.append(WHITESPACE + 'CHECK_EQUAL_TEXT('+indexer+','+bytestream_of_message_variable_name+'->size(), "ERROR : Indexing count does not match the stream size.");')
-            else:
-                result.append(WHITESPACE + "// Incorrect option " + str(unittestfw) + " for FROMBYTESTREAMINDEX, please see options in class UnitTestFramework")
-
-        if unittestfw == UnitTestFramework.NO_FW:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'return false;')
-            result.append(WHITESPACE + language.CloseBrace())
-        # Make sure all fields are equal...
-        equality_check = 'b_'+bytestream_of_message_variable_name+'_equal'
-        result.append(WHITESPACE + language.InstantiateType('bool', equality_check, 'true') + ";")
-
-        messagemembers = message.Decompose()
-
-        for mem in messagemembers:
-            membername = mem[1]
-            #membertype = str(self.m_struct_members.m_member_type[i])
-            isArray = message.IsArray(mem[1])
-            isStruct = interface.IsStruct(mem[0])
-            isProtocol = interface.IsProtocolStruct(mem[0])
-            if isStruct or isProtocol:
-                struct = interface[mem[0]]
-                structmembers = struct.Decompose()
-                if isArray:
-                    result.append(WHITESPACE + language.For_Range('i','size_t','0', '50'))
-                    result.append(WHITESPACE + language.OpenBrace())
-                    for smem in structmembers:
-                        result.append(WHITESPACE + language.WhiteSpace(0) + equality_check + ' = '+equality_check + ' && '+instancename+accessor+membername+'[i].'+smem[1]+' == '+message_variable_name_after_ser+accessor+membername+'[i].'+smem[1]+';')
-                    result.append(WHITESPACE + language.CloseBrace())
-                else:
-                    for smem in structmembers:
-                        result.append(WHITESPACE + equality_check + ' = ' + equality_check + ' && '+instancename+accessor+membername+'.'+smem[1]+' == '+message_variable_name_after_ser+accessor+membername+'.'+smem[1]+';')
-            else:
-                if isArray:
-                    result.append(WHITESPACE + language.For_Range('i','size_t','0', '50'))
-                    result.append(WHITESPACE + language.OpenBrace())
-                    result.append(WHITESPACE + language.WhiteSpace(0) + equality_check+' = '+equality_check + ' && '+instancename+accessor+membername+'[i] == '+message_variable_name_after_ser+accessor+membername+'[i];')
-                    result.append(WHITESPACE + language.CloseBrace())
-                else:
-                    result.append(WHITESPACE + equality_check + ' = ' + equality_check + ' && '+instancename+accessor+membername+' == '+message_variable_name_after_ser+accessor+membername+';')
-
-        if unittestfw == UnitTestFramework.NO_FW:
-            result.append(WHITESPACE + language.If('!' + equality_check))
-            result.append(WHITESPACE + language.OpenBrace())
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Equality check for '+message.Name+' failed"'))
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'return false;')
-            result.append(WHITESPACE + language.CloseBrace())
-        elif unittestfw == UnitTestFramework.MINUNIT:
-            result.append(WHITESPACE + 'mu_assert(' + equality_check + ', "ERROR : Equality check for '+message.Name+' failed.");')
-        elif unittestfw == UnitTestFramework.BOOST:
-            result.append(WHITESPACE + 'BOOST_REQUIRE_MESSAGE(' + equality_check + ', "ERROR : Equality check for '+message.Name+' failed.");')
-        elif unittestfw == UnitTestFramework.CPPuTEST:
-            result.append(WHITESPACE + 'CHECK_TEXT(' + equality_check + ', "ERROR : Equality check for '+message.Name+' failed.");')
-        else:
-            result.append(WHITESPACE + "// Incorrect option " + str(unittestfw) + " for "+message.Name+" EQUALITY CHECK, please see options in class UnitTestFramework")
-
-        return result, result_delete
-
-    def WRITE_UNITTEST_PACKED_STRUCT_SIZE(self, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
-        result = []
-
-        struct = self.message
-        language = self.language
-        interface = self.interface
-
-        struct_name             = struct.Name
-        size_struct_name        = 'size_' + struct_name
-        size_accum_struct_name  = 'size_accum_' + struct_name
-
-        result.append(WHITESPACE + language.FormatComment('Test ' + ("struct " if language.MessageDescriptor(interface, struct) == "" else "message " + language.MessageDescriptor(interface, struct)) + " " + struct_name + ' packedness'))
-
-        # Start Scope
-        result.append(WHITESPACE + language.OpenBrace())
-
-        result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('size_t', size_struct_name, 'sizeof(' + struct_name + ')') + ";")
-        result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('size_t', size_accum_struct_name, '0') + ";")
-
-        structmembers = struct.Decompose()
-        for mem in structmembers:
-            membertype = mem[0]
-            membername = mem[1]
-
-            result.append(WHITESPACE + language.WhiteSpace(0) + size_accum_struct_name + ' += sizeof(' + membertype + ('*' if struct.IsArray(membername) else '') + '); ' + language.FormatComment(struct_name + '::' + membername + ';'))
-
-        if unittestfw == UnitTestFramework.NO_FW:
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.If(size_struct_name + ' != ' + size_accum_struct_name))
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.OpenBrace())
-            result.append(WHITESPACE + language.WhiteSpace(1) + language.PrintError('"ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts: %i != %i" ,' + size_struct_name + ',' + size_accum_struct_name + '"'))
-            result.append(WHITESPACE + language.WhiteSpace(1) + 'return false;')
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.CloseBrace())
-        elif unittestfw == UnitTestFramework.MINUNIT:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'mu_assert(' + size_struct_name + ' == ' + size_accum_struct_name + ', "ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts.");')
-        elif unittestfw == UnitTestFramework.BOOST:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'BOOST_REQUIRE_MESSAGE(' + size_struct_name + ' == ' + size_accum_struct_name + ', "ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts.");')
-        elif unittestfw == UnitTestFramework.CPPuTEST:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'CHECK_EQUAL_TEXT(' + size_struct_name + ',' + size_accum_struct_name + ', "ERROR : Size of ' + struct_name + ' does not equal the sum of its separate parts.");')
-        else:
-            result.append(WHITESPACE + language.WhiteSpace(0) + "// Incorrect option " + str(unittestfw) + " for PACKEDNESS, please see options in class UnitTestFramework")
-
-        # End Scope
-        result.append(WHITESPACE + language.CloseBrace())
-
-        return result
-
-    def WRITE_DELETERS(self, to_delete, struct_name, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
-        language = self.language
-        result = []
-        result.append("#ifdef __arm__")
-        result.append(WHITESPACE + "// ARM doesnt use shared_ptr's, but a custom allocator...Don't leak memory")
-        if unittestfw == UnitTestFramework.CPPuTEST:
-            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetBlocksInUse(),' + str(len(to_delete)) + ',"ERROR : Somebody is using ' + struct_name + 's without deleting them.");')
-            for delete in to_delete:
-                result.append(WHITESPACE + "delete " + delete + ";")
-            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetBlocksInUse(),0,"ERROR : Somebody is using ' + struct_name + 's without deleting them (2).");')
-            result.append(WHITESPACE + 'CHECK_EQUAL_TEXT(' + struct_name + '::GetAllocations(),' + struct_name + '::GetDeallocations(),"ERROR : Somebody is using ' + struct_name + 's without deleting them (3).");')
-        else:
-            result.append(WHITESPACE + "if(" + struct_name + "::GetBlocksInUse() != " + str(len(to_delete)) + ")")
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them."'))
-            for delete in to_delete:
-                result.append(WHITESPACE + 'delete ' + delete + ';')
-            result.append(WHITESPACE + 'if(' + struct_name + '::GetBlocksInUse() != 0)')
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them (2)."'))
-            result.append(WHITESPACE + 'if(' + struct_name + '::GetAllocations() != ' + struct_name + '::GetDeallocations())')
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.PrintError('"ERROR : Somebody is using ' + struct_name + 's without deleting them (3)."'))
-
-        result.append('#endif // __arm__')
-        return result
-
-    def WRITE_UNITTEST_FACTORY_PAYLOAD_SIZE(self, WHITESPACE='        ', unittestfw=UnitTestFramework.NO_FW):
-        struct = self.message
-        language = self.language
-        interface = self.interface
-
-        struct_name = struct.Name
-
-        result = []
-        result.append(WHITESPACE + language.FormatComment('Test ' + ("struct " if language.MessageDescriptor(interface, struct) == "" else "message " + language.MessageDescriptor(interface, struct)) + " " + struct_name + ' payload size'))
-
-        # Start scope for local vars redeclared
-        result.append(WHITESPACE + language.OpenBrace())
-        # Accumulate the size
-        size_accumulator = 'size_accpl_' + struct.Name
-        result.append(WHITESPACE + language.WhiteSpace(0) + language.InstantiateType('size_t ', size_accumulator, '0') + ";")
-
-        # Reuse Base Class : Create Temporary Structs
-        lines, to_delete = self.WRITE_CREATE_MESSAGE(WHITESPACE + language.WhiteSpace(0))
-        for line in lines:
-            result.append(line)
-
-        '''
-        Memory Management via Shared Pointer support
-        '''
-        accessor = language.Accessor(True)
-
-        # Whilst we decompose, we might as well build these too...
-        member_size_strings = []
-        # To get payload size.
-        protocol_membername = None
-        # Creation of the type...
-        structmembers = struct.Decompose()
-        for mem in structmembers:
-            membername = mem[1]
-            membertype = mem[0]
-            isArray = struct.IsArray(membername)
-            isStruct = struct.IsStruct(membername)
-
-            isProtocol = struct.IsProtocolStruct(membername)
-            isEmbedded = isStruct or isProtocol
-
-            ''' Embedded struct support (i.e. user typed data)
-                Dont create a declaration for the protocol...this we can do automatically with
-                provided info
-            '''
-            if isEmbedded and not isArray:
-                if isProtocol:
-                    # Also ignore this member size, as its compensated for
-                    # in the payload (we send the data, not the pointer...
-                    protocol_membername = membername
-                else:
-                    member_size_strings.append(WHITESPACE + language.WhiteSpace(0) + size_accumulator + ' += sizeof(' + membertype + '); ' + language.FormatComment(struct.Name + '::' + membername))
-            elif isArray:
-                member_size_strings.append(WHITESPACE + language.WhiteSpace(0) + size_accumulator + ' += sizeof(' + membertype + ')*50;')
-            else:  # Normal type
-                # We are traversing, build these up inline.
-                member_size_strings.append(WHITESPACE + language.WhiteSpace(0) + size_accumulator + ' += sizeof(' + membertype + '); ' + language.FormatComment(struct.Name + '::' + membername))
-
-        # Now accumulate the size of payload items
-        for plitem in member_size_strings:
-            result.append(plitem)
-        # Now compare ...
-        if unittestfw == UnitTestFramework.NO_FW:
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.If(self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ' != ' + size_accumulator))
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.OpenBrace())
-            result.append(WHITESPACE + language.WhiteSpace(1) + language.PrintError('"ERROR : Size of ' + struct.Name + ' payload size does not equal the sum of its separate parts (less pointers to data): %i != %i " ,' + size_accumulator + ',' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize())+'"')
-
-            result.extend(self.WRITE_DELETERS(to_delete, struct_name, WHITESPACE + language.WhiteSpace(0), unittestfw))
-
-            result.append(WHITESPACE + language.WhiteSpace(1) + 'return false;')
-            result.append(WHITESPACE + language.WhiteSpace(0) + language.CloseBrace())
-        elif unittestfw == UnitTestFramework.MINUNIT:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'mu_assert(' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ' == ' + size_accumulator + ', "ERROR : Size of ' + struct_name + ' payload size does not equal the sum of its separate parts (less pointers to data).");')
-        elif unittestfw == UnitTestFramework.BOOST:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'BOOST_REQUIRE_MESSAGE(' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ' == ' + size_accumulator + ', "ERROR : Size of ' + struct_name + ' payload size does not equal the sum of its separate parts (less pointers to data).");')
-        elif unittestfw == UnitTestFramework.CPPuTEST:
-            result.append(WHITESPACE + language.WhiteSpace(0) + 'CHECK_EQUAL_TEXT(' + self.instancename + accessor + protocol_membername + '.' + interface[MessageHeader.Name].PayloadSize() + ',' + size_accumulator + ', "ERROR : Size of ' + struct_name + ' payload size does not equal the sum of its separate parts (less pointers to data).");')
-        else:
-            result.append(WHITESPACE + language.WhiteSpace(0) + "// Incorrect option " + str(unittestfw) + " for FACTORY PAYLOAD SIZE, please see options in class UnitTestFramework")
-
-        result.extend(self.WRITE_DELETERS(to_delete, struct_name, WHITESPACE + language.WhiteSpace(0), unittestfw))
-
-        # Stop scope for local vars redeclared
-        result.append(WHITESPACE + language.CloseBrace())
-
-        return result
-
-    def WRITE_UNITTEST_TOFROM_BYTESTREAM(self, WHITESPACE='        ', is_arm=False, unittestfw=UnitTestFramework.NO_FW):
-        struct = self.message
-        struct_name = struct.Name
-
-        result = []
-        result.append(WHITESPACE + self.language.FormatComment('Test ' + ("struct " if self.language.MessageDescriptor(self.interface, self.message) == "" else "message " + self.language.MessageDescriptor(self.interface, self.message)) + " " + self.message.Name + ' to/from byte stream '))
-
-        # Start scope for local vars redeclared
-        result.append(WHITESPACE + self.language.OpenBrace())
-        result.append("")
-        creation, to_delete = self.WRITE_CREATE_MESSAGE(WHITESPACE + self.language.WhiteSpace(0))
-        result.extend(creation)
-        result.append("")
-        result.extend(self.WRITE_MESSAGE_TO_STREAM(WHITESPACE + self.language.WhiteSpace(0), is_arm, unittestfw))
-        result.append("")
-        fromstream, to_delete2 = self.WRITE_MESSAGE_FROM_STREAM(WHITESPACE + self.language.WhiteSpace(0), is_arm, unittestfw)
-        result.extend(fromstream)
-        to_delete.extend(to_delete2)
-        result.append("")
-        result.extend(self.WRITE_DELETERS(to_delete, struct_name, WHITESPACE + self.language.WhiteSpace(0), unittestfw))
-        # Stop scope for local vars redeclared
-        result.append(WHITESPACE + self.language.CloseBrace())
-
-        return result
-
 
 class LanguageCPP(Language):
 
@@ -503,8 +83,6 @@ class LanguageCPP(Language):
 
     # parameters need to be a list of (type, name).
     def ParameterString(self, parameters=None) -> str:
-        # def ParameterString(self, parameters = []):
-        # https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
         if parameters is None:
             parameters = []
 
@@ -513,7 +91,10 @@ class LanguageCPP(Language):
             size = len(parameters)
             cnt = 0
             for param in parameters:
-                parameter_string += param[0] + ' ' + param[1]
+                if HasDefault(param):
+                    parameter_string += param[0] + ' ' + param[1] + "=" + param[2]
+                else:
+                    parameter_string += param[0] + ' ' + param[1]
                 if cnt != (size - 1):
                     parameter_string += ', '
                 cnt += 1
@@ -544,20 +125,39 @@ class LanguageCPP(Language):
 
     '''USED'''
     def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
+        def _processDefaults(default) -> str:
+            res = ""
+            if str(type(default))=="<class 'list'>":
+                res += "{"
+                for i in default:
+                    if HasDefault(i):
+                        res += _processDefaults(i[2]) + ","
+                    else:
+                        res += "{},"
+                res = res.rstrip(",")
+                res += "}"
+            else:
+                res += default
+            return res
+
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isMessage = interface.IsMessageStruct(mem[0])
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                ptr = " const*" if isArray else ""
                 ref = " const&" if isStruct or isMessage else ""
-                if (mem[0] in interface) and not isArray:
+                if (mem[0] in interface):
                     factoryparams.append(((self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref,
-                                          (mem[1] + "{" + mem[2] + "}") if (with_defaults and self.HasDefault(mem)) else mem[1]))
+                                          (mem[1] + "=" + _processDefaults(mem[2])) if (with_defaults and HasDefault(mem)) else mem[1]))
                 else:
-                    factoryparams.append((mem[0] + ptr + ref, mem[1]))
+                    if with_defaults:
+                        if HasDefault(mem):
+                            factoryparams.append((mem[0] + ref, mem[1], _processDefaults(mem[2])))
+                        else:
+                            factoryparams.append((mem[0] + ref, mem[1], "{}"))
+                    else:
+                        factoryparams.append((mem[0] + ref, mem[1]))
         return factoryparams
 
     '''USED
@@ -568,213 +168,51 @@ class LanguageCPP(Language):
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            ptr = ""
-            if struct.IsArray(mem[1]):
-                ptr = "*"
-            if (mem[0] in interface) and not struct.IsArray(mem[1]):
+            if (mem[0] in interface):
                 result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
-                result.append(whitespace + self.InstantiateType(mem[0] + ptr, mem[1],
-                                                                "" if (not self.HasDefault(mem) or attr_packed) else mem[2],
+                result.append(whitespace + self.InstantiateType(mem[0], mem[1],
+                                                                "" if (not HasDefault(mem) or attr_packed) else mem[2],
                                                                 attr_packed) + ";")
-
-            if struct.IsArray(mem[1]):
-                arrayName.append(mem[1])
-        if len(arrayName) != 0:
-            result.append(whitespace+"~%s()" % struct.Name)
-            result.append(whitespace+"{")
-            for todel in arrayName:
-                result.append(2*whitespace+"delete[] %s;" % todel)
-            result.append(whitespace+"}")
         return result
     '''USED'''
     def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor) -> list:
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isStruct = interface.IsStruct(mem[1])
             isProtocol = interface.IsProtocolStruct(mem[0])
             instance_accessor = whitespace + instancename + accessor
 
-            if not isArray and (not isProtocol or isStruct):
+            if not isProtocol or isStruct:
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]) + ";")
-            elif not isArray and isProtocol and not isStruct:
+            elif isProtocol and not isStruct:
                 s = Template("sizeof(${this}) - sizeof(${header})")
-                result.append(instance_accessor + self.InstantiateType("", mem[1], "Create_" + mem[0] + "(" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + ");"))
-            elif isArray and not isProtocol and not isStruct:
-                if not IsMessageStruct(interface, struct.Name):
-                    raise RuntimeError("Only message structs are allowed arrays.")
-                result.append(whitespace + "// cant transmit ptr's across the world, but well data.")
-                s = Template("${payload} ${op} ${bytes}")
-                array = struct[mem[1]]
-                result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="-=", bytes="sizeof("+instancename+accessor+array.Name+");"))
-                result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="+=", bytes="sizeof("+array.type + ")*" + array.Count() + ";"))
-                # result.append(instance_accessor + self.InstantiateType("",array.Count(),array.Count()))
-                result.append(instance_accessor + self.InstantiateArray(array.type, array.Name, array.Count()) + ";")
-                result.append(whitespace + "if(nullptr != " + array.Name + ")")
-                result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t", '').replace("    ","") + array.Name + ',(void*) ' + array.Name + ',sizeof(' + array.type + ")*" + array.Count() + ");")
+                # Aggregate initializer
+                new = instance_accessor +  self.InstantiateType("", mem[1], "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "};")
+                result.append(new)
             else:
                 print("WTF : InstantiateStructMembers")
         return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructToByteStream(self, struct, interface, whitespace, outname, inname, inacessor, is_arm=False) -> list:
-        result = []
-        hasArray = False
-        isProtocol = interface.IsProtocolStruct(struct.Name)
-        isStruct = interface.IsStruct(struct.Name)
-        if isProtocol or isStruct:
-            result.append(whitespace + "size_t streamsize = sizeof("+struct.Name+");")
-        else:
-            hasArray = struct.HasArray()  # Message can not have an array.
-            result.append(whitespace + "size_t streamsize = sizeof("+inname + inacessor + struct.HeaderName() + ") +" + inname + inacessor + struct.HeaderName() + "."+struct[struct.HeaderName()].PayloadSize() + ";")
-        out_accessor = outname + self.BytestreamAccessor()
-        if not is_arm:
-            result.append(whitespace + out_accessor + "resize(streamsize)"+";")
-        if isProtocol or isStruct or not hasArray:
-            if not is_arm:
-                result.append(whitespace + "memcpy((void*) &(*"+outname+")[0], (void*) " + (("&"+inname) if ("." == inacessor) else (inname + ".get()")) + ", streamsize);")
-            else:
-                result.append(whitespace + "memcpy((void*) " + outname + ", (void*) " + (("&"+inname) if ("." == inacessor) else ("&(*" + inname + ")")) + ", streamsize);")
-        else:
-            if not interface.IsMessageStruct(struct.Name):
-                raise RuntimeError("Unhandled type. This should be an message struct, but is a %s" % str(type(struct)))
-            result.append(whitespace + "size_t index = 0;")
-            structmembers = struct.Decompose()
-            for mem in structmembers:
-                if struct.IsArray(mem[1]):
-                    array = struct[mem[1]]
-                    result.append(whitespace + "memcpy((void*) &(*"+outname+")[index], (void*) "+inname + inacessor + mem[1] + ", sizeof("+mem[0]+")*"+inname + inacessor + array.Count() + ");")
-                    result.append(whitespace + "index += sizeof("+mem[0]+")*" + inname + inacessor + array.Count()+";")
-                else:
-                    result.append(whitespace + "memcpy((void*) &(*"+outname+")[index], (void*) &"+inname + inacessor + mem[1] + ", sizeof("+mem[0]+"));")
-                    result.append(whitespace + "index += sizeof("+mem[0]+");")
-            result.append(whitespace + "assert(index == streamsize); // index should be at next (non existant) place (thus streamsize).")
-        return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructIntoByteStream(self, struct, interface, whitespace, inname, streamname, cntname, inacessor) -> list:
-        result = []
-        hasArray = False
-        isProtocol = interface.IsProtocolStruct(struct.Name)
-        isStruct = interface.IsStruct(struct.Name)
-        if isProtocol or isStruct:
-            result.append(whitespace + "size_t append_size = sizeof("+struct.Name+");")
-        else:
-            hasArray = struct.HasArray()  # Message can not have an array.
-            result.append(whitespace + "size_t append_size = sizeof("+inname + inacessor + struct.HeaderName() + ") +"+inname + inacessor + struct.HeaderName() + "."+struct[struct.HeaderName()].PayloadSize() + ";")
-        result.append(whitespace + "size_t avail_size = "+streamname+"->size() - "+cntname+";")
-        result.append(whitespace + "if(avail_size < append_size)")
-        result.append(whitespace*2 + streamname + "->resize(append_size - avail_size);")
-        if isProtocol or isStruct or not hasArray:
-            result.append(whitespace + "memcpy((void*) &(*"+streamname+")["+cntname+"], (void*) " + (("&"+inname ) if ("." == inacessor) else (inname + ".get()")) + ", append_size);")
-        else:
-            if not interface.IsMessageStruct(struct.Name):
-                raise RuntimeError("Unhandled type. This should be an message struct, but is a %s" % str(type(struct)))
 
-            structmembers = struct.Decompose()
-            for mem in structmembers:
-                if struct.IsArray(mem[1]):
-                    array = struct[mem[1]]
-                    result.append(whitespace + "memcpy((void*) &(*"+streamname+")[index], (void*) "+inname + inacessor + mem[1] + ", sizeof("+mem[0]+")*"+inname + inacessor + array.Count() + ");")
-                    result.append(whitespace + "index += sizeof("+mem[0]+")*" + inname + inacessor + array.Count()+";")
-                else:
-                    result.append(whitespace + "memcpy((void*) &(*"+streamname+")[index], (void*) &"+inname+inacessor + mem[1] + ", sizeof("+mem[0]+"));")
-                    result.append(whitespace + "index += sizeof("+mem[0]+");")
-        result.append(whitespace + cntname + "+=append_size;")
-        return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructFromByteStream(self, functioname, struct, interface, whitespace, streamname, cntname, outname, outaccessor) -> list:
-        result = []
-
+    def InstantiateStructWithAggregateInitializer(self, struct, interface) -> str:
         structmembers = struct.Decompose()
-        has_allowed_stream_size = False
+        result = ""
         for mem in structmembers:
-
-            isProtocol = interface.IsProtocolStruct(mem[0])
             isStruct = interface.IsStruct(mem[0])
-            isArray = struct.IsArray(mem[1])
-            isType = not isProtocol and not isStruct and not isArray
-
-            access_member = outname+outaccessor+mem[1]
-            if isArray:
-                array = struct[mem[1]]
-                size_of_cnt_var = 'sizeof(' + array[array.Count()] + ')'
-                array_cnt_var = outname + outaccessor + array.Count()
-                size_of_array = 'sizeof(' + mem[0] + ')*' + array_cnt_var
-                result.append(whitespace + 'if ((' + cntname + ' + ' + size_of_cnt_var + ' < streamsize) && (' + size_of_cnt_var + ' <= allowed_streamsize))')
-                result.append(whitespace + '{')
-                result.append(whitespace*2 +      'memcpy((void*) &' + array_cnt_var + ', (void*) &('+streamname+'['+cntname+']), ' + size_of_cnt_var + ');')
-                result.append(whitespace*2 +      cntname + '+=' + size_of_cnt_var + ";")
-                result.append(whitespace*2 +      'allowed_streamsize-=' + size_of_cnt_var + ";")
-                # Create a new array, set the size, and memcpy the entire contents into the member var
-                result.append(whitespace*2 +      self.InstantiateArray(mem[0], access_member, array_cnt_var) + ";")
-                result.append(whitespace*2 +      'if ((' + cntname + ' + ' + size_of_array + ' <= streamsize) && (' + size_of_array + ' <= allowed_streamsize))')
-                result.append(whitespace*2 +      '{')
-                result.append(whitespace*3 +          'memcpy((void*) ' + access_member + ', (void*) &(' + streamname + '[' + cntname + ']), ' + size_of_array + ');')
-                result.append(whitespace*3 +          cntname + '+=' + size_of_array + ";")
-                result.append(whitespace*3 +          'allowed_streamsize-=' + size_of_array + ";")
-                result.append(whitespace*2 +      '}')
-                result.append(whitespace*2 +      'else if ((' + cntname + ' + ' + size_of_array + ' <= streamsize) && (' + size_of_array + ' > allowed_streamsize))')
-                result.append(whitespace*2 +      '{')
-                result.append(whitespace*3 +          'memcpy((void*) ' + access_member + ', (void*) &(' + streamname + '[' + cntname + ']), allowed_streamsize);')
-                result.append(whitespace*3 +          cntname + '+=allowed_streamsize;')
-                result.append(whitespace*3 +          'allowed_streamsize-=allowed_streamsize;')
-                result.append(whitespace*2 +      '}')
-                result.append(whitespace*2 +      'else')
-                result.append(whitespace*2 +      '{')
-                result.append(whitespace*3 +          self.PrintMessage('"' + functioname + ' Safety Bogey : resyncing streams, not copying..."'))
-                result.append(whitespace*3 +          'index+=allowed_streamsize;')
-                result.append(whitespace*3 +          'allowed_streamsize=0;')
-                result.append(whitespace*2 +      '}')
-                result.append(whitespace + '}')
-                result.append(whitespace + 'else')
-                result.append(whitespace + '{')
-                result.append(whitespace*2 +      self.PrintMessage('"' + functioname + ' index exceeds given streamsize."'))
-                result.append(whitespace + '}')
+            isProtocol = interface.IsProtocolStruct(mem[0])
+            if not isProtocol or isStruct:
+                result += mem[1] + ", "
             elif isProtocol:
-                result.append(whitespace + access_member + ' = FromByteStream_' + mem[0] + '('+streamname+', streamsize, '+cntname+');')
-                result.append(whitespace + '// Backward Compat: Protocol header should NEVER change, but payloads may.')
-                result.append(whitespace + '// Calculate remaining non destructive stream size.')
-                result.append(whitespace + 'size_t allowed_streamsize = '+access_member+'.' + struct[mem[1]].PayloadSize()+";")
-                has_allowed_stream_size = True
-            elif isStruct:
-                result.append(whitespace + access_member + ' = FromByteStream_' + mem[0] + '('+streamname+', streamsize, '+cntname+');')
-                result.append(whitespace + 'allowed_streamsize-=sizeof('+mem[0]+');')
-            elif isType:
-                if mem[1].find(Array.PREFIX) == -1:  # Ignore the array count member here! deal with it in the array...
-                    if has_allowed_stream_size:
-                        result.append(whitespace + "if((" + cntname + " + sizeof(" + mem[0] + ") <= streamsize) && (sizeof(" + mem[0] + ") <= allowed_streamsize))")
-                        result.append(whitespace + "{")
-                        result.append(whitespace*2 +   "memcpy((void*) &" + access_member + ", (void*) &(" + streamname + "[" + cntname + "]), sizeof(" + mem[0] + "));")
-                        result.append(whitespace*2 +   cntname + "+=sizeof(" + mem[0] + ");")
-                        result.append(whitespace*2 +   "allowed_streamsize-=sizeof(" + mem[0] + ");")
-                        result.append(whitespace + "}")
-                        result.append(whitespace + "else")
-                        result.append(whitespace + "{")
-                        result.append(whitespace*2 +   self.PrintMessage('"' + functioname + ' index exceeds given streamsize."'))
-                        result.append(whitespace + "}")
-                    else:
-                        result.append(whitespace + 'if(index + sizeof(' + mem[0] + ') <= streamsize)')
-                        result.append(whitespace + '{')
-                        result.append(whitespace*2 +      'memcpy((void*) &' + access_member + ', (void*) &(' + streamname + '[' + cntname + ']), sizeof(' + mem[0] + '));')
-                        result.append(whitespace*2 +      cntname + '+=sizeof(' + mem[0] + ');')
-                        result.append(whitespace + '}')
-                        result.append(whitespace + "else")
-                        result.append(whitespace + '{')
-                        result.append(whitespace*2 + self.PrintMessage('"' + functioname + ' index exceeds given streamsize."'))
-                        result.append(whitespace + '}')
+                s = Template("sizeof(${this}) - sizeof(${header})")
+                result += "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "}, "
             else:
-                raise RuntimeError("Unhandled type %s in SerializeStructFromByteStream" % str(type(mem[1])))
+                raise Exception("InstantiateStructWithAggregateInitializer unhandled!")
+        return "{" + result.rstrip(", ") + "}"
 
-        if has_allowed_stream_size:
-            result.append(whitespace + 'assert(allowed_streamsize==0);')
-        return result
+    def DefaultAggregateInitializer(self) -> str:
+        return "{}"
+
 
     '''USED'''
     def InstantiatePtrToType(self, typename, instancename, typepointername=""):
@@ -943,13 +381,6 @@ class LanguageCPP(Language):
 
     def This(self):
         return 'this->'
-
-    '''USED'''
-    # 1 means ++
-    def For_Range(self, iterName, iterType, start, stop, incr=1) -> str:
-        if incr == 1:
-            return 'for (' + iterType + ' ' + iterName + ' = ' + str(start) + '; '+ iterName +' < ' + str(stop) + '; ++'+ iterName +')'
-        return 'for (' + iterType + ' ' + iterName + ' = ' + str(start) + '; '+ iterName +' < ' + str(stop) + '; '+ iterName +'+=' + str(incr) + ')'
 
     # ------------------------------ End
 
@@ -1485,29 +916,4 @@ def _getNamespaceToClassesFromFullyQualifiedNames(classObj, setOfClasses, is_fil
             namespace_to_class[ns] = []
         namespace_to_class[ns].append(full[-1])
     return namespace_to_class
-
-
-if __name__ == "__main__":
-    from TCPGen_IF_test import *
-    interface = CreateInterface()
-    structs = interface.Messages()
-    language = LanguageCPP()
-    '''
-    for s in structs:
-            a_test_writer = UnitTestWriter(interface,s,language,"ptr2"+s.Name)
-            print (language.WhiteSpace(1) + language.OpenBrace())
-            guts = a_test_writer.WRITE_CREATE_MESSAGE(language.WhiteSpace(2))
-            for g in guts:
-                print (g)
-            guts = a_test_writer.WRITE_MESSAGE_TO_STREAM(language.WhiteSpace(2))
-            for g in guts:
-                print (g)
-            print (language.WhiteSpace(2)+'m_connection->SendData(' + a_test_writer.bytestream_of_message_variable_name + ');')
-            print (language.WhiteSpace(1) + language.CloseBrace())
-    '''
-    for s in structs:
-        test = UnitTestWriter(interface, s, language, "WATKYKJY")
-        guts = test.WRITE_UNITTEST_FACTORY_PAYLOAD_SIZE(language.WhiteSpace(0))
-        for g in guts:
-            print(g)
 

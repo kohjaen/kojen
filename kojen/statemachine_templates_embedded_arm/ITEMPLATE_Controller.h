@@ -56,7 +56,7 @@ namespace <<<NAMESPACE>>>
     {
         <<<EVENTNAME>>>(){};
         MOVE_ONLY(<<<EVENTNAME>>>)
-    <<<EVENTMEMBERSDECLARE>>>
+    <<<MEMBERSDECLARE>>>
 #ifdef __arm__
     DECLARE_ALLOCATOR
 #endif //__arm__

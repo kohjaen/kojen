@@ -206,10 +206,10 @@ namespace <<<NAMESPACE>>>
 
         // Event triggering
         <<<PER_EVENT_BEGIN>>>
-        virtual void Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATURE>>>) override
+        virtual void Trigger<<<EVENTNAME>>>(<<<SIGNATURE>>>) override
         {
             <<<EVENTNAME>>>_ptr data(new <<<EVENTNAME>>>());
-            <<<EVENTMEMBERSINSTANTIATE>>>
+            <<<MEMBERSINSTANTIATE>>>
             if(m_is_asynchronous)
                 Add(data);
             else

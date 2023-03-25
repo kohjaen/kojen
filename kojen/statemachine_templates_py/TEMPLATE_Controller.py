@@ -20,7 +20,7 @@ from enum import Enum, unique, auto
 #@{
 <<<PER_EVENT_BEGIN>>>
 class <<<EVENTNAME>>>:
-    def __init__(self, <<<EVENTSIGNATURE>>>):
+    def __init__(self, <<<SIGNATURE>>>):
         <<<EVENTMEMBERSLITEINSTANTIATE::self>>>
         pass
 <<<PER_EVENT_END>>>

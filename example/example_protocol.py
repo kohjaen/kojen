@@ -28,32 +28,51 @@ __author__ = 'eugene'
 '''
 
 from kojen.kojentypes import *
+import kojen.Generate as Generate
+import os
 
-def CreateInterface():
-    sCustomStruct = Struct('sCustomStruct')
-    sCustomStruct.AddType('m_Member1','uint16')
-    sCustomStruct.AddType('m_Member2','uint16')
-    sCustomStruct.AddType('m_Member3','uint32')
+def generate():
+    author = "yourname@yourdomain.com"
+    group = "GROUP_EXAMPLE"
+    brief = "An example demonstrating code-generation abilities."
+    namespacename = "ExampleIO"
+    classname = "ExampleIF"
+    declspec = ""
+    outputdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "autogen")
+    templatedir = ""  # defaults
 
-    MsgSomeCMD = Message('MsgSomeCMD',0x01)
-    MsgSomeCMD.AddType('m_Member1','uint8')
+    interface = Interface('IMyIntefaceIO')
 
-    MsgSomeCMDRSP = Message('MsgSomeCMDRSP',0x02)
-    MsgSomeCMDRSP.AddStruct('mStructMember1',sCustomStruct)
-    MsgSomeCMDRSP.AddType('m_Member2','uint8')
-    
-    MsgSomeREQ = Message('MsgSomeREQ',0x03)
-    MsgSomeREQ.AddType('m_Member1','uint8')
+    AnotherNestedPayloadStruct = Struct('AnotherNestedPayloadStruct')
+    AnotherNestedPayloadStruct.AddType('member1', 'uint16', '6')
+    AnotherNestedPayloadStruct.AddType('member2', 'uint16', '7')
+    AnotherNestedPayloadStruct.AddType('member3', 'uint32', '8')
 
-    #Array of type : Not supported by ARM due to dynamic memory allocation requirements
-    MsgSomeREQRSP = Message('MsgSomeREQRSP',0x04)
-    MsgSomeREQRSP.AddStruct('mStructMember1',sCustomStruct)
-    MsgSomeREQRSP.AddType('m_Member2','uint8')
-    MsgSomeREQRSP.AddArrayOfType('mArrayMember3','double')
+    NestedPayloadStruct = Struct('NestedPayloadStruct')
+    NestedPayloadStruct.AddType('member1', 'uint16', '3')
+    NestedPayloadStruct.AddType('member2', 'uint16', '4')
+    NestedPayloadStruct.AddType('member3', 'uint32', '5')
+    NestedPayloadStruct.AddStruct('member4', AnotherNestedPayloadStruct)
 
+    PayloadStruct = Struct('PayloadStruct')
+    PayloadStruct.AddType('member1', 'uint16', '1')
+    PayloadStruct.AddType('member2', 'uint16', '2')
+    PayloadStruct.AddType('member3', 'uint32', '3')
+    PayloadStruct.AddStruct('member4', NestedPayloadStruct)
 
-    MsgSomeUnsolicitedData = Message('MsgSomeUnsolicitedData',0x05)
-    MsgSomeUnsolicitedData.AddArrayOfStruct('mStructArrayMember1',sCustomStruct)
+    MsgSomeCMD = Message('MsgSomeCMD', 0x01)
+    MsgSomeCMD.AddType('member1', 'uint8', '2')
+
+    MsgSomeCMDRSP = Message('MsgSomeCMDRSP', 0x02)
+    MsgSomeCMDRSP.AddStruct('mStructMember1', PayloadStruct)
+    MsgSomeCMDRSP.AddType('member2', 'uint8', '3')
+
+    MsgSomeREQ = Message('MsgSomeREQ', 0x03)
+    MsgSomeREQ.AddType('member1', 'uint8', '4')
+
+    MsgSomeREQRSP = Message('MsgSomeREQRSP', 0x04)
+    MsgSomeREQRSP.AddStruct('mStructMember1', PayloadStruct)
+    MsgSomeREQRSP.AddType('member2', 'uint8', '5')
 
     #
     # Includes : Enums and defines ...
@@ -67,29 +86,22 @@ def CreateInterface():
     Revision.Add("kVersion2", 1)
     Revision.Add("kVersion3", 2)
 
-
-    interface = Interface('IMyIntefaceIO')
-
     interface.AddEnum(Type)
     interface.AddEnum(Revision)
 
     interface.AddHashDefine("THREE", 3)
     interface.AddHashDefine("PI", 3.14159265359)
 
-    interface.AddStruct(sCustomStruct)
+    interface.AddStruct(AnotherNestedPayloadStruct)
+    interface.AddStruct(NestedPayloadStruct)
+    interface.AddStruct(PayloadStruct)
+
     interface.AddMessage(MsgSomeCMD)
     interface.AddMessage(MsgSomeCMDRSP)
     interface.AddMessage(MsgSomeREQ)
     interface.AddMessage(MsgSomeREQRSP)
-    interface.AddMessage(MsgSomeUnsolicitedData)
 
-
-    return interface
+    Generate.Protocol(outputdir, interface, namespacename, classname, declspec, author, group, brief, templatedir, __file__, True)
 
 if __name__ == "__main__":
-    import kojen.protogen
-    output_dir = ".\\autogen\\test_protocol"
-    pythonfile = ".\\example_protocol.py"
-    namespacename = "ITemplateIO"
-    classname = "ITemplateIF"
-    kojen.protogen.Generate(output_dir, pythonfile, namespacename, classname)
+    generate()

@@ -127,7 +127,7 @@ class ConsoleRunner(threading.Thread):
     def processConsoleInput(self, input):
         <<<PER_EVENT_BEGIN>>>
         if input == '<<<ALPH>>>':
-            self.sm.Trigger<<<EVENTNAME>>>(<<<EVENTSIGNATUREWITHDEFAULTS>>>)
+            self.sm.Trigger<<<EVENTNAME>>>(<<<SIGNATUREWITHDEFAULTS>>>)
             return
         <<<PER_EVENT_END>>>
         <<<PER_GUARD_BEGIN>>>

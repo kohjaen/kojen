@@ -60,12 +60,6 @@ __TAG_PASIG_END__                   = "<<<PER_ACTION_SIGNATURE_END>>>"
 __TAG_PG_BEGIN__                    = "<<<PER_GUARD_BEGIN>>>"
 __TAG_PG_END__                      = "<<<PER_GUARD_END>>>"
 
-__TAG_EVENT_SIGNATURE__             = "<<<EVENTSIGNATURE>>>"
-__TAG_EVENT_SIGNATURE_DEF__         = "<<<EVENTSIGNATUREWITHDEFAULTS>>>"
-__TAG_EVENT_MEMBERINST__            = "<<<EVENTMEMBERSINSTANTIATE>>>"
-__TAG_LITE_EVENT_MEMBERINST__       = "<<<EVENTMEMBERSLITEINSTANTIATE>>>"
-__TAG_EVENT_MEMBERDECL__            = "<<<EVENTMEMBERSDECLARE>>>"
-
 __TAG_STATENAME__                   = '<<<STATENAME>>>'            # As given
 __TAG_STATENAME_SMALL_CAMEL__       = '<<<stateName>>>'            # camelCaps
 __TAG_NEXTSTATENAME__               = '<<<NEXTSTATENAME>>>'        # As given
@@ -91,6 +85,34 @@ __TAG_TTT_BOOST_SML__               = '<<<TTT_BOOST_SML>>>'
 __TAG_TTT_BOOST_SML_ENTRYEXIT__     = '<<<TTT_BOOST_SML_ENTRY_EXIT>>>'
 
 __TAG_DECLSPEC_DLL_EXPORT__         = "<<<DLL_EXPORT>>>"
+
+### CONSOLODATE AND unit test the new recursive features with defaults
+__TAG_STRUCTNAME__                  = '<<<STRUCTNAME>>>'        # As given
+__TAG_STRUCTNAME_SMALL_CAMEL__      = '<<<structName>>>'        # camelCaps
+__TAG_MSGNAME__                     = '<<<MSGNAME>>>'           # As given
+__TAG_MSGID__                       = '<<<MSGID>>>'
+__TAG_MSGNAME_SMALL_CAMEL__         = '<<<msgName>>>'           # camelCaps
+__TAG_PROTOMSGNAME__                = '<<<PROTOMSGNAME>>>'      # As given
+__TAG_PROTOMSGNAME_SMALL_CAMEL__    = '<<<protoMsgName>>>'      # camelCaps
+__TAG_ATTRIBUTE_TYPE__              = "<<<ATTRIBUTETYPE>>>"
+__TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
+__TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
+__TAG_PAYLOAD_NAME__                = "<<<PAYLOADNAME>>>"
+__TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"
+
+__TAG_STRUCT_BEGIN__                = "<<<PER_STRUCT_BEGIN>>>"
+__TAG_STRUCT_END__                  = "<<<PER_STRUCT_END>>>"
+__TAG_MSG_BEGIN__                   = "<<<PER_MSG_BEGIN>>>"
+__TAG_MSG_END__                     = "<<<PER_MSG_END>>>"
+__TAG_PROTOMSG_BEGIN__              = "<<<PER_PROTOMSG_BEGIN>>>"
+__TAG_PROTOMSG_END__                = "<<<PER_PROTOMSG_END>>>"
+###
+__TAG_SIGNATURE__                   = "<<<SIGNATURE>>>"
+__TAG_SIGNATURE_DEF__               = "<<<SIGNATUREWITHDEFAULTS>>>"
+__TAG_MEMBERINST__                  = "<<<MEMBERSINSTANTIATE>>>"
+__TAG_LITE_MEMBERINST__             = "<<<MEMBERSLITEINSTANTIATE>>>"
+__TAG_MEMBERDECL__                  = "<<<MEMBERSDECLARE>>>"
+__TAG_AGGREGATE_INIT__              = "<<<AGGREGATEINITIALIZATION>>>"
 
 # Python2 -> 3 shennanigans...try support both
 try:
@@ -278,7 +300,7 @@ class CStateMachineGenerator(CGenerator):
     def get_event_signature(self,name, with_defaults):
         if self.events_interface is None or self.language is None:
             return ""
-        for s in self.events_interface.Structs():
+        for s in self.events_interface.All():
             if s.Name == name:
                 return self.language.ParameterString(self.language.GetFactoryCreateParams(s, self.events_interface, with_defaults))
 
@@ -287,7 +309,7 @@ class CStateMachineGenerator(CGenerator):
     def instantiate_event_struct_member(self, name, whitespace_cnt, is_ptr=True, instancename="data"):
         if self.events_interface is None or self.language is None:
             return ""
-        for s in self.events_interface.Structs():
+        for s in self.events_interface.All():
             if s.Name == name:
                 guts = self.language.InstantiateStructMembers(s, self.events_interface, '', instancename, self.language.Accessor(is_ptr))
                 result = ''
@@ -298,13 +320,21 @@ class CStateMachineGenerator(CGenerator):
                 return result.rsplit('\n', 1)[0]
         return ""
 
-    def declare_event_struct_members(self, name, whitespace_cnt):
+    def instantiate_event_aggregate_initializer(self, name):
+        if self.events_interface is None or self.language is None:
+            return ""
+        for s in self.events_interface.All():
+            if s.Name == name:
+                return self.language.InstantiateStructWithAggregateInitializer(s, self.events_interface)
+        return self.language.DefaultAggregateInitializer()
+
+    def declare_event_struct_members(self, name, whitespace_cnt, attr_packed=False):
         if self.events_interface is None or self.language is None:
             return ""
 
-        for s in self.events_interface.Structs():
+        for s in self.events_interface.All():
             if s.Name == name:
-                guts = self.language.DeclareStructMembers(s, self.events_interface, '', False)
+                guts = self.language.DeclareStructMembers(s, self.events_interface, '', attr_packed)
                 result = ''
                 cnt = 0
                 for g in guts:
@@ -318,8 +348,13 @@ class CStateMachineGenerator(CGenerator):
         cnt = 0
         for name in items:
             for line in snippet_to_expand:
-                newline = line
-                newline = newline.replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(name))
+                # If there is no tag ... don't waste time
+                if not hasTag(line):
+                    if line.isspace():
+                        continue
+                    alllinesexpanded.append(line)
+                    continue
+                newline = line.replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_STATENAME__, name)
                 newline = newline.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_EVENTNAME__, name)
@@ -330,8 +365,8 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_ABC__, alpha)
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
-                if hasSpecificTag(newline,__TAG_EVENT_SIGNATURE__):
-                    has_signature_defaults = __TAG_EVENT_SIGNATURE_DEF__ in newline
+                if hasSpecificTag(newline,__TAG_SIGNATURE__):
+                    has_signature_defaults = __TAG_SIGNATURE_DEF__ in newline
                     if hasDefault(newline):
                         # Has user params
                         user_params = extractDefaultAndTag(newline)
@@ -339,27 +374,129 @@ class CStateMachineGenerator(CGenerator):
                         signature = signature.strip(',').strip(' ')
                         newline = newline.replace(user_params[0], signature)
                     else:
-                        newline = newline.replace(__TAG_EVENT_SIGNATURE_DEF__ if has_signature_defaults else __TAG_EVENT_SIGNATURE__, self.get_event_signature(name, has_signature_defaults))
+                        newline = newline.replace(__TAG_SIGNATURE_DEF__ if has_signature_defaults else __TAG_SIGNATURE__, self.get_event_signature(name, has_signature_defaults))
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
-                # __TAG_EVENT_MEMBERINST__ -> PTR
-                if hasSpecificTag(newline,__TAG_EVENT_MEMBERINST__) and hasDefault(newline):
+                # __TAG_MEMBERINST__ -> PTR
+                if hasSpecificTag(newline,__TAG_MEMBERINST__) and hasDefault(newline):
                     line_member = extractDefaultAndTag(newline)
                     newline = newline.replace(line_member[0],self.instantiate_event_struct_member(name, tabcnt, True, line_member[1]))
                 else:
-                    newline = newline.replace(__TAG_EVENT_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, True))        # PTR
-                # __TAG_LITE_EVENT_MEMBERINST__ -> NO PTR
-                if hasSpecificTag(newline,__TAG_LITE_EVENT_MEMBERINST__) and hasDefault(newline):
+                    newline = newline.replace(__TAG_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, True))        # PTR
+                # __TAG_LITE_MEMBERINST__ -> NO PTR
+                if hasSpecificTag(newline,__TAG_LITE_MEMBERINST__) and hasDefault(newline):
                     line_member = extractDefaultAndTag(newline)
                     newline = newline.replace(line_member[0],self.instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
                 else:
-                    newline = newline.replace(__TAG_LITE_EVENT_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
-                newline = newline.replace(__TAG_EVENT_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt))
-                if newline == '\n' or newline == '' or newline == '\r\n' or newline.replace(' ','') == "" or newline.replace(' ','').replace('\n','').replace('\r','') == "":
+                    newline = newline.replace(__TAG_LITE_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
+                newline = newline.replace(__TAG_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt))
+                # Aggregate initialization
+                if hasSpecificTag(newline, __TAG_AGGREGATE_INIT__):
+                    newline = newline.replace(__TAG_AGGREGATE_INIT__, self.instantiate_event_aggregate_initializer(name))
+                # Member attributes ... all structs (msgs, protocols, structs)
+                if hasSpecificTag(newline, __TAG_ATTRIBUTE_TYPE__) or hasSpecificTag(newline, __TAG_ATTRIBUTE_NAME__):
+                    struct_or_msg = self.events_interface[name]
+                    members = struct_or_msg.Decompose(False)
+                    for mem in members:
+                        membername = mem[1]
+                        membertype = mem[0]
+                        alllinesexpanded.append(newline.replace(__TAG_ATTRIBUTE_TYPE__, membertype).replace(__TAG_ATTRIBUTE_NAME__, membername))
+                    continue
+                # Python attributes ... someone piggybacks the nice interface
+                if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
+                    [tag, default] = extractDefaultAndTag(newline)
+                    if hasattr(self.events_interface[name], default):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], default)))
+                if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
             cnt = cnt + 1
             alpha = get_next_alphabet()
+
+    ### CONSOLODATE ... this is essentially a copy-paste of the above ...
+    def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items):
+        alpha = reset_alphabet()
+        cnt = 0
+        for name in items:
+            for line in snippet_to_expand:
+                # If there is no tag ... don't waste time
+                if not hasTag(line):
+                    if line.isspace():
+                        continue
+                    alllinesexpanded.append(line)
+                    continue
+
+                newline = line.replace(__TAG_STRUCTNAME_SMALL_CAMEL__, camel_case_small(name))
+                newline = newline.replace(__TAG_STRUCTNAME__, name)
+                newline = newline.replace(__TAG_MSGNAME_SMALL_CAMEL__, camel_case_small(name))
+                newline = newline.replace(__TAG_MSGNAME__, name)
+                newline = newline.replace(__TAG_PROTOMSGNAME__, name)
+                newline = newline.replace(__TAG_PROTOMSGNAME_SMALL_CAMEL__, camel_case_small(name))
+                newline = newline.replace(__TAG_ABC__, alpha)
+                newline = newline.replace(__TAG_123__, str(cnt))
+                tabcnt = newline.count('    ')
+                if hasSpecificTag(newline, __TAG_SIGNATURE__):
+                    has_signature_defaults = __TAG_SIGNATURE_DEF__ in newline
+                    if hasDefault(newline):
+                        # Has user params
+                        user_params = extractDefaultAndTag(newline)
+                        signature = self.get_event_signature(name, False) + ", " + user_params[1]
+                        signature = signature.strip(',').strip(' ')
+                        newline = newline.replace(user_params[0], signature)
+                    else:
+                        newline = newline.replace(__TAG_SIGNATURE_DEF__ if has_signature_defaults else __TAG_SIGNATURE__, self.get_event_signature(name, has_signature_defaults))
+                    # check for brackets...remove any spurious ',' and ' '
+                    newline = re.sub("\([^)]*\)", lambda x: x.group(0).replace(' , )', ')').replace(', )', ')').replace(',)', ')').replace('( , ', '(').replace('( ,', '(').replace('(,', '('), newline)
+                # __TAG_MEMBERINST__ -> PTR
+                if hasSpecificTag(newline, __TAG_MEMBERINST__) and hasDefault(newline):
+                    line_member = extractDefaultAndTag(newline)
+                    newline = newline.replace(line_member[0], self.instantiate_event_struct_member(name, tabcnt, True, line_member[1]))
+                else:
+                    newline = newline.replace(__TAG_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, True))  # PTR
+                # __TAG_LITE_MEMBERINST__ -> NO PTR
+                if hasSpecificTag(newline, __TAG_LITE_MEMBERINST__) and hasDefault(newline):
+                    line_member = extractDefaultAndTag(newline)
+                    newline = newline.replace(line_member[0], self.instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
+                else:
+                    newline = newline.replace(__TAG_LITE_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
+                # Aggregate initialization
+                if hasSpecificTag(newline, __TAG_AGGREGATE_INIT__):
+                    newline = newline.replace(__TAG_AGGREGATE_INIT__, self.instantiate_event_aggregate_initializer(name))
+                if hasSpecificTag(newline, __TAG_MSGID__):
+                    newline = newline.replace(__TAG_MSGID__, str(self.events_interface[name].MessageTypeID))
+                newline = newline.replace(__TAG_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt, True))
+                # Member attributes ... all structs (msgs, protocols, structs)
+                if hasSpecificTag(newline, __TAG_ATTRIBUTE_TYPE__) or hasSpecificTag(newline, __TAG_ATTRIBUTE_NAME__):
+                    struct_or_msg = self.events_interface[name]
+                    members = struct_or_msg.Decompose(False)
+                    for mem in members:
+                        membername = mem[1]
+                        membertype = mem[0]
+                        alllinesexpanded.append(newline.replace(__TAG_ATTRIBUTE_TYPE__,membertype).replace(__TAG_ATTRIBUTE_NAME__, membername))
+                    continue
+                # Payload attributes only
+                if hasSpecificTag(newline, __TAG_PAYLOAD_TYPE__) or hasSpecificTag(newline, __TAG_PAYLOAD_NAME__):
+                    struct_or_msg = self.events_interface[name]
+                    structmembers = struct_or_msg.Decompose(False)
+                    for mem in structmembers:
+                        membername = mem[1]
+                        membertype = mem[0]
+                        #isStruct = struct_or_msg.IsStruct(membername)
+                        isProtocol = struct_or_msg.IsProtocolStruct(membername)
+                        if not isProtocol:
+                            alllinesexpanded.append(newline.replace(__TAG_PAYLOAD_TYPE__, membertype).replace(__TAG_PAYLOAD_NAME__, membername))
+                    continue
+                # Python attributes ... someone piggybacks the nice interface
+                if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
+                    [tag, default] = extractDefaultAndTag(newline)
+                    if hasattr(self.events_interface[name], default):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], default)))
+                if newline.isspace():
+                    continue
+                alllinesexpanded.append(newline)
+            cnt = cnt + 1
+            alpha = get_next_alphabet()
+    ###
 
     def innerexpand_actionsignatures(self, snippet_to_expand, alllinesexpanded, states):
         alpha = reset_alphabet()
@@ -556,6 +693,13 @@ class CStateMachineGenerator(CGenerator):
             all_lines_expanded = PairExpander(__TAG_PASIG_BEGIN__, __TAG_PASIG_END__).Expand(all_lines_expanded, self.innerexpand_actionsignatures, smmodel.actionsignatures)
             all_lines_expanded = PairExpander(__TAG_PST_BEGIN__, __TAG_PST_END__).Expand(all_lines_expanded, self.innerexpand_transitionsperstate, smmodel.transitionsperstate)
             all_lines_expanded = PairExpander(__TAG_PG_BEGIN__, __TAG_PG_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering, smmodel.guards)
+
+            ### CONSOLODATE
+            if self.events_interface:
+                all_lines_expanded = PairExpander(__TAG_STRUCT_BEGIN__, __TAG_STRUCT_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering_PROTO, self.events_interface.StructNames())
+                all_lines_expanded = PairExpander(__TAG_PROTOMSG_BEGIN__, __TAG_PROTOMSG_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering_PROTO, self.events_interface.ProtocolStructNames())
+                all_lines_expanded = PairExpander(__TAG_MSG_BEGIN__, __TAG_MSG_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering_PROTO, self.events_interface.MessageNames())
+            ###
             cmmodel.filenames_to_lines[file] = all_lines_expanded
 
     ''' Used for State Machine Generation
