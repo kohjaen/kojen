@@ -281,12 +281,6 @@ class LanguagePython(Language):
     def This(self):
         return 'self.'
 
-    # 1 means ++
-    def For_Range(self, iterName, iterType, start, stop, incr=1) -> str:
-        if incr == 1:
-            return 'for ' + iterName + ' in range(' + str(start) + ',' + str(stop) + '):'
-        return 'for ' + iterName + ' in range (' + str(start) + ',' + str(stop) + ',' + str(incr) + '):'
-
     # Python special functions
     def DeclareDataFormatFunction(self, struct, interface, whitespace, formatfunction):
         structmembers = struct.Decompose()

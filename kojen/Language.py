@@ -216,10 +216,6 @@ class Language:
     def ParameterString(self,  parameters=None) -> str:
         raise RuntimeError("Language Feature Not Implemented")
 
-    # 1 means ++
-    def For_Range(self, iterName, iterType, start, stop, incr=1) -> str:
-        raise RuntimeError("Language Feature Not Implemented")
-
     def LicenseAgreement(self):
         result = []
         result.append("--------------------------------------------------------------------------------")

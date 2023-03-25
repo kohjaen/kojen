@@ -87,7 +87,10 @@ class LanguageCsharp(Language):
             size = len(parameters)
             cnt = 0
             for param in parameters:
-                parameter_string += param[0] + ' ' + param[1]
+                if HasDefault(param):
+                    parameter_string += param[0] + ' ' + param[1] + "=" + param[2]
+                else:
+                    parameter_string += param[0] + ' ' + param[1]
                 if cnt != (size - 1):
                     parameter_string += ', '
                 cnt += 1
@@ -116,6 +119,22 @@ class LanguageCsharp(Language):
 
     '''USED'''
     def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
+        # C++ copy/paste
+        def _processDefaults(default) -> str:
+            res = ""
+            if str(type(default)) == "<class 'list'>":
+                res += "{"
+                for i in default:
+                    if HasDefault(i):
+                        res += _processDefaults(i[2]) + ","
+                    else:
+                        res += "{},"
+                res = res.rstrip(",")
+                res += "}"
+            else:
+                res += default
+            return res
+
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
@@ -123,7 +142,19 @@ class LanguageCsharp(Language):
             isMessage = interface.IsMessageStruct(mem[0])
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                factoryparams.append((mem[0], (mem[1] + "=" + mem[2]) if (with_defaults and HasDefault(mem)) else mem[1]))
+                ptr = ""#" const*" if isArray else ""
+                ref = ""#" const&" if isStruct or isMessage else ""
+                if (mem[0] in interface) and not isArray:
+                    factoryparams.append(((self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref,
+                                          (mem[1] + "=" + _processDefaults(mem[2])) if (with_defaults and HasDefault(mem)) else mem[1]))
+                else:
+                    if with_defaults:
+                        if HasDefault(mem):
+                            factoryparams.append((mem[0] + ptr + ref, mem[1], _processDefaults(mem[2])))
+                        else:
+                            factoryparams.append((mem[0] + ptr + ref, mem[1], "{}"))
+                    else:
+                        factoryparams.append((mem[0] + ptr + ref, mem[1]))
         return factoryparams
 
     '''USED
@@ -161,34 +192,14 @@ class LanguageCsharp(Language):
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]) + ";")
             elif not isArray and isProtocol and not isStruct:
                 s = Template("sizeof(${this}) - sizeof(${header})")
-                result.append(instance_accessor + self.InstantiateType("", mem[1], "Create_" + mem[0] + "(" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + ")"))
-                #raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
+                # Aggregate initializer
+                new = instance_accessor + self.InstantiateType("", mem[1], "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "};")
+                result.append(new)
             elif isArray and not isProtocol and not isStruct:
                 raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             else:
                 print("WTF : InstantiateStructMembers")
 
-        return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructToByteStream(self, struct, interface, whitespace, outname, inname, inacessor, is_arm=False) -> list:
-        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
-        result = []
-        return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructIntoByteStream(self, struct, interface, whitespace, inname, streamname, cntname, inacessor) -> list:
-        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
-        result = []
-        return result
-    '''USED
-    All custom structs, protocol structs and message structs.
-    '''
-    def SerializeStructFromByteStream(self, functioname, struct, interface, whitespace, streamname, cntname, outname, outaccessor) -> list:
-        raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
-        result = []
         return result
 
     '''USED'''

@@ -36,7 +36,7 @@ def generate():
     group = "GROUP_EXAMPLE"
     brief = "An example demonstrating code-generation abilities."
     namespacename = "ExampleIO"
-    classname = "CExampleIF"
+    classname = "ExampleIF"
     declspec = ""
     outputdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "autogen")
     templatedir = ""  # defaults

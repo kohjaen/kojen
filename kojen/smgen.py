@@ -98,6 +98,7 @@ __TAG_ATTRIBUTE_TYPE__              = "<<<ATTRIBUTETYPE>>>"
 __TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
 __TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
 __TAG_PAYLOAD_NAME__                = "<<<PAYLOADNAME>>>"
+__TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"
 
 __TAG_STRUCT_BEGIN__                = "<<<PER_STRUCT_BEGIN>>>"
 __TAG_STRUCT_END__                  = "<<<PER_STRUCT_END>>>"
@@ -347,8 +348,13 @@ class CStateMachineGenerator(CGenerator):
         cnt = 0
         for name in items:
             for line in snippet_to_expand:
-                newline = line
-                newline = newline.replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(name))
+                # If there is no tag ... don't waste time
+                if not hasTag(line):
+                    if line.isspace():
+                        continue
+                    alllinesexpanded.append(line)
+                    continue
+                newline = line.replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_STATENAME__, name)
                 newline = newline.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_EVENTNAME__, name)
@@ -383,6 +389,7 @@ class CStateMachineGenerator(CGenerator):
                     newline = newline.replace(line_member[0],self.instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
                 else:
                     newline = newline.replace(__TAG_LITE_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
+                newline = newline.replace(__TAG_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt))
                 # Aggregate initialization
                 if hasSpecificTag(newline, __TAG_AGGREGATE_INIT__):
                     newline = newline.replace(__TAG_AGGREGATE_INIT__, self.instantiate_event_aggregate_initializer(name))
@@ -395,8 +402,12 @@ class CStateMachineGenerator(CGenerator):
                         membertype = mem[0]
                         alllinesexpanded.append(newline.replace(__TAG_ATTRIBUTE_TYPE__, membertype).replace(__TAG_ATTRIBUTE_NAME__, membername))
                     continue
-                newline = newline.replace(__TAG_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt))
-                if newline == '\n' or newline == '' or newline == '\r\n' or newline.replace(' ','') == "" or newline.replace(' ','').replace('\n','').replace('\r','') == "":
+                # Python attributes ... someone piggybacks the nice interface
+                if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
+                    [tag, default] = extractDefaultAndTag(newline)
+                    if hasattr(self.events_interface[name], default):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], default)))
+                if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
             cnt = cnt + 1
@@ -408,8 +419,14 @@ class CStateMachineGenerator(CGenerator):
         cnt = 0
         for name in items:
             for line in snippet_to_expand:
-                newline = line
-                newline = newline.replace(__TAG_STRUCTNAME_SMALL_CAMEL__, camel_case_small(name))
+                # If there is no tag ... don't waste time
+                if not hasTag(line):
+                    if line.isspace():
+                        continue
+                    alllinesexpanded.append(line)
+                    continue
+
+                newline = line.replace(__TAG_STRUCTNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_STRUCTNAME__, name)
                 newline = newline.replace(__TAG_MSGNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_MSGNAME__, name)
@@ -470,7 +487,12 @@ class CStateMachineGenerator(CGenerator):
                         if not isProtocol:
                             alllinesexpanded.append(newline.replace(__TAG_PAYLOAD_TYPE__, membertype).replace(__TAG_PAYLOAD_NAME__, membername))
                     continue
-                if newline == '\n' or newline == '' or newline == '\r\n' or newline.replace(' ','') == "" or newline.replace(' ','').replace('\n','').replace('\r','') == "":
+                # Python attributes ... someone piggybacks the nice interface
+                if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
+                    [tag, default] = extractDefaultAndTag(newline)
+                    if hasattr(self.events_interface[name], default):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], default)))
+                if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
             cnt = cnt + 1
