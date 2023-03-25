@@ -81,7 +81,6 @@ class LanguagePython(Language):
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
-            #isArray = struct.IsArray(mem[1])
             #isMessage = interface.IsMessageStruct(mem[0])
             #isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
@@ -94,17 +93,10 @@ class LanguagePython(Language):
     '''Declares the guts of a struct declaration
     '''
     def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True) -> list:
-        arrayName = []
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            if not struct.IsArray(mem[1]):
-                result.append(whitespace + self.InstantiateType(mem[0], mem[1], mem[2] if HasDefault(mem) else 'None') + ' # ' + mem[0])
-            else:
-                result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + ' # ' + mem[0] + '[]')
-
-            if struct.IsArray(mem[1]):
-                arrayName.append(mem[1])
+            result.append(whitespace + self.InstantiateType(mem[0], mem[1], mem[2] if HasDefault(mem) else 'None') + ' # ' + mem[0])
         return result
 
     # Packedness
@@ -140,16 +132,13 @@ class LanguagePython(Language):
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isStruct = interface.IsStruct(mem[1])
             isProtocol = interface.IsProtocolStruct(mem[0])
             instance_accessor = whitespace + instancename + accessor
 
-            if not isArray and (not isProtocol or isStruct):
+            if not isProtocol or isStruct:
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]))
-            elif not isArray and isProtocol and not isStruct:
-                raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
-            elif isArray and not isProtocol and not isStruct:
+            elif isProtocol and not isStruct:
                 raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             else:
                 print("WTF : InstantiateStructMembers")
@@ -280,61 +269,5 @@ class LanguagePython(Language):
 
     def This(self):
         return 'self.'
-
-    # Python special functions
-    def DeclareDataFormatFunction(self, struct, interface, whitespace, formatfunction):
-        structmembers = struct.Decompose()
-        result = []
-        result.append(whitespace + "# Binary data format")
-        result.append(whitespace + "@staticmethod")
-        hasArray = False
-        if interface.IsMessageStruct(struct.Name):
-            hasArray = struct.HasArray()
-        if not hasArray:
-            result.append(whitespace + self.DeclareFunction(struct.Name, "", "BinaryDataFormat", True, []))
-        else:
-            result.append(whitespace + self.DeclareFunction(struct.Name, "", "BinaryDataFormat", True, [('actual', 'actual')]) + " # Has array, needs actual count.")
-
-        result.append(whitespace + self.WhiteSpace(0) + 'result = ""')
-        for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
-            isStruct = struct.IsStruct(mem[1])
-            isProtocol = interface.IsProtocolStruct(mem[0])
-            if isStruct or isProtocol:
-                result.append(whitespace + self.WhiteSpace(0) + 'result += ' + mem[0] + '.BinaryDataFormat()' + "# " + mem[0] + ' - ' + mem[1])
-            elif isArray:
-                if interface.IsStruct(mem[0]):
-                    result.append(whitespace + self.WhiteSpace(0) + 'for i in range(actual.' + mem[1] + '_Cnt):' + "# " + mem[0] + ' - ' + mem[1])
-                    result.append(whitespace + self.WhiteSpace(1) + 'result += ' + mem[0] + '.BinaryDataFormat()')
-                else:
-                    result.append(whitespace + self.WhiteSpace(0) + 'result += str(actual.' + mem[1] + "_Cnt) + " + formatfunction + '("' + mem[0] + '")' + "# " + mem[0] + ' - ' + mem[1])
-            else:
-                result.append(whitespace + self.WhiteSpace(0) + 'result += '+formatfunction+'("' + mem[0] + '")' + "# " + mem[0] + ' - ' + mem[1])
-        result.append(whitespace + self.WhiteSpace(0) + 'return "="+result.replace("=","") # "=" for no padding...only need the first one, this removes nested "="\n')
-        return result
-
-    def DeclareDataSizeFunction(self, struct, interface, whitespace):
-        result = []
-
-        hasArray = False
-        if interface.IsMessageStruct(struct.Name):
-            hasArray = struct.HasArray()
-
-        structmembers = struct.Decompose()
-
-        result.append(whitespace + "# Binary data size")
-        result.append(whitespace + "@staticmethod")
-        if hasArray:
-            result.append(whitespace + self.DeclareFunction(struct.Name, '', "SizeOf", True, [('actual = None', 'actual = None')]))
-            result.append(whitespace + self.WhiteSpace(0) + 'if None == actual: # Factory create will calculate correctly')
-            result.append(whitespace + self.WhiteSpace(1) + self.InstantiatePtrToType(struct.Name, 'actual'))
-            for mem in structmembers:
-                if mem[1].find('_Cnt') > -1:
-                    result.append(whitespace + self.WhiteSpace(1) + 'actual.' + mem[1] + ' = 1')
-            result.append(whitespace + self.WhiteSpace(0) + 'return calcsize(' + struct.Name + '.BinaryDataFormat(actual))\n')
-        else:
-            result.append(whitespace + self.DeclareFunction(struct.Name, '', "SizeOf", True, []))
-            result.append(whitespace + self.WhiteSpace(0) + 'return calcsize(' + struct.Name + '.BinaryDataFormat())\n')
-        return result
 
     # ------------------------------ End

@@ -481,7 +481,6 @@ class CStateMachineGenerator(CGenerator):
                     for mem in structmembers:
                         membername = mem[1]
                         membertype = mem[0]
-                        #isArray = struct_or_msg.IsArray(membername)
                         #isStruct = struct_or_msg.IsStruct(membername)
                         isProtocol = struct_or_msg.IsProtocolStruct(membername)
                         if not isProtocol:

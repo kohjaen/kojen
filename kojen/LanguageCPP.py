@@ -143,23 +143,21 @@ class LanguageCPP(Language):
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isMessage = interface.IsMessageStruct(mem[0])
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                ptr = " const*" if isArray else ""
                 ref = " const&" if isStruct or isMessage else ""
-                if (mem[0] in interface) and not isArray:
+                if (mem[0] in interface):
                     factoryparams.append(((self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref,
                                           (mem[1] + "=" + _processDefaults(mem[2])) if (with_defaults and HasDefault(mem)) else mem[1]))
                 else:
                     if with_defaults:
                         if HasDefault(mem):
-                            factoryparams.append((mem[0] + ptr + ref, mem[1], _processDefaults(mem[2])))
+                            factoryparams.append((mem[0] + ref, mem[1], _processDefaults(mem[2])))
                         else:
-                            factoryparams.append((mem[0] + ptr + ref, mem[1], "{}"))
+                            factoryparams.append((mem[0] + ref, mem[1], "{}"))
                     else:
-                        factoryparams.append((mem[0] + ptr + ref, mem[1]))
+                        factoryparams.append((mem[0] + ref, mem[1]))
         return factoryparams
 
     '''USED
@@ -170,54 +168,29 @@ class LanguageCPP(Language):
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            ptr = ""
-            if struct.IsArray(mem[1]):
-                ptr = "*"
-            if (mem[0] in interface) and not struct.IsArray(mem[1]):
+            if (mem[0] in interface):
                 result.append(whitespace + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
-                result.append(whitespace + self.InstantiateType(mem[0] + ptr, mem[1],
+                result.append(whitespace + self.InstantiateType(mem[0], mem[1],
                                                                 "" if (not HasDefault(mem) or attr_packed) else mem[2],
                                                                 attr_packed) + ";")
-
-            if struct.IsArray(mem[1]):
-                arrayName.append(mem[1])
-        if len(arrayName) != 0:
-            result.append(whitespace+"~%s()" % struct.Name)
-            result.append(whitespace+"{")
-            for todel in arrayName:
-                result.append(2*whitespace+"delete[] %s;" % todel)
-            result.append(whitespace+"}")
         return result
     '''USED'''
     def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor) -> list:
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isStruct = interface.IsStruct(mem[1])
             isProtocol = interface.IsProtocolStruct(mem[0])
             instance_accessor = whitespace + instancename + accessor
 
-            if not isArray and (not isProtocol or isStruct):
+            if not isProtocol or isStruct:
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]) + ";")
-            elif not isArray and isProtocol and not isStruct:
+            elif isProtocol and not isStruct:
                 s = Template("sizeof(${this}) - sizeof(${header})")
                 # Aggregate initializer
                 new = instance_accessor +  self.InstantiateType("", mem[1], "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "};")
                 result.append(new)
-            elif isArray and not isProtocol and not isStruct:
-                if not IsMessageStruct(interface, struct.Name):
-                    raise RuntimeError("Only message structs are allowed arrays.")
-                result.append(whitespace + "// cant transmit ptr's across the world, but well data.")
-                s = Template("${payload} ${op} ${bytes}")
-                array = struct[mem[1]]
-                result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="-=", bytes="sizeof("+instancename+accessor+array.Name+");"))
-                result.append(instance_accessor + s.substitute(payload=struct.HeaderName() + "." + struct[struct.HeaderName()].PayloadSize(), op="+=", bytes="sizeof("+array.type + ")*" + array.Count() + ";"))
-                # result.append(instance_accessor + self.InstantiateType("",array.Count(),array.Count()))
-                result.append(instance_accessor + self.InstantiateArray(array.type, array.Name, array.Count()) + ";")
-                result.append(whitespace + "if(nullptr != " + array.Name + ")")
-                result.append(2*whitespace + "memcpy((void*) "+instance_accessor.replace("\t", '').replace("    ","") + array.Name + ',(void*) ' + array.Name + ',sizeof(' + array.type + ")*" + array.Count() + ");")
             else:
                 print("WTF : InstantiateStructMembers")
         return result
@@ -226,17 +199,15 @@ class LanguageCPP(Language):
         structmembers = struct.Decompose()
         result = ""
         for mem in structmembers:
-            isArray = struct.IsArray(mem[0])
             isStruct = interface.IsStruct(mem[0])
             isProtocol = interface.IsProtocolStruct(mem[0])
-            if not isArray and (not isProtocol or isStruct):
+            if not isProtocol or isStruct:
                 result += mem[1] + ", "
             elif isProtocol:
                 s = Template("sizeof(${this}) - sizeof(${header})")
                 result += "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "}, "
             else:
                 raise Exception("InstantiateStructWithAggregateInitializer unhandled!")
-                #result += self.InstantiateStructWithAggregateInitializer(interface[mem[0]], interface)
         return "{" + result.rstrip(", ") + "}"
 
     def DefaultAggregateInitializer(self) -> str:

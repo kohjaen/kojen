@@ -138,65 +138,52 @@ class LanguageCsharp(Language):
         structmembers = struct.Decompose()
         factoryparams = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isMessage = interface.IsMessageStruct(mem[0])
             isStruct = struct.IsStruct(mem[1])
             if not interface.IsProtocolStruct(mem[0]):
-                ptr = ""#" const*" if isArray else ""
                 ref = ""#" const&" if isStruct or isMessage else ""
-                if (mem[0] in interface) and not isArray:
+                if mem[0] in interface:
                     factoryparams.append(((self.SharedPtrToType(mem[0]) if isMessage else mem[0]) + ref,
                                           (mem[1] + "=" + _processDefaults(mem[2])) if (with_defaults and HasDefault(mem)) else mem[1]))
                 else:
                     if with_defaults:
                         if HasDefault(mem):
-                            factoryparams.append((mem[0] + ptr + ref, mem[1], _processDefaults(mem[2])))
+                            factoryparams.append((mem[0] + ref, mem[1], _processDefaults(mem[2])))
                         else:
-                            factoryparams.append((mem[0] + ptr + ref, mem[1], "{}"))
+                            factoryparams.append((mem[0] + ref, mem[1], "{}"))
                     else:
-                        factoryparams.append((mem[0] + ptr + ref, mem[1]))
+                        factoryparams.append((mem[0] + ref, mem[1]))
         return factoryparams
 
     '''USED
     Declares the guts of a struct declaration
     '''
     def DeclareStructMembers(self, struct, interface, whitespace, attr_packed=True) -> list:
-        arrayName = []
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
             ptr = ""
-            #if struct.IsArray(mem[1]):
-            #    ptr = "*"
-            if (mem[0] in interface) and not struct.IsArray(mem[1]):
+            if mem[0] in interface:
                 result.append(whitespace + "public " + self.InstantiateType(mem[0], mem[1]) + ";")
             else:
                 result.append(whitespace + "public " + self.InstantiateType(mem[0] + ptr, mem[1], mem[2] if HasDefault(mem) else "", is_attr_packed=False) + ";")
-
-            if struct.IsArray(mem[1]):
-                arrayName.append(mem[1])
-        if len(arrayName) != 0:
-            raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
         return result
     '''USED'''
     def InstantiateStructMembers(self, struct, interface, whitespace, instancename, accessor = ".") -> list:
         structmembers = struct.Decompose()
         result = []
         for mem in structmembers:
-            isArray = struct.IsArray(mem[1])
             isStruct = interface.IsStruct(mem[1])
             isProtocol = interface.IsProtocolStruct(mem[0])
             instance_accessor = whitespace + instancename + accessor
 
-            if not isArray and (not isProtocol or isStruct):
+            if not isProtocol or isStruct:
                 result.append(instance_accessor + self.InstantiateType('', mem[1], mem[1]) + ";")
-            elif not isArray and isProtocol and not isStruct:
+            elif isProtocol and not isStruct:
                 s = Template("sizeof(${this}) - sizeof(${header})")
                 # Aggregate initializer
                 new = instance_accessor + self.InstantiateType("", mem[1], "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "};")
                 result.append(new)
-            elif isArray and not isProtocol and not isStruct:
-                raise RuntimeError("C++ Copy Paste -> Language Feature Not Implemented")
             else:
                 print("WTF : InstantiateStructMembers")
 

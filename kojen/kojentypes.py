@@ -36,14 +36,6 @@ class MsgIDType:
         self.m_msg_type = msg_type
 
 
-def IsArray(container, instancename):
-    if instancename in container:
-        typeof = str(type(container[instancename]))
-        if typeof.find('class') > -1 and typeof.find('Array') > -1 and typeof.find('Struct') == -1 and typeof.find('Message') == -1 and typeof.find('MessageHeader') == -1:
-            return True
-    return False
-
-
 def IsStruct(container, instancename):
     if instancename in container:
         typeof = str(type(container[instancename]))
@@ -69,9 +61,6 @@ def IsMessageStruct(container, instancename):
 
 
 class Query:
-    def IsArray(self, instancename):
-        return IsArray(self, instancename)
-
     def IsStruct(self, instancename):
         return IsStruct(self, instancename)
 
@@ -321,18 +310,6 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
 
     def AddStruct(self, memberName, struct):
         self[memberName] = struct
-
-    #def AddArrayOfType(self, memberName, membertype):
-    #    self[memberName] = Array(memberName, membertype)
-
-    #def AddArrayOfStruct(self, memberName, struct):
-    #    self[memberName] = Array(memberName, struct.Name)
-
-    def HasArray(self):
-        for memberName in self:
-            if self.IsArray(memberName):
-                return True
-        return False
 
     def Decompose(self, recursive = True):
         result = []
