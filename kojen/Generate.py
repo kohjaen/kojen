@@ -32,7 +32,7 @@ def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, s
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_embedded_arm")
 
-    if not os.path.isdir(templatedir):
+    if not os.path.isdir(templatedir) and not os.path.isfile(templatedir):
         print("Error : dir '" + templatedir + "' does not exist. Aborting.")
         return
 
@@ -49,7 +49,7 @@ def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacen
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_cs_winlinmac")
 
-    if not os.path.isdir(templatedir):
+    if not os.path.isdir(templatedir) and not os.path.isfile(templatedir):
         print("Error : dir '" + templatedir + "' does not exist. Aborting.")
         return []
 
@@ -66,7 +66,7 @@ def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacen
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_py")
 
-    if not os.path.isdir(templatedir):
+    if not os.path.isdir(templatedir) and not os.path.isfile(templatedir):
         print("Error : dir '" + templatedir + "' does not exist. Aborting.")
         return []
 

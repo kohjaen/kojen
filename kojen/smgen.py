@@ -99,6 +99,7 @@ __TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
 __TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
 __TAG_PAYLOAD_NAME__                = "<<<PAYLOADNAME>>>"
 __TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"
+__TAG_DOCUMENTATION__               = "<<<DOCUMENTATION>>>"
 
 __TAG_STRUCT_BEGIN__                = "<<<PER_STRUCT_BEGIN>>>"
 __TAG_STRUCT_END__                  = "<<<PER_STRUCT_END>>>"
@@ -369,7 +370,7 @@ class CStateMachineGenerator(CGenerator):
                     has_signature_defaults = __TAG_SIGNATURE_DEF__ in newline
                     if hasDefault(newline):
                         # Has user params
-                        user_params = extractDefaultAndTag(newline)
+                        user_params = extractDefaultAndTagNamed(newline, cleanTag(__TAG_SIGNATURE__))
                         signature = self.get_event_signature(name, False) + ", " + user_params[1]
                         signature = signature.strip(',').strip(' ')
                         newline = newline.replace(user_params[0], signature)
@@ -390,6 +391,13 @@ class CStateMachineGenerator(CGenerator):
                 else:
                     newline = newline.replace(__TAG_LITE_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
                 newline = newline.replace(__TAG_MEMBERDECL__, self.declare_event_struct_members(name, tabcnt))
+                # Documentation
+                if hasSpecificTag(newline, __TAG_DOCUMENTATION__):
+                    ws = getWhitespace(newline)
+                    docs = self.events_interface[name].documentation.rstrip("\n").split("\n")
+                    for d in docs:
+                        alllinesexpanded.append(ws + d + "\n")
+                    continue
                 # Aggregate initialization
                 if hasSpecificTag(newline, __TAG_AGGREGATE_INIT__):
                     newline = newline.replace(__TAG_AGGREGATE_INIT__, self.instantiate_event_aggregate_initializer(name))
@@ -404,9 +412,13 @@ class CStateMachineGenerator(CGenerator):
                     continue
                 # Python attributes ... someone piggybacks the nice interface
                 if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
-                    [tag, default] = extractDefaultAndTag(newline)
-                    if hasattr(self.events_interface[name], default):
-                        newline = newline.replace(tag, str(getattr(self.events_interface[name], default)))
+                    [tag, attr, useifnotexist] = extractTagAndAandB(newline)
+                    if hasattr(self.events_interface[name], attr):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
+                    elif useifnotexist:
+                        newline = newline.replace(tag, useifnotexist)
+                    else:
+                        continue
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
@@ -439,7 +451,7 @@ class CStateMachineGenerator(CGenerator):
                     has_signature_defaults = __TAG_SIGNATURE_DEF__ in newline
                     if hasDefault(newline):
                         # Has user params
-                        user_params = extractDefaultAndTag(newline)
+                        user_params = extractDefaultAndTagNamed(newline, cleanTag(__TAG_SIGNATURE__))
                         signature = self.get_event_signature(name, False) + ", " + user_params[1]
                         signature = signature.strip(',').strip(' ')
                         newline = newline.replace(user_params[0], signature)
@@ -459,6 +471,13 @@ class CStateMachineGenerator(CGenerator):
                     newline = newline.replace(line_member[0], self.instantiate_event_struct_member(name, tabcnt, False, line_member[1]))
                 else:
                     newline = newline.replace(__TAG_LITE_MEMBERINST__, self.instantiate_event_struct_member(name, tabcnt, False))  # NO PTR
+                # Documentation
+                if hasSpecificTag(newline, __TAG_DOCUMENTATION__):
+                    ws = getWhitespace(newline)
+                    docs = self.events_interface[name].documentation.rstrip("\n").split("\n")
+                    for d in docs:
+                        alllinesexpanded.append(ws + d + "\n")
+                    continue
                 # Aggregate initialization
                 if hasSpecificTag(newline, __TAG_AGGREGATE_INIT__):
                     newline = newline.replace(__TAG_AGGREGATE_INIT__, self.instantiate_event_aggregate_initializer(name))
@@ -488,9 +507,13 @@ class CStateMachineGenerator(CGenerator):
                     continue
                 # Python attributes ... someone piggybacks the nice interface
                 if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
-                    [tag, default] = extractDefaultAndTag(newline)
-                    if hasattr(self.events_interface[name], default):
-                        newline = newline.replace(tag, str(getattr(self.events_interface[name], default)))
+                    [tag, attr, useifnotexist] = extractTagAndAandB(newline)
+                    if hasattr(self.events_interface[name], attr):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
+                    elif useifnotexist:
+                        newline = newline.replace(tag, useifnotexist)
+                    else:
+                        continue
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)

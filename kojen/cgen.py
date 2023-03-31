@@ -205,11 +205,24 @@ def hasSpecificTag(a, tag):
 def hasDefault(a):
     return a.find("::", a.find("<<<")) >= 0
 
-
 def extractDefaultAndTag(a):
     default = a[a.find("::", a.find("<<<")):a.rfind(">>>")].replace("::","", 1)
     tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
     return [tag, default]
+
+def extractDefaultAndTagNamed(a, named):
+    all = a.split(">>>")
+    for b in all:
+        if named in b:
+            return extractDefaultAndTag(b + ">>>")
+    raise Exception(named + " not found.")
+
+def extractTagAndAandB(a):
+    tag = a[a.find("<<<"):a.find(">>>") + len(">>>")]
+    r = a[a.find("<<<") + len("<<<"):a.find(">>>")].split("::")
+    A = None if len(r) < 2 else r[1]
+    B = None if len(r) < 3 else r[2]
+    return [tag, A, B]
 
 
 def removeDefault(a):
@@ -248,7 +261,11 @@ class CGenerator:
         if not os.path.exists(inputfiledir):
             raise Exception("Directory '" + inputfiledir + "' does not exist.")
         else:
-            files = os.listdir(inputfiledir)
+            files = None
+            if os.path.isdir(inputfiledir):
+                files = os.listdir(inputfiledir)
+            if os.path.isfile(inputfiledir):
+                files = inputfiledir
             # Is the input empty
             if not files:
                 raise Exception("Directory '" + inputfiledir + "' is empty.")
@@ -445,15 +462,20 @@ class CGenerator:
         CWD = self.input_template_file_dir
         dict_to_replace_lines[__TAG_DATETIME__] = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         dict_to_replace_lines[__TAG_PLATFORM__] = sys.platform + ' python ' + sys.version
-        for root, dirs, files in os.walk(CWD):
-            for file in files:
-                if (file.lower().find(filter_files_containing_in_name.lower()) > -1 or not filter_files_containing_in_name.strip()) and not file.lower().find(".removed") > -1 :
-                    template_file_found = True
-                    cm = self.loadtemplates_firstfiltering_FILE(os.path.join(root, file), dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name)
-                    result.Merge(cm)
+        if os.path.isfile(self.input_template_file_dir):
+            template_file_found = True
+            cm = self.loadtemplates_firstfiltering_FILE(self.input_template_file_dir, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name)
+            result.Merge(cm)
+        else:
+            for root, dirs, files in os.walk(CWD):
+                for file in files:
+                    if (file.lower().find(filter_files_containing_in_name.lower()) > -1 or not filter_files_containing_in_name.strip()) and not file.lower().find(".removed") > -1 :
+                        template_file_found = True
+                        cm = self.loadtemplates_firstfiltering_FILE(os.path.join(root, file), dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name)
+                        result.Merge(cm)
 
-        if not template_file_found:
-            raise Exception("Directory '" + self.input_template_file_dir + "' contains no templates.")
+            if not template_file_found:
+                raise Exception("Directory '" + self.input_template_file_dir + "' contains no templates.")
 
         return result
 

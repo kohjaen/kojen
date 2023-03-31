@@ -220,6 +220,7 @@ class Struct(OrderedDict, Query, DefaultVal, Documentation):
     def __init__(self, structName):
         super(Struct, self).__init__()
         DefaultVal.__init__(self)
+        Documentation.__init__(self)
         self.Name  = structName
 
     def AddType(self, memberName, memberType, default = None):
@@ -253,6 +254,7 @@ class Array(OrderedDict, Query, Documentation):
 
     def __init__(self, arrayname, arraytype):
         super(Array, self).__init__()
+        Documentation.__init__(self)
         self.Name = arrayname
         self[self.Count()] = 'uint32'
         self.type = arraytype
@@ -286,6 +288,7 @@ class Message(OrderedDict, Query, DefaultVal, Documentation):
     def __init__(self, messageName, messageTypeID):
         super(Message, self).__init__()
         DefaultVal.__init__(self)
+        Documentation.__init__(self)
         self.Name            = messageName
         self.MessageTypeID   = messageTypeID
         self[self.HeaderName()] = MessageHeader(0, self.MessageTypeID)
