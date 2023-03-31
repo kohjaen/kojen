@@ -367,27 +367,95 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[1], "{bla, blabla}\n")
 
     def test_pyattr(self):
+        # param, no default
         input = []
         input.append("<<<PER_STRUCT_BEGIN>>>")
-        input.append("<<<PyAttr::bla>>>")
+        input.append("<<<PyAttr::ninja>>>")
         input.append("<<<PER_STRUCT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga", "bool")
         s.AddType("bunga", "size_t")
-        s.bla = "here"
+        s.ninja = "here"
         s2 = Struct("somestruct2")
         s2.AddType("bla", "bool")
         s2.AddType("blabla", "size_t")
-        s2.bla = 36
+        s2.ninja = 36
         i = Interface('')
         i.AddStruct(s)
         i.AddStruct(s2)
-
         output = TestFeatures.do_magic(input, i, [], LanguageCPP())
         self.assertEqual(len(output), 2)
         self.assertEqual(output[0], "here\n")
         self.assertEqual(output[1], "36\n")
+        # multiple param, no default
+        input = []
+        input.append("<<<PER_STRUCT_BEGIN>>>")
+        input.append("<<<PyAttr::ninja>>> is a big fat <<<PyAttr::ninja>>>")
+        input.append("<<<PER_STRUCT_END>>>")
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], "here is a big fat here\n")
+        self.assertEqual(output[1], "36 is a big fat 36\n")
+        # no param
+        input = []
+        input.append("<<<PER_STRUCT_BEGIN>>>")
+        input.append("<<<PyAttr::ninja>>>")
+        input.append("<<<PER_STRUCT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga", "size_t")
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+        output2 = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output2), 0)
+        # param, default
+        input = []
+        input.append("<<<PER_STRUCT_BEGIN>>>")
+        input.append("<<<PyAttr::ninja::yoyo>>>")
+        input.append("<<<PER_STRUCT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga", "size_t")
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+        output3 = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output3), 2)
+        self.assertEqual(output3[0], "yoyo\n")
+        self.assertEqual(output3[1], "yoyo\n")
 
+    def test_Docs(self):
+        input = []
+        input.append("<<<PER_STRUCT_BEGIN>>>")
+        input.append("  *  *  <<<DOCUMENTATION>>>")
+        input.append("<<<PER_STRUCT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga", "size_t")
+        s.SetDocumentation("line1\nline2\nline3\n")
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        s2.SetDocumentation("line4\nline5\nline6")
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+        # param, no default
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 6)
+        self.assertEqual(output[0], "  *  *  line1\n")
+        self.assertEqual(output[1], "  *  *  line2\n")
+        self.assertEqual(output[2], "  *  *  line3\n")
+        self.assertEqual(output[3], "  *  *  line4\n")
+        self.assertEqual(output[4], "  *  *  line5\n")
+        self.assertEqual(output[5], "  *  *  line6\n")
     '''
     def test_split(self):
         s = 'hello world'
