@@ -73,7 +73,7 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_a[0], "<<<something::1>>>", "Wrong tag")
         self.assertEqual(res_a[1], "1", "Wrong default")
         self.assertEqual(res_b[0], "<<<else::2>>>", "Wrong tag")
-        self.assertEqual(res_b[1], "1", "Wrong default")
+        self.assertEqual(res_b[1], "2", "Wrong default")
 
     def test_extract_TAG_and_A_and_B(self):
         a = "blab @#$KLF!WEFJ <<<some::thing::here>>>"
