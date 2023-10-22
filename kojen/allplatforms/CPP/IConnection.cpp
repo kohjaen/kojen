@@ -1,60 +1,58 @@
+#include "basetypes.h"
 #include "IConnection.h"
 #include "MsgHeader.h"
 #ifdef __arm__
-#include <stdio.h>
-#include <string.h>
+#include <cassert>
 #endif
+#include <algorithm>
+
+// Header used for connection message parsing
+static constexpr uint16 SizeOfHeader = sizeof(sMsgHeader);
 
 namespace XKoJen
 {
     IConnection::~IConnection() {}
-    IConnection::IConnection() :
-        m_fragment_buffer_bytes_required(0),
-        m_msg_receiver(nullptr),
+
+    IConnection::IConnection()
+    : m_fragment_buffer_bytes_required{0}
+    , m_msg_receiver{nullptr}
+    , m_rawdata_receiver{nullptr}
 #if defined(__arm__)
-        m_has_data_exceeding_fragment_buffer_size(false),
-        m_largest_message_size(FRAGMENT_BUF_SIZE),
-        m_fragment_buffer_cnt(0),
+    , m_has_data_exceeding_fragment_buffer_size{false}
+    , m_largest_message_size{FRAGMENT_BUF_SIZE}
+    , m_fragment_buffer_cnt{0}
 #else
-        m_request_disconnect(false),
+    , m_request_disconnect{false}
 #endif
-        m_sizeofheader(sizeof(sMsgHeader)),
-        m_receiver_preamble(0)
+    , m_receiver_preamble{0}
+    {}
+
+    void IConnection::SetMsgReceiver(IMsgReceiver& receiver)
     {
+        m_rawdata_receiver = nullptr;
+        m_msg_receiver = &receiver;
+        m_receiver_preamble = receiver.Preamble();
+        m_receiver_preamble_0 = m_receiver_preamble & 0x00FF;
+        m_receiver_preamble_1 = m_receiver_preamble >> 8;
+#if defined(__arm__)
+        m_largest_message_size = receiver.LargestMessageSize();
+        // Check that this is at least half the size of the fragment buffer.
+        if (2 * m_largest_message_size > FRAGMENT_BUF_SIZE)
+            printf("Warning : IConnection::SetMsgReceiver -> for safety fragment buffer(%i) needs to be at least twice the largest interface message size(%i).", m_largest_message_size, FRAGMENT_BUF_SIZE);
+#endif // __arm__
     }
 
-    void IConnection::SetMsgReceiver(IMsgReceiver* receiver)
-    {
-        // Warn if receiver is nullptr
-        if (receiver) {
-            m_rawdata_receiver = nullptr;
-            m_msg_receiver = receiver;
-            m_receiver_preamble = receiver->Preamble();
-            m_receiver_preamble_0 = m_receiver_preamble & 0x00FF;
-            m_receiver_preamble_1 = m_receiver_preamble >> 8;
-#if defined(__arm__)
-            m_largest_message_size = receiver->LargestMessageSize();
-            // Check that this is at least half the size of the fragment buffer.
-            if (2 * m_largest_message_size > FRAGMENT_BUF_SIZE)
-                printf("Warning : IConnection::SetMsgReceiver -> for safety fragment buffer(%i) needs to be at least twice the largest interface message size(%i).", m_largest_message_size, FRAGMENT_BUF_SIZE);
-#endif // __arm__
-        }
-        //else
-        //	printf("ERROR : IConnection::SetMsgReceiver -> m_receiver is a nullptr...no messages can be received.");
-    }
     bool IConnection::HasMsgReceiver() const
     {
         return (m_msg_receiver != nullptr);
     }
 
-    void IConnection::SetRawDataReceiver(IRawDataReceiver* receiver)
+    void IConnection::SetRawDataReceiver(IRawDataReceiver& receiver)
     {
-        if (receiver)
-        {
-            m_msg_receiver = nullptr;
-            m_rawdata_receiver = receiver;
-        }
+        m_msg_receiver = nullptr;
+        m_rawdata_receiver = &receiver;
     }
+
     bool IConnection::HasRawDataReceiver() const
     {
         return (m_rawdata_receiver != nullptr);
@@ -73,296 +71,233 @@ namespace XKoJen
     }
 #endif
 
-#if defined(__arm__)
-
-#define RESET_FRAG \
-    {\
-        m_fragment_buffer_cnt = 0;\
-        m_fragment_buffer_bytes_required = 0;\
-    }
-
-#else
-
-#define RESET_FRAG \
-    {\
-        m_fragment_buffer_cnt = 0;\
-        m_fragment_buffer_bytes_required = 0;\
-        m_fragment_buffer.resize(0);\
-    }
-
-#endif
-
-#define PREAMBLE_SAFETY \
-if(header->Preamble != m_receiver_preamble){\
-    RESET_FRAG \
-    return;\
-}
-
-    void IConnection::OnDataReceived(const uint8* data_buffer, const uint32& number_of_bytes_rx)
+    void IConnection::ResetFragmentation()
     {
-        if (number_of_bytes_rx == 0) return;
-        if (m_rawdata_receiver)
+        m_fragment_buffer_bytes_required = 0;
+#if defined(__arm__)
+        m_fragment_buffer_cnt = 0;
+        m_has_data_exceeding_fragment_buffer_size =false;
+#else
+        m_fragment_buffer.resize(0);
+#endif
+    }
+
+    std::optional<uint32> IConnection::FindPreamble(const uint8* data, const uint32 count)
+    {
+        uint32 i = 0;
+        while (i < count)
         {
-            m_rawdata_receiver->OnDataReceived(data_buffer, number_of_bytes_rx);
+            if (data[i] == m_receiver_preamble_0)
+            {
+                if (i < count - 1)
+                {
+                    if (data[i + 1] == m_receiver_preamble_1)
+                    {
+                        return i;
+                    }
+                }
+                else if (i == (count - 1))// last one...potentially fragmented preamble.
+                    return i;
+            }
+            i++;
         }
-        else if (m_msg_receiver)
+        return std::optional<uint16>();
+    }
+    void IConnection::PutIntoFragmentBuffer(const uint8* data, const uint32 count)
+    {
+#if defined(__arm__)
+        auto fragmentLast = m_fragment_buffer_cnt;
+        m_fragment_buffer_cnt += count;
+        if (m_has_data_exceeding_fragment_buffer_size) // Keep account ... but no copy.
+            return;
+#else
+        auto fragmentLast = m_fragment_buffer.size();
+        m_fragment_buffer.resize(fragmentLast + count);
+#endif
+        std::copy(data, data + count, std::addressof(m_fragment_buffer[fragmentLast]));
+    }
+
+    void IConnection::HandleFragmentedData(const uint8* data, const uint32 count)
+    {
+#if defined(__arm__)
+#else
+        auto m_fragment_buffer_cnt = m_fragment_buffer.size();
+#endif
+        uint32 totalFragmentedByteCount = count + m_fragment_buffer_cnt;
+
+        // Fragmented header support : if there is 1 byte only in the fragment buffer, then the header
+        // was fragmented...or there was some garbage which just so happened to be the last byte of the last message (that matches)
+        // the first byte of the header. For this fragmented data to be real, it would be expected that
+        // the first byte of the next set is the second byte of the header...
+        if ( (m_fragment_buffer_cnt == 1) && (data[0] != m_receiver_preamble_1) )
         {
-            // What if someone puts in chars that dont match anything? USE the max message size...clear once it get to that...
-#if defined(__arm__)
-            if (m_fragment_buffer_cnt >= m_largest_message_size && m_fragment_buffer_bytes_required == 0)
-            //if (m_fragment_buffer_cnt >= m_largest_message_size /*&& m_fragment_buffer_bytes_required == 0*/) // this might fail a unit test on arm ... need to check...
-                RESET_FRAG;
-#else
-            size_t m_fragment_buffer_cnt = m_fragment_buffer.size();
-#endif
-
-            // For unfragmented data, and less than headersize rx, check preamble...and ignore if not found
-            if (0 == m_fragment_buffer_cnt)
+            ResetFragmentation();
+            if (data[0] == m_receiver_preamble_0)
             {
-                if (number_of_bytes_rx < 2) { // 1
-                    if (data_buffer[0] != m_receiver_preamble_0)
-                        return;
-                }
-                else if (number_of_bytes_rx >= 2) {
-                    if ((data_buffer[0] != m_receiver_preamble_0) || (data_buffer[1] != m_receiver_preamble_1))
-                        return;
-                }
-                // rest will be process in header
+                OnDataReceived(data, count); // start new
             }
-
-            uint32 bytes_for_msg = 0;
-            uint32 no_bytes_rx_plus_in_frag_buf = number_of_bytes_rx + m_fragment_buffer_cnt;
-
-            // What if we don't get a full header?
-            if (no_bytes_rx_plus_in_frag_buf < m_sizeofheader)
-            {
+            return;
+        }
 #if defined(__arm__)
-                memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
-                m_fragment_buffer_cnt += number_of_bytes_rx;
-#else
-                m_fragment_buffer.resize(m_fragment_buffer_cnt + number_of_bytes_rx);
-                memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
-                m_fragment_buffer_cnt = m_fragment_buffer.size();
+        // No crashing for garbage received...data is parsed over, but not written to buffer.
+        m_has_data_exceeding_fragment_buffer_size = m_has_data_exceeding_fragment_buffer_size || (totalFragmentedByteCount > FRAGMENT_BUF_SIZE);//(/*totalFragmentedByteCount*/count > m_largest_message_size);
 #endif
-                // For unfragmented data, and less than headersize rx, check preamble...and ignore if not found
-                if (m_fragment_buffer_cnt < 2) { // 1
-                    if (m_fragment_buffer[0] != m_receiver_preamble_0) {
-                        RESET_FRAG
-                    }
-                }
-                else if (m_fragment_buffer_cnt >= 2) {
-                    if ((m_fragment_buffer[0] != m_receiver_preamble_0) || (m_fragment_buffer[1] != m_receiver_preamble_1)) {
-                        RESET_FRAG
-                    }
-                }
-                return;
-            }
-            else if (no_bytes_rx_plus_in_frag_buf == m_sizeofheader) // Rx'd a full header...
+
+        if (m_fragment_buffer_bytes_required == 0)
+        {
+            if (totalFragmentedByteCount < SizeOfHeader)
             {
-#if defined(__arm__)
-                memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
-                m_fragment_buffer_cnt += number_of_bytes_rx;
-
-                // Should now have a full header...how much is still required?
-                sMsgHeader* header = (sMsgHeader*)(m_fragment_buffer);
-                bytes_for_msg = m_sizeofheader + header->PayloadSize;
-
-                // No crashing for garbage received...data is parsed over, but not written to buffer.
-                if (bytes_for_msg > m_largest_message_size) {
-                    m_has_data_exceeding_fragment_buffer_size = true;
-                }
-#else
-                m_fragment_buffer.resize(m_fragment_buffer_cnt + number_of_bytes_rx);
-                memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
-                m_fragment_buffer_cnt += number_of_bytes_rx;
-
-                // Should now have a full header...how much is still required?
-                sMsgHeader* header = (sMsgHeader*)(&m_fragment_buffer[0]);
-                bytes_for_msg = m_sizeofheader + header->PayloadSize;
-#endif
-                PREAMBLE_SAFETY;
-
-                m_fragment_buffer_bytes_required = bytes_for_msg - m_fragment_buffer_cnt;
-
-                if (m_fragment_buffer_bytes_required == 0) // header only message
-                {
-#if defined(__arm__)
-                    m_msg_receiver->OnMessageReceived(m_fragment_buffer, m_fragment_buffer_cnt);
-#else
-                    m_msg_receiver->OnMessageReceived(&m_fragment_buffer[0], m_fragment_buffer_cnt);
-#endif
-                    RESET_FRAG;
-                }
-                return;
-            }
-
-            // Are we already processing fragmented data?
-            if (m_fragment_buffer_cnt == 0)
-            {
-                // Should now have a full header...how much is still required?
-                sMsgHeader* header = (sMsgHeader*)(data_buffer);
-                bytes_for_msg = m_sizeofheader + header->PayloadSize;
-                PREAMBLE_SAFETY;
-#if defined(__arm__)
-                // No crashing for garbage received...
-                if (bytes_for_msg > m_largest_message_size)
-                {
-                    m_has_data_exceeding_fragment_buffer_size = true;
-                }
-#endif // __arm__
-
-                if (number_of_bytes_rx == bytes_for_msg)			// Ideal case : the match
-                {
-                    m_msg_receiver->OnMessageReceived(data_buffer, number_of_bytes_rx);
-#if defined(__arm__)
-                    m_has_data_exceeding_fragment_buffer_size = false;
-#endif // __arm__
-                }
-                else if (number_of_bytes_rx < bytes_for_msg)		// Fragmented data received
-                {
-                    m_fragment_buffer_cnt = number_of_bytes_rx;
-#if defined(__arm__)
-                    // Check that there is enough space in the fragment buffer...
-                    if (!m_has_data_exceeding_fragment_buffer_size)
-                        memcpy((void*)&m_fragment_buffer[0], (void*)data_buffer, number_of_bytes_rx);
-#else				
-                    m_fragment_buffer.resize(number_of_bytes_rx);
-                    memcpy((void*)&m_fragment_buffer[0], (void*)data_buffer, number_of_bytes_rx);
-#endif // __arm__
-                    m_fragment_buffer_bytes_required = bytes_for_msg - number_of_bytes_rx;
-                }
-                else if (number_of_bytes_rx > bytes_for_msg)		// Concatenated data received
-                {
-                    m_msg_receiver->OnMessageReceived(data_buffer, bytes_for_msg);
-                    // Recurse
-                    OnDataReceived(&data_buffer[bytes_for_msg], number_of_bytes_rx - bytes_for_msg);
-                }
+                // There is some data in the fragment buffer but it was not enough to extract message information.
+                PutIntoFragmentBuffer(data, count);
             }
             else
             {
-                // **** CASE 5 : NEW
-                //There is some data in the frag buffer, but it wasnt enough to extract a header...
-                if (m_fragment_buffer_bytes_required == 0 && bytes_for_msg == 0 && m_fragment_buffer_cnt < m_sizeofheader)
+                // There is enough for a header. Extract the header.
+                uint32 size_to_process = SizeOfHeader - m_fragment_buffer_cnt;
+                PutIntoFragmentBuffer(data, size_to_process);
+                // Enough data is present to determine the required message size.
+                sMsgHeader* header = (sMsgHeader*)(&m_fragment_buffer[0]);
+                uint32 msgSize = SizeOfHeader + header->PayloadSize;
+#if defined(__arm__)
+                // No crashing for garbage received...data is parsed over, but not written to buffer.
+                m_has_data_exceeding_fragment_buffer_size = m_has_data_exceeding_fragment_buffer_size || (msgSize > m_largest_message_size);
+#endif
+                if (totalFragmentedByteCount < msgSize)
                 {
-                    if (no_bytes_rx_plus_in_frag_buf < m_sizeofheader)
+                    PutIntoFragmentBuffer(std::addressof(data[size_to_process]), count - size_to_process);
+#if defined(__arm__)
+#else
+                    m_fragment_buffer_cnt = m_fragment_buffer.size();
+#endif
+                    m_fragment_buffer_bytes_required = msgSize - m_fragment_buffer_cnt;
+                }
+                else
+                {
+                    uint32 rxBytesParsed = size_to_process;
+                    // Enough data to handle a full message ... and maybe more...
+                    PutIntoFragmentBuffer(std::addressof(data[size_to_process]), msgSize - SizeOfHeader);
+                    rxBytesParsed += (msgSize - SizeOfHeader);
+                    assert(m_fragment_buffer[0] == m_receiver_preamble_0 && m_fragment_buffer[1] == m_receiver_preamble_1); // TODO : remove? Handle?
+                    m_msg_receiver->OnMessageReceived(std::addressof(m_fragment_buffer[0]), msgSize);
+                    ResetFragmentation();
+
+                    if (count > rxBytesParsed) // Recurse
                     {
+                        OnDataReceived(std::addressof(data[rxBytesParsed]), count - rxBytesParsed);
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (count < m_fragment_buffer_bytes_required)		// Data is majorly fragmented
+            {
+                PutIntoFragmentBuffer(data, count);
+                m_fragment_buffer_bytes_required -= count;
+            }
+            else
+            {
+                uint32 rxBytesParsed = m_fragment_buffer_bytes_required;
+                PutIntoFragmentBuffer(data, m_fragment_buffer_bytes_required);
 #if defined(__arm__)
-                        memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
 #else
-                        m_fragment_buffer.resize(m_fragment_buffer_cnt + number_of_bytes_rx);
-                        memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
+                m_fragment_buffer_cnt = m_fragment_buffer.size();
 #endif
-                        m_fragment_buffer_cnt += number_of_bytes_rx;
+                assert(m_fragment_buffer[0] == m_receiver_preamble_0 && m_fragment_buffer[1] == m_receiver_preamble_1); // TODO : remove? Handle?
+                m_msg_receiver->OnMessageReceived(std::addressof(m_fragment_buffer[0]), m_fragment_buffer_cnt);
+                ResetFragmentation();
+
+                if (count > rxBytesParsed) // Recurse
+                {
+                    OnDataReceived(std::addressof(data[rxBytesParsed]), count - rxBytesParsed);
+                }
+            }
+        }
+    }
+    void IConnection::HandleUnfragmentedData(const uint8* data, const uint32 count)
+    {
+        DEBUG_CODE(assert(data[0] == m_receiver_preamble_0 && data[1] == m_receiver_preamble_1)); // TODO : remove? Handle?
+        DEBUG_CODE(auto start = FindPreamble(data, count));
+        DEBUG_CODE(assert(start.has_value()));
+        DEBUG_CODE(assert(start.value() == 0));
+
+        if (count < SizeOfHeader) // Less data RX than Header -> copy from start of header into fragment buffer.
+        {
+            PutIntoFragmentBuffer(std::addressof(data[0]), count);
+        }
+        else// More data RX than header
+        {
+            // Enough data is present to determine the required message size.
+            sMsgHeader* header = (sMsgHeader*)(&data[0]);
+            uint32 msgSize = SizeOfHeader + header->PayloadSize;
+            if (count < msgSize)
+            {
+#if defined(__arm__)
+                // No crashing for garbage received...data is parsed over, but not written to buffer.
+                m_has_data_exceeding_fragment_buffer_size = m_has_data_exceeding_fragment_buffer_size || (msgSize > m_largest_message_size);
+#endif
+                PutIntoFragmentBuffer(std::addressof(data[0]), count);
+                m_fragment_buffer_bytes_required = msgSize - count;
+            }
+            else
+            {
+                // Enough data to handle a full message ... and maybe more...
+                m_msg_receiver->OnMessageReceived(std::addressof(data[0]), msgSize);
+                if (count > msgSize) // Recurse
+                {
+                    OnDataReceived(std::addressof(data[0 + msgSize]), count - msgSize);
+                }
+            }
+        }
+    }
+    void IConnection::OnDataReceived(const uint8* data, const uint32 count)
+    {
+        if (count == 0)
+            return;
+
+        if (m_rawdata_receiver)
+        {
+            m_rawdata_receiver->OnDataReceived(data, count);
+        }
+
+        if (m_msg_receiver)
+        {
+            // What if someone puts in chars that dont match anything? USE the max message size...clear once it get to that...
+#if defined(__arm__)
+            //if (m_fragment_buffer_cnt >= m_largest_message_size /*&& m_fragment_buffer_bytes_required == 0*/)
+            //    ResetFragmentation();
+#else
+            size_t m_fragment_buffer_cnt = m_fragment_buffer.size();
+#endif
+            // Actual data starts at the preamble.
+            const uint8* actualData  = data;
+            uint32       actualCount = count;
+            // Early filtering : if not processing fragmented data,
+            // and the expected preamble is not found, then simply ignore the data.
+            if (0 == m_fragment_buffer_cnt)
+            {
+                if (count == 1)
+                {
+                    if (data[0] != m_receiver_preamble_0)
                         return;
-                    }
-                    else
-                    {
-                        // There is enough for a header. Dont unneccessarily use the frag buffer...just extract the header
-                        uint16 size_to_process = m_sizeofheader - m_fragment_buffer_cnt;
-#if defined(__arm__)
-                        memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, size_to_process);
-#else
-                        m_fragment_buffer.resize(m_fragment_buffer_cnt + size_to_process);
-                        memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, size_to_process);
-#endif
-                        m_fragment_buffer_cnt += size_to_process;
-
-                        // Should now have a full header...how much is still required?
-#if defined(__arm__)
-                        sMsgHeader* header = (sMsgHeader*)(m_fragment_buffer);
-#else
-                        sMsgHeader* header = (sMsgHeader*)(&m_fragment_buffer[0]);
-#endif
-                        bytes_for_msg = m_sizeofheader + header->PayloadSize;
-                        PREAMBLE_SAFETY;
-#if defined(__arm__)
-                        // No crashing for garbage received...data is parsed over, but not written to buffer.
-                        if (bytes_for_msg > m_largest_message_size) {
-                            m_has_data_exceeding_fragment_buffer_size = true;
-                        }
-#endif
-
-                        m_fragment_buffer_bytes_required = bytes_for_msg - m_fragment_buffer_cnt;
-                        // Recurse...
-                        if (number_of_bytes_rx - size_to_process > 0)
-                            OnDataReceived(&data_buffer[size_to_process], number_of_bytes_rx - size_to_process);
+                }
+                else if (count >= 2)
+                {
+                    auto start = FindPreamble(data, count);
+                    if (!start.has_value())
                         return;
-                    }
+
+                    actualData = std::addressof(data[start.value()]);
+                    actualCount= count - start.value();
                 }
-                // **** CASE 5 : NEW
-
-                if (number_of_bytes_rx < m_fragment_buffer_bytes_required)		// Data is majorly fragmented
-                {
-#if defined(__arm__)
-                    // Check that there is enough space in the fragment buffer...
-                    if (!m_has_data_exceeding_fragment_buffer_size)
-                        memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
-#else
-                    m_fragment_buffer.resize(m_fragment_buffer_cnt + number_of_bytes_rx);
-                    memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
-#endif // __arm__
-
-                    m_fragment_buffer_cnt += number_of_bytes_rx;
-                    m_fragment_buffer_bytes_required -= number_of_bytes_rx;
-                }
-                else if (number_of_bytes_rx == m_fragment_buffer_bytes_required)	// We have everything we need
-                {
-#if defined(__arm__)
-                    // Check that there is enough space in the fragment buffer...
-                    if (!m_has_data_exceeding_fragment_buffer_size)
-                        memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
-#else
-                    m_fragment_buffer.resize(m_fragment_buffer_cnt + number_of_bytes_rx);
-                    memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, number_of_bytes_rx);
-#endif // __arm__
-
-                    m_fragment_buffer_cnt += number_of_bytes_rx;
-
-#if defined(__arm__)
-                    m_msg_receiver->OnMessageReceived(m_fragment_buffer, m_fragment_buffer_cnt);
-#else
-                    m_msg_receiver->OnMessageReceived(&m_fragment_buffer[0], m_fragment_buffer_cnt);
-#endif
-
-                    RESET_FRAG;
-
-#if defined(__arm__)
-                    m_has_data_exceeding_fragment_buffer_size = false;
-#endif // __arm__
-                }
-                else if (number_of_bytes_rx > m_fragment_buffer_bytes_required)	// We received more : so the remained of the last fragment, concatenated to something else.
-                {
-
-
-#if defined(__arm__)
-                    // Check that there is enough space in the fragment buffer...
-                    if (!m_has_data_exceeding_fragment_buffer_size)
-                        memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, m_fragment_buffer_bytes_required);
-#else
-                    // Resize, only if non-zero
-                    if (m_fragment_buffer_bytes_required > 0) {
-                        m_fragment_buffer.resize(m_fragment_buffer_cnt + m_fragment_buffer_bytes_required);
-                        memcpy((void*)&m_fragment_buffer[m_fragment_buffer_cnt], (void*)data_buffer, m_fragment_buffer_bytes_required);
-                    }
-#endif // __arm__
-
-                    m_fragment_buffer_cnt += m_fragment_buffer_bytes_required;
-
-#if defined(__arm__)
-                    m_msg_receiver->OnMessageReceived(m_fragment_buffer, m_fragment_buffer_cnt);
-#else
-                    m_msg_receiver->OnMessageReceived(&m_fragment_buffer[0], m_fragment_buffer_cnt);
-#endif
-
-                    // Pass unhandled remainder recursively, but need to reset fragment buffer, as recursive call might use it...
-                    uint32 start = m_fragment_buffer_bytes_required;
-                    uint32 cnt = number_of_bytes_rx - m_fragment_buffer_bytes_required;
-                    RESET_FRAG;
-#if defined(__arm__)
-                    m_has_data_exceeding_fragment_buffer_size = false;
-#endif // __arm__
-                    OnDataReceived(&data_buffer[start], cnt);
-                }
+            }
+            if (m_fragment_buffer_cnt > 0 || (actualCount < SizeOfHeader))
+            {
+                HandleFragmentedData(actualData, actualCount);
+            }
+            else
+            {
+                HandleUnfragmentedData(actualData, actualCount);
             }
         }
     }

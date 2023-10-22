@@ -56,6 +56,16 @@
 #endif
 //-->> End
 
+#ifdef NDEBUG
+
+#define DEBUG_CODE(x)
+
+#else
+
+#define DEBUG_CODE(x) x
+
+#endif // DEBUG
+
 
 #ifdef USING_BOOST
     // If boost is defined, it should be dynamically linked, and this should be defined in the project settings.

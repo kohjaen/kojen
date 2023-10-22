@@ -265,9 +265,9 @@ namespace XKoJen
         }
 #endif
         if(auto protocolhandler = m_msg_handler.lock())
-            m_server->SetMsgReceiver(protocolhandler.get());
+            m_server->SetMsgReceiver(*protocolhandler.get());
         if (auto rawdatahandler = m_rawdata_handler.lock())
-            m_server->SetRawDataReceiver(rawdatahandler.get());
+            m_server->SetRawDataReceiver(*rawdatahandler.get());
 
         m_auto_reconnections.push_back(m_server->m_sig_OnConnectionRefused.connect(boost::bind(&CSerialPort::DoReconnect, this)));
         m_auto_reconnections.push_back(m_server->m_sig_OnConnectionClosed.connect(boost::bind(&CSerialPort::DoConnectionClosed, this, _1)));
