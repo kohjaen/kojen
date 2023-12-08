@@ -28,6 +28,7 @@
 #include "basetypes.h"
 #include "IMsgReceiver.h"
 #include "IRawDataReceiver.h"
+#include <optional>
 
 #if defined(__arm__)
 #else
@@ -88,12 +89,12 @@ namespace XKoJen
         /** Set the receiver for protocol communications. No messages will flow otherwise...
             Setting this will clear the rawdatareceiver.
         */
-        void SetMsgReceiver(IMsgReceiver* receiver);
+        void SetMsgReceiver(IMsgReceiver& receiver);
         bool HasMsgReceiver() const;
         /** Set the receiver for raw data communications. No data will flow otherwise...
             Setting this will clear the message receiver
         */
-        void SetRawDataReceiver(IRawDataReceiver* receiver);
+        void SetRawDataReceiver(IRawDataReceiver& receiver);
         bool HasRawDataReceiver() const;
         virtual ~IConnection();
 
@@ -107,24 +108,21 @@ namespace XKoJen
 #else
     protected:
         IConnection();
-        std::mutex									m_request_disconnect_mutex;
-        bool										m_request_disconnect;
+        std::mutex m_request_disconnect_mutex;
+        bool m_request_disconnect;
 #endif // __arm__
+        void PutIntoFragmentBuffer(const uint8* data, const uint32 count);
+        std::optional<uint32> FindPreamble(const uint8* data, const uint32 count);
+        void HandleFragmentedData(const uint8* data, const uint32 count);
+        void HandleUnfragmentedData(const uint8* data, const uint32 count);
+        void ResetFragmentation();
         /** Each derived transport layer connection should assume that there could be some fragmentation
             in the data that flows (either it is a bunch of messages concatenated, in the case of a fast burst of small messages,
             or its seperate parts of a larger message).
 
             Therefore, each derived transport layer connection should enter all its received data here, it will handle this.
         */
-        void OnDataReceived( const uint8* data_buffer, const uint32& number_of_bytes );
-
-#if defined(__arm__)
-        uint8  m_fragment_buffer[FRAGMENT_BUF_SIZE];
-        uint16 m_fragment_buffer_cnt;
-#else
-        std::vector< uint8 > m_fragment_buffer;
-#endif
-        uint32 m_fragment_buffer_bytes_required;
+        void OnDataReceived(const uint8* data, const uint32 count);
 
         IMsgReceiver* m_msg_receiver;
         IRawDataReceiver* m_rawdata_receiver;
@@ -139,9 +137,11 @@ namespace XKoJen
 #if defined(__arm__)
         uint16 m_largest_message_size;
         bool m_has_data_exceeding_fragment_buffer_size;
+        uint8  m_fragment_buffer[FRAGMENT_BUF_SIZE];
+        uint16 m_fragment_buffer_cnt;
+#else
+        std::vector< uint8 > m_fragment_buffer;
 #endif // __arm__
-
-        // This connection parses a specific header. Cache the size once.
-        const uint16 m_sizeofheader;
+        uint32 m_fragment_buffer_bytes_required;
     };
 }
