@@ -45,7 +45,7 @@ import os
 
     Step 1) Load template files to memory
     Step 2) Search and replace passed-in tags in memory (including filenames).
-    
+
 '''
 
 __TAG_DATETIME__           = '<<<DATETIME>>>'
@@ -605,9 +605,9 @@ def FileCopyUtil(dir_from, dir_to, list_of_filenames):
             try:
                 shutil.copy(os.path.join(dir_from, filename), os.path.join(dir_to, filename))
             except OSError:
-                warnings.warn("Copy of the file %s failed" % os.path.join(dir_from, filename))
+                warning("Copy of the file %s failed" % os.path.join(dir_from, filename))
     except OSError:
-        warnings.warn("Creation of the directory %s failed" % dir_to)
+        warning("Creation of the directory %s failed" % dir_to)
 
 def FilePreservationSyncUtil(file_from, file_to) -> None:
     """
