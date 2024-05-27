@@ -27,7 +27,7 @@ jobs:
       max-parallel: 2 # Try to save memory
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.8, 3.9, 3.10.9, 3.11, 3.12]
+        python-version: [3.8, 3.9, 3.10, 3.11, 3.12]
         dotnet-version: [ '6.0.x' ]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
