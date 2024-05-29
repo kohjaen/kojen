@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 try:
-    from . import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython, cgen
+    from . import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython, cgen, Install
 except:
-    import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython, cgen
+    import protogen, smgen, umlgen, coggen, vppfs, LanguageCPP, LanguageCsharp, LanguagePython, cgen, Install
 
 import os
 
-''' Generate Entry function for Protocols. 
+''' Generate Entry function for Protocols.
 '''
 
 
@@ -14,6 +14,10 @@ import os
 #    return protogen.Generate(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec, author, group, brief, template_dir)
 
 def Protocol(outputdir, eventsinterface, namespacenname, classname, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
+    if not os.path.isabs(templatedir):
+        # Is it a user template?
+        if Install.ContainsTemplates(templatedir):
+            templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
     if not templatedir.strip():
         templatedir = os.path.join(os.path.join(os.path.abspath(os.path.dirname(__file__)), "protocol_templates"), "CPP")
     res =  StateMachine(outputdir, [], eventsinterface, namespacenname, classname, dclspc, author, group, brief, templatedir, __internal, False)
@@ -29,11 +33,16 @@ def Protocol(outputdir, eventsinterface, namespacenname, classname, dclspc="", a
 
 
 def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
+    if not os.path.isabs(templatedir):
+        # Is it a user template?
+        if Install.ContainsTemplates(templatedir):
+            templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
+
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_embedded_arm")
 
     if not os.path.isdir(templatedir) and not os.path.isfile(templatedir):
-        print("Error : dir '" + templatedir + "' does not exist. Aborting.")
+        print("Error : path '" + templatedir + "' does not exist. Aborting.")
         return
 
     language = LanguageCPP.LanguageCPP()
@@ -46,11 +55,16 @@ def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, s
 
 
 def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
+    if not os.path.isabs(templatedir):
+        # Is it a user template?
+        if Install.ContainsTemplates(templatedir):
+            templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
+
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_cs_winlinmac")
 
     if not os.path.isdir(templatedir) and not os.path.isfile(templatedir):
-        print("Error : dir '" + templatedir + "' does not exist. Aborting.")
+        print("Error : path '" + templatedir + "' does not exist. Aborting.")
         return []
 
     language = LanguageCsharp.LanguageCsharp()
@@ -63,11 +77,16 @@ def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacen
 
 
 def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
+    if not os.path.isabs(templatedir):
+        # Is it a user template?
+        if Install.ContainsTemplates(templatedir):
+            templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
+
     if not templatedir.strip():
         templatedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "statemachine_templates_py")
 
     if not os.path.isdir(templatedir) and not os.path.isfile(templatedir):
-        print("Error : dir '" + templatedir + "' does not exist. Aborting.")
+        print("Error : path '" + templatedir + "' does not exist. Aborting.")
         return []
 
     language = LanguagePython.LanguagePython()
@@ -80,6 +99,11 @@ def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacen
 
 
 def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __copy_other_files=True) -> list:
+    if not os.path.isabs(templatedir):
+        # Is it a user template?
+        if Install.ContainsTemplates(templatedir):
+            templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
+
     transition_table = vppfs.ExtractTransitionTable(vp_statemachinename, vp_project_path)
     return StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc, author, group, brief, templatedir, os.path.basename(vp_project_path),__copy_other_files)
 
@@ -89,6 +113,11 @@ def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, event
 
 
 def UML(outputdir, vp_project_path, vp_classdiagramname, dclspc="", author="", group="", brief="", namespace_to_folders=False, templatefiledir="") -> list:
+    if not os.path.isabs(templatefiledir):
+        # Is it a user template?
+        if Install.ContainsTemplates(templatefiledir):
+            templatefiledir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatefiledir))
+
     language = LanguageCPP.LanguageCPP()
     return umlgen.Generate(vp_project_path, vp_classdiagramname, outputdir, language, author, group, brief, namespace_to_folders, dclspc, templatefiledir)
 

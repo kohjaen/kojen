@@ -13,9 +13,23 @@ def _checkPath(template_path) -> bool:
     if not template_path.strip():
         print("Error : path empty. Aborting.")
         return False
-    if not os.path.isfile(template_path) and not os.path.isdir(template_path):
+    isFile = os.path.isfile(template_path)
+    isDir = os.path.isdir(template_path)
+
+    if not isFile and not isDir:
         print("Error : path '" + template_path + "' does not exist. Aborting.")
         return False
+    if isFile:
+        if not os.path.exists(template_path):
+            print("Error : path '" + template_path + "' does not exist. Aborting.")
+            return False
+    if isDir:
+        if not os.path.exists(template_path):
+            print("Error : path '" + template_path + "' does not exist. Aborting.")
+            return False
+        if os.listdir(template_path) == []:
+            print("Error : path '" + template_path + "' contains no files. Aborting.")
+            return False
     return True
 
 def InstallTemplates(template_path) -> None:
