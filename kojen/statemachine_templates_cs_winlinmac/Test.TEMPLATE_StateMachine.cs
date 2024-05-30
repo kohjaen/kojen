@@ -13,6 +13,7 @@
 #define VERBOSE_<<<Verbose::1>>>
 
 using System;
+using System.Threading;
 using <<<NAMESPACE>>>;
 // {{{USER_USING_DECLARATIONS}}}
 // {{{USER_USING_DECLARATIONS}}}
@@ -54,7 +55,7 @@ namespace <<<NAMESPACE>>>Test
         {
             // {{{USER_<<<ACTIONNAME>>>_<<<EVENTNAME>>>}}}
             // {{{USER_<<<ACTIONNAME>>>_<<<EVENTNAME>>>}}}
-            //handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.Set();
+            handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.Set();
 #if VERBOSE_1
             Console.WriteLine("<<<STATEMACHINENAME>>> >> <<<ACTIONNAME>>> on event <<<EVENTNAME>>>...");
 #endif
@@ -85,7 +86,7 @@ namespace <<<NAMESPACE>>>Test
         ///
         /// </summary>
         <<<PER_ACTION_SIGNATURE_BEGIN>>>
-        //OsWrappers::Event handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry;
+        AutoResetEvent handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry = new AutoResetEvent(false);
         <<<PER_ACTION_SIGNATURE_END>>>
 
         /// <summary>
@@ -94,8 +95,8 @@ namespace <<<NAMESPACE>>>Test
         <<<PER_ACTION_SIGNATURE_BEGIN>>>
         public void Check<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry()
         {
-            //CHECK_TRUE(cSuccess == handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.TimedWait(cEventTimeoutMs));
-            //handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.Reset();
+            handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.WaitOne();
+            handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry.Set();
         }
         <<<PER_ACTION_SIGNATURE_END>>>
         // {{{USER_MEMBERS}}}
@@ -117,7 +118,7 @@ namespace <<<NAMESPACE>>>Test
         // {{{USER_TESTS}}}
         // {{{USER_TESTS}}}
         [Fact]
-        public void Run() 
+        public void Run()
         {
             Test<<<STATEMACHINENAME>>>States();
             // Don't forget to run your tests here.
