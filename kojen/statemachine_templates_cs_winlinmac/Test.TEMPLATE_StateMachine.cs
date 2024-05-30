@@ -86,7 +86,7 @@ namespace <<<NAMESPACE>>>Test
         ///
         /// </summary>
         <<<PER_ACTION_SIGNATURE_BEGIN>>>
-        AutoResetEvent handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry = new AutoResetEvent(false);;
+        AutoResetEvent handle<<<ACTIONNAME>>>On<<<EVENTNAME>>>Entry = new AutoResetEvent(false);
         <<<PER_ACTION_SIGNATURE_END>>>
 
         /// <summary>
