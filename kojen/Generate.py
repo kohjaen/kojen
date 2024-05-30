@@ -14,7 +14,7 @@ import os
 #    return protogen.Generate(output_dir, pythoninterfacegeneratorfilename, namespacename, classname, declspec, author, group, brief, template_dir)
 
 def Protocol(outputdir, eventsinterface, namespacenname, classname, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
-    if not os.path.isabs(templatedir):
+    if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
             templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
@@ -33,7 +33,7 @@ def Protocol(outputdir, eventsinterface, namespacenname, classname, dclspc="", a
 
 
 def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
-    if not os.path.isabs(templatedir):
+    if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
             templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
@@ -55,7 +55,7 @@ def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, s
 
 
 def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
-    if not os.path.isabs(templatedir):
+    if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
             templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
@@ -77,7 +77,7 @@ def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacen
 
 
 def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True) -> list:
-    if not os.path.isabs(templatedir):
+    if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
             templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
@@ -99,7 +99,7 @@ def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacen
 
 
 def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __copy_other_files=True) -> list:
-    if not os.path.isabs(templatedir):
+    if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
             templatedir = os.path.join(Install.getUserTemplateRoot(), os.path.normpath(templatedir))
