@@ -14,6 +14,7 @@ except (ModuleNotFoundError, ImportError) as e:
 	from preservative import *
 
 import os
+import re
 
 '''
 
@@ -153,22 +154,21 @@ class PairExpander:
 
 
 '''------------------------------------------------------------------------------------------------------'''
-alpha = 97
 
 
-def get_next_alphabet() -> str:
-    global alpha
+def get_next_alphabet(alpha) -> int:
     alpha = alpha + 1
     if alpha == 123:
         alpha = 65
     if alpha == 91:
         alpha = 97
-    return chr(alpha)
+    return alpha
 
 
-def reset_alphabet() -> str:
-    global alpha
-    alpha = 97
+def reset_alphabet() -> int:
+    return 97
+
+def alphabet_to_string(alpha) -> str:
     return chr(alpha)
 
 
@@ -177,13 +177,31 @@ def even_space(a, nospaces=35) -> str:
 
 
 def camel_case(str) -> str:
+    """A function to convert a string to CamelCase"""
     return str.title()
 
 
 def camel_case_small(a) -> str:
+    """A function to convert a string to camelCase"""
     if a:
         return a[0].lower() + a[1:]
     return ""
+
+def snake_case(a) -> str:
+    """A function to convert a string to snake_case."""
+    # Replace hyphens and dots with underscores
+    s = re.sub(r'[-.]+', '_', a)
+    # Replace spaces with underscores
+    s = s.replace(' ', '_')
+    # Insert underscores before uppercase letters (only if preceded by a lowercase letter)
+    s = re.sub(r'(?<=[a-z])(?=[A-Z])', '_', s)
+    # Convert to lowercase
+    s = s.lower()
+    # Remove leading and trailing underscores
+    s = s.strip('_')
+    # Remove consecutive underscores
+    s = re.sub(r'__+', '_', s)
+    return s
 
 
 def caps(a) -> str:
@@ -320,9 +338,9 @@ class CGenerator:
                         to_add.append(l.replace(__TAG_EACH__, i.strip())
                                   .replace(__TAG_EACH_CAMELCAPS__, camel_case_small(i.strip()))
                                   .replace(__TAG_123__, str(cnt))
-                                  .replace(__TAG_ABC__, alpha))
+                                  .replace(__TAG_ABC__, alphabet_to_string(alpha)))
                 cnt = cnt + 1
-                alpha = get_next_alphabet()
+                alpha = get_next_alphabet(alpha)
             if first:
                 to_add.insert(0, first)
             if last:
