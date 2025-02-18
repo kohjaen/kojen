@@ -107,10 +107,88 @@ class TestFeatures(unittest.TestCase):
 
     def test_alpha(self):
         for i in range(100):
-            s = reset_alphabet()
+            a = reset_alphabet()
+            s = alphabet_to_string(a)
             for j in range(26*2-1):
-                s+=get_next_alphabet()
+                a = get_next_alphabet(a)
+                s+=alphabet_to_string(a)
             self.assertEqual(s,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+    def test_even_space(self):
+        a = "someWord"
+        len_a = len(a)
+        b = even_space(a, int(len_a/2))
+        self.assertEqual(b, "someWord")
+        b = even_space(a, len_a)
+        self.assertEqual(b, "someWord")
+        b = even_space(a, len_a * 2)
+        self.assertEqual(b, "someWord        ")
+
+
+    def test_camel_case(self):
+        a = camel_case("bla")
+        self.assertEqual(a, "Bla")
+        a = camel_case("Bla")
+        self.assertEqual(a, "Bla")
+        a = camel_case("BlaBla")
+        self.assertEqual(a, "Blabla")
+        a = camel_case("blaBla")
+        self.assertEqual(a, "Blabla")
+
+    def test_camel_case_small(self):
+        a = camel_case_small("bla")
+        self.assertEqual(a, "bla")
+        a = camel_case_small("Bla")
+        self.assertEqual(a, "bla")
+        a = camel_case_small("BlaBla")
+        self.assertEqual(a, "blaBla")
+        a = camel_case_small("blaBla")
+        self.assertEqual(a, "blaBla")
+
+    def test_snake_case(self):
+        all1 = []
+        all1.append('Bar')
+        all1.append('-Bar')
+        all1.append('_bar')
+        all1.append('--.bar')
+        all1.append('-BAR')
+        all1.append('BAR')
+        all1.append(' bar')
+        for a in all1:
+            self.assertEqual("bar", snake_case(a), f"Function 'snake_case' failed (1) -> {a}")
+
+        all2 = []
+        all2.append('FooBar')
+        all2.append('Foo-Bar')
+        all2.append('foo_bar')
+        all2.append('--foo.bar')
+        all2.append('Foo-BAR')
+        #all2.append('fooBAR')
+        all2.append('foo bar')
+        for a in all2:
+            self.assertEqual("foo_bar", snake_case(a), f"Function 'snake_case' failed (2) -> {a}")
+
+        all3 = []
+        all3.append('FooBarFoo')
+        all3.append('Foo-Bar-Foo')
+        all3.append('foo_bar_foo')
+        all3.append('--foo.bar.foo-')
+        all3.append('Foo-BAR_Foo')
+        #all3.append('fooBARfoo')
+        all3.append('foo bar foo')
+        for a in all3:
+            self.assertEqual("foo_bar_foo", snake_case(a), f"Function 'snake_case' failed (3) -> {a}")
+
+        all4 = []
+        all4.append('FooBarFooBar')
+        all4.append('Foo-Bar-Foo-Bar')
+        all4.append('foo_bar_foo_bar')
+        all4.append('--foo.bar--foo.bar')
+        all4.append('Foo-BAR.Foo-BAR')
+        #all4.append('fooBARfooBAR')
+        all4.append('foo bar foo bar')
+        for a in all4:
+            self.assertEqual("foo_bar_foo_bar", snake_case(a), f"Function 'snake_case' failed (4) -> {a}.")
 
 
     def test_getWhitespace(self):
