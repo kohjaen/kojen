@@ -161,6 +161,7 @@ class TestFeatures(unittest.TestCase):
         input.append("<<<SIGNATUREWITHDEFAULTS>>>")
         input.append("<<<PER_MSG_END>>>")
         return input
+    
     def createIfNestedMsgWithDefalts(self, allDefaults = True):
         s = Struct("s")
         s.AddType("myApple", "apple", 1)
@@ -456,6 +457,135 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[3], "  *  *  line4\n")
         self.assertEqual(output[4], "  *  *  line5\n")
         self.assertEqual(output[5], "  *  *  line6\n")
+
+    def test_user_if_endif_no_valid_tags(self):
+        input = []
+        input.append("// 1")
+        input.append("<<<IF feefiefoefum>>>")
+        input.append("  <<<ThisIsValue>>>")
+        input.append("<<<ENDIF>>>")
+        input.append("// 2")
+        input.append("// 3")
+        input.append("<<<IF abracadabra>>>")
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("~~ <<<EVENT_NAME>>> ~~")
+        input.append("<<<PER_EVENT_END>>>")
+        input.append("<<<ENDIF>>>")
+        input.append("// 4")
+        
+        i = Interface('')
+        s = Struct("someStruct")
+        s2 = Struct("someOtherStruct")
+        i.AddStruct(s)
+        i.AddStruct(s2)
+
+        # param, no default
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 4)
+        self.assertEqual(output[0], "// 1\n")
+        self.assertEqual(output[1], "// 2\n")
+        self.assertEqual(output[2], "// 3\n")
+        self.assertEqual(output[3], "// 4\n")
+
+    def test_user_if_endif_valid_tags(self):
+        input = []
+        input.append("// 1")
+        input.append("<<<IF feefiefoefum>>>")
+        input.append("  <<<ThisIsValue>>>")
+        input.append("<<<ENDIF>>>")
+        input.append("// 2")
+        input.append("// 3")
+        input.append("<<<IF abracadabra>>>")
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("~~ <<<EVENT_NAME>>> ~~")
+        input.append("<<<PER_EVENT_END>>>")
+        input.append("<<<ELSE>>>")
+        input.append(" 0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append("// 4")
+        
+        i = Interface('')
+        i.AddUserTag("feefiefoefum", None) # Does it matter what this is?
+        i.AddUserTag("abracadabra", None)
+        s = Struct("someStruct")
+        s2 = Struct("someOtherStruct")
+        i.AddStruct(s)
+        i.AddStruct(s2)
+
+        # param, no default
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 7)
+        self.assertEqual(output[0], "// 1\n")
+        self.assertEqual(output[1], "  <<<ThisIsValue>>>\n")
+        self.assertEqual(output[2], "// 2\n")
+        self.assertEqual(output[3], "// 3\n")
+        self.assertEqual(output[4], "~~ some_struct ~~\n")
+        self.assertEqual(output[5], "~~ some_other_struct ~~\n")
+        self.assertEqual(output[6], "// 4\n")
+
+    def test_user_if_elif_endif_valid_tags(self):
+        input = []
+        input.append("// 1")
+        input.append("<<<IF feefiefoefum>>>")
+        input.append("  <<<ThisIsValue>>>")
+        input.append("<<<ELSEIF abracadabra>>>")
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("~~ <<<EVENT_NAME>>> ~~")
+        input.append("<<<PER_EVENT_END>>>")
+        input.append("<<<ELSEIF bbbbbbbbbbb>>>")
+        input.append(" >>>>>>   <<<<<<  ")
+        input.append("<<<ELSE>>>")
+        input.append(" 0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append("// 4")
+        
+        i = Interface('')
+        #i.AddUserTag("feefiefoefum", None) # Does it matter what this is?
+        i.AddUserTag("abracadabra", None)
+        s = Struct("someStruct")
+        s2 = Struct("someOtherStruct")
+        i.AddStruct(s)
+        i.AddStruct(s2)
+
+        # param, no default
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 4)
+        self.assertEqual(output[0], "// 1\n")
+        self.assertEqual(output[1], "~~ some_struct ~~\n")
+        self.assertEqual(output[2], "~~ some_other_struct ~~\n")
+        self.assertEqual(output[3], "// 4\n")
+
+    def test_user_if_elif_else_endif_invalid_tags(self):
+        input = []
+        input.append("// 1")
+        input.append("<<<IF feefiefoefum>>>")
+        input.append("  <<<ThisIsValue>>>")
+        input.append("<<<ELSEIF abracadabra>>>")
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("~~ <<<EVENT_NAME>>> ~~")
+        input.append("<<<PER_EVENT_END>>>")
+        input.append("<<<ELSEIF bbbbbbbbbbb>>>")
+        input.append(" >>>>>>   <<<<<<  ")
+        input.append("<<<ELSE>>>")
+        input.append(" 0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append("// 4")
+        
+        i = Interface('')
+        #i.AddUserTag("feefiefoefum", None) # Does it matter what this is?
+        #i.AddUserTag("abracadabra", None)
+        s = Struct("someStruct")
+        s2 = Struct("someOtherStruct")
+        i.AddStruct(s)
+        i.AddStruct(s2)
+
+        # param, no default
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 3)
+        self.assertEqual(output[0], "// 1\n")
+        self.assertEqual(output[1], " 0xBADFOOD\n")
+        self.assertEqual(output[2], "// 4\n")
+
     '''
     def test_split(self):
         s = 'hello world'
