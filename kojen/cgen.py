@@ -266,7 +266,7 @@ def replaceUserTags(line, dict_key_vals):
     for tag, value in dict_key_vals.items():
         if value == None: # None is allowed ... it should be '' and not 'None'.
             value = ""
-        line = line.replace(tag, str(value))
+        line = line.replace(f'<<<{tag}>>>', str(value))
     if taganddefault[1].strip():
         line = line.replace(taganddefault[0], taganddefault[1])
     line = line.replace('<<<','').replace('>>>','')

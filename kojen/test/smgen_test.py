@@ -667,6 +667,21 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[2], "extern template class StrawberryStateMachine<FruitSalad>;\n")
         self.assertEqual(output[3], "// 4\n")
 
+    def test_duplicate_label_usertags(self):
+        input = []
+        input.append("[something(IsClean.<<<IsClean=Soap>>>)]")
+        i = Interface('')
+        i.AddUserTag("IsClean", "Toothpaste")
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "[something(IsClean.Toothpaste)]\n")
+
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "[something(IsClean.Soap)]\n")
+
 
     '''
     def test_split(self):
