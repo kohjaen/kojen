@@ -34,7 +34,9 @@ __TAG_NAMESPACE__                   = '<<<NAMESPACE>>>'
 __TAG_SM_NAME__                     = '<<<STATEMACHINENAME>>>'       # As given
 __TAG_SM_NAME_SMALL_CAMEL__         = '<<<stateMachineName>>>'       # camelCaps
 __TAG_SM_NAME_UPPER__               = '<<<STATEMACHINENAMEUPPER>>>'  # ALL UPPER
+__TAG_SM_NAME_SNAKE__               = '<<<STATE_MACHINE_NAME>>>'     # snake case
 __TAG_CLASS_NAME__                  = '<<<CLASSNAME>>>'
+__TAG_CLASS_NAME_SNAKE__            = '<<<CLASS_NAME>>>'
 __TAG_PyIFGen_NAME__                = '<<<PYIFGENNAME>>>'
 __TAG_ENUMERATIONS__                = '<<<ENUMS>>>'
 
@@ -62,16 +64,22 @@ __TAG_PG_END__                      = "<<<PER_GUARD_END>>>"
 
 __TAG_STATENAME__                   = '<<<STATENAME>>>'            # As given
 __TAG_STATENAME_SMALL_CAMEL__       = '<<<stateName>>>'            # camelCaps
+__TAG_STATENAME_SNAKE__             = '<<<STATE_NAME>>>'           # snake case
 __TAG_NEXTSTATENAME__               = '<<<NEXTSTATENAME>>>'        # As given
 __TAG_NEXTSTATENAME_SMALL_CAMEL__   = '<<<nextStateName>>>'        # camelCaps
+__TAG_NEXTSTATENAME_SNAKE__         = '<<<NEXT_STATE_NAME>>>'      # snake case
 __TAG_STATENAME_IF_NEXTSTATE__      = '<<<STATENAMEIFNEXTSTATE>>>' # As given
 __TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__      = '<<<stateNameIfNextState>>>' # As given
+__TAG_STATENAME_IF_NEXTSTATE_SNAKE__      = '<<<STATE_NAME_IF_NEXT_STATE>>>' # snake case
 __TAG_EVENTNAME__                   = '<<<EVENTNAME>>>'            # As given
 __TAG_EVENTNAME_SMALL_CAMEL__       = '<<<eventName>>>'            # camelCaps
+__TAG_EVENTNAME_SNAKE__             = '<<<EVENT_NAME>>>'           # snake case
 __TAG_ACTIONNAME__                  = '<<<ACTIONNAME>>>'           # As given
 __TAG_ACTIONNAME_SMALL_CAMEL__      = '<<<actionName>>>'           # camelCaps
+__TAG_ACTIONNAME_SNAKE__            = '<<<ACTION_NAME>>>'          # snake case
 __TAG_GUARDNAME__                   = '<<<GUARDNAME>>>'            # As given
 __TAG_GUARDNAME_SMALL_CAMEL__       = '<<<guardName>>>'            # camelCaps
+__TAG_GUARDNAME_SNAKE__             = '<<<GUARD_NAME>>>'           # snake case
 
 __TAG_ABC__                         = '<<<ALPH>>>'
 __TAG_123__                         = '<<<NUM>>>'
@@ -232,14 +240,18 @@ class CTransitionTableModel(CStateMachineModel):
             if tableline[self.ACTION] != "" and tableline[self.ACTION].lower() != "none":
                 transition[__TAG_ACTIONNAME__] = tableline[self.ACTION]
                 transition[__TAG_ACTIONNAME_SMALL_CAMEL__] = camel_case_small(tableline[self.ACTION])
+                transition[__TAG_ACTIONNAME_SNAKE__] = snake_case(tableline[self.ACTION])
             if tableline[self.GUARD] != "" and tableline[self.GUARD].lower() != "none":
                 transition[__TAG_GUARDNAME__] = tableline[self.GUARD]
+                transition[__TAG_GUARDNAME_SNAKE__] = snake_case(tableline[self.GUARD])
                 transition[__TAG_GUARDNAME_SMALL_CAMEL__] = camel_case_small(tableline[self.GUARD])
             if tableline[self.NEXT_STATE] != "" and tableline[self.NEXT_STATE].lower() != "none":
                 transition[__TAG_STATENAME_IF_NEXTSTATE__] = tableline[self.START_STATE]
                 transition[__TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__] = camel_case_small(tableline[self.START_STATE])
+                transition[__TAG_STATENAME_IF_NEXTSTATE_SNAKE__] = snake_case(tableline[self.START_STATE])
                 transition[__TAG_NEXTSTATENAME__] = tableline[self.NEXT_STATE]
                 transition[__TAG_NEXTSTATENAME_SMALL_CAMEL__] = camel_case_small(tableline[self.NEXT_STATE])
+                transition[__TAG_NEXTSTATENAME_SNAKE__] = snake_case(tableline[self.NEXT_STATE])
 
             if tableline[self.START_STATE] != "" and tableline[self.START_STATE].lower() != "none":
                 if not tableline[self.START_STATE] in self.transitionsperstate:
@@ -275,8 +287,10 @@ class CStateMachineGenerator(CGenerator):
         dict_to_replace_lines = {}
         dict_to_replace_lines[__TAG_SM_NAME_UPPER__] = caps(smmodel.statemachinename)
         dict_to_replace_lines[__TAG_SM_NAME_SMALL_CAMEL__] = camel_case_small(smmodel.statemachinename)
+        dict_to_replace_lines[__TAG_SM_NAME_SNAKE__] = snake_case(smmodel.statemachinename)
         dict_to_replace_lines[__TAG_SM_NAME__] = smmodel.statemachinename
         dict_to_replace_lines[__TAG_CLASS_NAME__] = smmodel.statemachinename
+        dict_to_replace_lines[__TAG_CLASS_NAME_SNAKE__] = snake_case(smmodel.statemachinename)
         dict_to_replace_lines[__TAG_PyIFGen_NAME__] = smmodel.pythoninterfacegeneratorfilename.replace('.py', '')  # hack : for tcpgen simple templates,
         if not dict_to_replace_lines[__TAG_PyIFGen_NAME__]:
             dict_to_replace_lines[__TAG_PyIFGen_NAME__] = self.vpp_filename
@@ -358,12 +372,17 @@ class CStateMachineGenerator(CGenerator):
                 newline = line.replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_STATENAME__, name)
                 newline = newline.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(name))
+                newline = newline.replace(__TAG_STATENAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_EVENTNAME__, name)
+                newline = newline.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(name))
+                newline = newline.replace(__TAG_EVENTNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_ACTIONNAME__, name)
                 newline = newline.replace(__TAG_ACTIONNAME_SMALL_CAMEL__, camel_case_small(name))
+                newline = newline.replace(__TAG_ACTIONNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_GUARDNAME__, name)
                 newline = newline.replace(__TAG_GUARDNAME_SMALL_CAMEL__, camel_case_small(name))
-                newline = newline.replace(__TAG_ABC__, alpha)
+                newline = newline.replace(__TAG_GUARDNAME_SNAKE__, snake_case(name))
+                newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
                 if hasSpecificTag(newline,__TAG_SIGNATURE__):
@@ -423,7 +442,7 @@ class CStateMachineGenerator(CGenerator):
                     continue
                 alllinesexpanded.append(newline)
             cnt = cnt + 1
-            alpha = get_next_alphabet()
+            alpha = get_next_alphabet(alpha)
 
     ### CONSOLODATE ... this is essentially a copy-paste of the above ...
     def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items):
@@ -444,7 +463,7 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_MSGNAME__, name)
                 newline = newline.replace(__TAG_PROTOMSGNAME__, name)
                 newline = newline.replace(__TAG_PROTOMSGNAME_SMALL_CAMEL__, camel_case_small(name))
-                newline = newline.replace(__TAG_ABC__, alpha)
+                newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
                 if hasSpecificTag(newline, __TAG_SIGNATURE__):
@@ -518,7 +537,7 @@ class CStateMachineGenerator(CGenerator):
                     continue
                 alllinesexpanded.append(newline)
             cnt = cnt + 1
-            alpha = get_next_alphabet()
+            alpha = get_next_alphabet(alpha)
     ###
 
     def innerexpand_actionsignatures(self, snippet_to_expand, alllinesexpanded, states):
@@ -533,12 +552,14 @@ class CStateMachineGenerator(CGenerator):
                 alllinesexpanded.append(line
                             .replace(__TAG_ACTIONNAME_SMALL_CAMEL__, camel_case_small(actionname))
                             .replace(__TAG_ACTIONNAME__, actionname)
+                            .replace(__TAG_ACTIONNAME_SNAKE__, snake_case(actionname))
                             .replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventname))
                             .replace(__TAG_EVENTNAME__, eventname)
-                            .replace(__TAG_ABC__, alpha)
+                            .replace(__TAG_EVENTNAME_SNAKE__, snake_case(eventname))
+                            .replace(__TAG_ABC__, alphabet_to_string(alpha))
                             .replace(__TAG_123__, str(cnt)))
             cnt = cnt + 1
-            alpha = get_next_alphabet()
+            alpha = get_next_alphabet(alpha)
 
     def innerexpand_msm(self, output, whitespace, smmodel):
         len_tt = len(smmodel.transition_table)
@@ -627,14 +648,14 @@ class CStateMachineGenerator(CGenerator):
     def filterStateName(self, lines, stateName):
         result = []
         for l in lines:
-            result.append(l.replace(__TAG_STATENAME__, stateName).replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(stateName)))
+            result.append(l.replace(__TAG_STATENAME__, stateName).replace(__TAG_STATENAME_SMALL_CAMEL__, camel_case_small(stateName)).replace(__TAG_STATENAME_SNAKE__, snake_case(stateName)))
         return result
 
 
     def filterEventName(self, lines, eventName):
         result = []
         for l in lines:
-            result.append(l.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName)))
+            result.append(l.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName)).replace(__TAG_EVENTNAME_SNAKE__, snake_case(eventName)))
         return result
 
 
@@ -663,13 +684,20 @@ class CStateMachineGenerator(CGenerator):
                         l = l.replace(k, v)
                     # l = l.replace(__TAG_EVENTNAME__, eventName)
                     # l = l.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
+                    # l = l.replace(__TAG_EVENTNAME_SNAKE__, snake_case(eventName))
                     # If there is no guard, or no next state, or no action, just remove it (or replace it with the alternative text). Leave no hanging code.
-                    if hasSpecificTag(l, __TAG_GUARDNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_GUARDNAME__) or hasSpecificTag(l, __TAG_NEXTSTATENAME__) or hasSpecificTag(l, __TAG_ACTIONNAME__) or hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE__) or hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__):
+                    if hasSpecificTag(l, __TAG_EVENTNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_EVENTNAME__) or hasSpecificTag(l, __TAG_EVENTNAME_SNAKE__) or\
+                       hasSpecificTag(l, __TAG_GUARDNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_GUARDNAME__) or hasSpecificTag(l, __TAG_GUARDNAME_SNAKE__) or\
+                       hasSpecificTag(l, __TAG_NEXTSTATENAME__) or hasSpecificTag(l, __TAG_NEXTSTATENAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_NEXTSTATENAME_SNAKE__) or\
+                       hasSpecificTag(l, __TAG_ACTIONNAME__) or hasSpecificTag(l, __TAG_ACTIONNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_ACTIONNAME_SNAKE__) or\
+                       hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE__) or hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE_SNAKE__):
                         line_member = extractDefaultAndTag(l)
                         if line_member[1]:  # alternative text is embedded in the tag.
                             whitespace = len(l) - len(l.lstrip())
                             output.append(whitespace * ' ' + line_member[1] + '\n')
-                    elif l.find(__TAG_GUARDNAME_SMALL_CAMEL__) == -1 and l.find(__TAG_GUARDNAME__) == -1 and l.find(__TAG_NEXTSTATENAME__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__) == -1:
+                    elif l.find(__TAG_GUARDNAME_SMALL_CAMEL__) == -1 and l.find(__TAG_GUARDNAME__) == -1 and l.find(__TAG_GUARDNAME_SNAKE__) == -1 and\
+                         l.find(__TAG_NEXTSTATENAME__) == -1 and l.find(__TAG_NEXTSTATENAME_SMALL_CAMEL__) == -1 and l.find(__TAG_NEXTSTATENAME_SNAKE__) == -1 and\
+                         l.find(__TAG_STATENAME_IF_NEXTSTATE__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE_SNAKE__) == -1:
                         output.append(l)
 
         all_lines_snippet = self.filterEventName(snippet_to_expand, eventName)

@@ -17,7 +17,7 @@
 /// {{{USER_HEADER}}}
 /// {{{USER_HEADER}}}
 
-#define VERBOSE <<<Verbose::1>>>
+#define VERBOSE <<<Verbose=1>>>
 #if VERBOSE == 1
 #define _OUT_<<<STATEMACHINENAME>>>_DISP_
 #include <cstdio>

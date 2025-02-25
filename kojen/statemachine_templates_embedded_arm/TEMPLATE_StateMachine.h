@@ -21,7 +21,7 @@
 #endif
 
 
-#define SM_THREAD <<<StateMachineThread::1>>>
+#define SM_THREAD <<<StateMachineThread=1>>>
 #if SM_THREAD == 1
 #define THREADED
 #endif
