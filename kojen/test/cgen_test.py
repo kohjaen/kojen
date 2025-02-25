@@ -360,7 +360,7 @@ class TestFeatures(unittest.TestCase):
         for l in all_lines:
             transformed.append(replaceUserTags(l, user_tags))
         
-        self.assertEqual(transformed[0], "<<<H=0>>>")
+        self.assertEqual(transformed[0], "0")
         self.assertEqual(transformed[1], "1")
         self.assertEqual(transformed[2], "12")
         self.assertEqual(transformed[3], "123")

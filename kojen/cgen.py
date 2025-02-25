@@ -212,9 +212,10 @@ def snake_case(a) -> str:
 def caps(a) -> str:
     return a.upper()
 
-
+tag_pattern = re.compile(r'<<<(.*?)>>>')
 def hasTag(a):
-    return '<<<' in a and '>>>' in a
+    b = tag_pattern.findall(a)
+    return len(b) > 0
 
 def hasSpecificTag(a, tag):
     # allows for defaults : BEWARE also allows for partial matching so order is important in such a case.
@@ -222,10 +223,14 @@ def hasSpecificTag(a, tag):
     if res:
         res = tag.replace("<<<", "").replace(">>>", "") in a
     return res
-
+    #b = tag_pattern.findall(a)
+    #r = any(tag in string for string in b)
+    #return r
 
 def hasDefault(a, delimiter = "="):
-    return a.find(delimiter, a.find("<<<")) >= 0
+    b = tag_pattern.findall(a)
+    r = any(delimiter in string for string in b)
+    return r
 
 def extractDefaultAndTag(a, delimiter = "="):
     default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")].replace(delimiter,"", 1)
@@ -248,7 +253,7 @@ def extractTagAndAandB(a, delimiter = "="):
 
 def replaceUserTags(line, dict_key_vals):
     is_defined = [key for key in dict_key_vals if key in line]
-    if not is_defined: # if its not defined (even None or '') then leave it.
+    if not is_defined and not hasDefault(line): # if its not defined (even None or '') then leave it.
         return line
     
     taganddefault    = extractDefaultAndTag(line)
