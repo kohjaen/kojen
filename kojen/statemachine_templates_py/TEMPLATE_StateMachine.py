@@ -37,7 +37,7 @@ class <<<STATEMACHINENAME>>>StateMachine(threading.Thread):
     def __init__(self, controller):
         threading.Thread.__init__(self)
         self.context        = controller
-        self.__runThreaded  = <<<StateMachineThread::1>>>
+        self.__runThreaded  = <<<StateMachineThread=1>>>
         self.__fifoQueue    = queue.Queue() # threadsafe by default.
         self.context.On<<<STATE_0>>>Entry(EventStartup())
         self.currentState = <<<STATEMACHINENAME>>>StateId.c<<<STATE_0>>>

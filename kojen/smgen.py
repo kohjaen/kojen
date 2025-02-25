@@ -686,7 +686,8 @@ class CStateMachineGenerator(CGenerator):
                     # l = l.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
                     # l = l.replace(__TAG_EVENTNAME_SNAKE__, snake_case(eventName))
                     # If there is no guard, or no next state, or no action, just remove it (or replace it with the alternative text). Leave no hanging code.
-                    if hasSpecificTag(l, __TAG_GUARDNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_GUARDNAME__) or hasSpecificTag(l, __TAG_GUARDNAME_SNAKE__) or\
+                    if hasSpecificTag(l, __TAG_EVENTNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_EVENTNAME__) or hasSpecificTag(l, __TAG_EVENTNAME_SNAKE__) or\
+                       hasSpecificTag(l, __TAG_GUARDNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_GUARDNAME__) or hasSpecificTag(l, __TAG_GUARDNAME_SNAKE__) or\
                        hasSpecificTag(l, __TAG_NEXTSTATENAME__) or hasSpecificTag(l, __TAG_NEXTSTATENAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_NEXTSTATENAME_SNAKE__) or\
                        hasSpecificTag(l, __TAG_ACTIONNAME__) or hasSpecificTag(l, __TAG_ACTIONNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_ACTIONNAME_SNAKE__) or\
                        hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE__) or hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_STATENAME_IF_NEXTSTATE_SNAKE__):

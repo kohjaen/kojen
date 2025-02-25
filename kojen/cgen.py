@@ -216,7 +216,6 @@ def caps(a) -> str:
 def hasTag(a):
     return '<<<' in a and '>>>' in a
 
-
 def hasSpecificTag(a, tag):
     # allows for defaults : BEWARE also allows for partial matching so order is important in such a case.
     res = hasTag(a)
@@ -225,10 +224,10 @@ def hasSpecificTag(a, tag):
     return res
 
 
-def hasDefault(a, delimiter = "::"):
+def hasDefault(a, delimiter = "="):
     return a.find(delimiter, a.find("<<<")) >= 0
 
-def extractDefaultAndTag(a, delimiter = "::"):
+def extractDefaultAndTag(a, delimiter = "="):
     default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")].replace(delimiter,"", 1)
     tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
     return [tag, default]
@@ -240,20 +239,38 @@ def extractDefaultAndTagNamed(a, named):
             return extractDefaultAndTag(b + ">>>")
     raise Exception(named + " not found.")
 
-def extractTagAndAandB(a, delimiter = "::"):
+def extractTagAndAandB(a, delimiter = "="):
     tag = a[a.find("<<<"):a.find(">>>") + len(">>>")]
     r = a[a.find("<<<") + len("<<<"):a.find(">>>")].split(delimiter)
     A = None if len(r) < 2 else r[1]
     B = None if len(r) < 3 else r[2]
     return [tag, A, B]
 
+def replaceUserTags(line, dict_key_vals):
+    is_defined = [key for key in dict_key_vals if key in line]
+    if not is_defined: # if its not defined (even None or '') then leave it.
+        return line
+    
+    taganddefault    = extractDefaultAndTag(line)
+    line             = removeDefault(line)
+    taganddefault[0] = removeDefault(taganddefault[0])
+    
+    for tag, value in dict_key_vals.items():
+        if value == None: # None is allowed ... it should be '' and not 'None'.
+            value = ""
+        line = line.replace(tag, str(value))
+    if taganddefault[1].strip():
+        line = line.replace(taganddefault[0], taganddefault[1])
+    line = line.replace('<<<','').replace('>>>','')
+    return line
 
-def removeDefault(a, delimiter = "::"):
+
+def removeDefault(a, delimiter = "="):
     default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")]
     return a.replace(default, "")
 
 
-def replaceDefault(a, b, delimiter = "::"):
+def replaceDefault(a, b, delimiter = "="):
     default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")]
     default = default.strip(delimiter)
     return a.replace(default, b)
@@ -537,7 +554,8 @@ class CGenerator:
         return list(filenames_to_lines.keys())
 
 
-    def do_user_tags(self, codemodel, dict_key_vals):
+
+    def do_user_tags(self, codemodel, dict_key_vals, delimiter="="):
         # get defaults : for loop processing introduces multiple uses of tags across multiple files.
         # first is the law!
         defaults_in_files_FOR = {}
@@ -547,9 +565,9 @@ class CGenerator:
                 has_for = hasSpecificTag(line, __TAG_FOR_BEGIN__)
                 if has_tag and has_for:
                     fortaganddefault = extractDefaultAndTag(line)
-                    if fortaganddefault[1].find("::") > -1:
+                    if fortaganddefault[1].find(delimiter) > -1:
                         hack = cleanTag(__TAG_FOR_BEGIN__)
-                        hack = fortaganddefault[0].replace(hack+"::","")
+                        hack = fortaganddefault[0].replace(hack + delimiter,"")
                         if hasDefault(hack):
                             taganddefault = extractDefaultAndTag(hack)
                             key = cleanTag(removeDefault(taganddefault[0]))
@@ -570,7 +588,7 @@ class CGenerator:
                     has_else         = hasSpecificTag(line, __TAG_ELSE__) and not has_elseif
                     has_endif        = hasSpecificTag(line, __TAG_ENDIF__)
                     if not has_elseif and not has_else and not has_endif:
-                        pass # still processing if ...
+                        line = replaceUserTags(line, dict_key_vals) # still processing if ...
                     if has_elseif and not has_else and not has_endif:
                         [unused, user_tag] = extractDefaultAndTag(line, " ")
                         can_append_line = user_tag in dict_key_vals
@@ -582,6 +600,7 @@ class CGenerator:
                     elif not has_elseif and not has_else and has_endif: # End ...
                         is_processing_if = False
                         can_append_line = True
+                        can_process_else = True
                         continue
                 else:
                     can_append_line = True
@@ -589,14 +608,7 @@ class CGenerator:
                     has_for      = hasSpecificTag(line, __TAG_FOR_BEGIN__)
                     has_if       = hasSpecificTag(line, __TAG_IF__)
                     if has_tag and not has_for and not has_if:
-                        taganddefault    = extractDefaultAndTag(line)
-                        line             = removeDefault(line)
-                        taganddefault[0] = removeDefault(taganddefault[0])
-                        tagnoprepostfix  = taganddefault[0].replace('<<<','').replace('>>>','')
-                        if tagnoprepostfix in dict_key_vals:
-                            line = line.replace(taganddefault[0], str(dict_key_vals[tagnoprepostfix]))
-                        elif taganddefault[1].strip():
-                            line = line.replace(taganddefault[0], taganddefault[1])
+                        line = replaceUserTags(line, dict_key_vals)
                     elif has_tag and has_for and not has_if:
                         taganddefault = extractDefaultAndTag(line)
                         key = cleanTag(removeDefault("<<<" + taganddefault[1] + ">>>"))

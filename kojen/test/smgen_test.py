@@ -34,16 +34,16 @@ class TestFeatures(unittest.TestCase):
             return f.readlines()
 
     @classmethod
-    def do_magic(cls, input, interface, tt = [], language=LanguagePython()):
+    def do_magic(cls, input, interface, tt = [], language=LanguagePython(), namespace_name = "", fsm_name = ""):
         TestFeatures.create_template_file(input)
         smgenerator = CStateMachineGenerator(cls.workingfolder, cls.workingfolder, interface, language, "", "", "")
-        smgenerator.Generate(tt, "", "", "", False)
+        smgenerator.Generate(tt, namespace_name, fsm_name, "", False)
         return TestFeatures.read_lines_of_output_file()
 
     def test_event_custom_params_nosignature(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTSIGNATURE::p1, p2, p3,>>>")
+        input.append("<<<EVENTSIGNATURE=p1, p2, p3,>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         i = Interface('')
@@ -57,8 +57,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature1(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTSIGNATURE::p1, p2, p3,>>>")
-        input.append("<<<EVENTSIGNATUREWITHDEFAULTS::p1, p2, p3,>>>")
+        input.append("<<<EVENTSIGNATURE=p1, p2, p3,>>>")
+        input.append("<<<EVENTSIGNATUREWITHDEFAULTS=p1, p2, p3,>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga","bungaBunga", 0x66)
@@ -246,7 +246,7 @@ class TestFeatures(unittest.TestCase):
     def test_event_members_instantiate_custom_name(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTMEMBERSLITEINSTANTIATE::hello>>>")
+        input.append("<<<EVENTMEMBERSLITEINSTANTIATE=hello>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga", "bungaBunga")
@@ -278,12 +278,12 @@ class TestFeatures(unittest.TestCase):
         input.append("<<<PER_STATETRANSITION_BEGIN>>>")
         input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
         input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
-        input.append("<<<GUARDNAME::No Guard>>>")
-        #input.append("<<<EVENTNAME::No Event>>>") Hmmm ... need to think more on this.
+        input.append("<<<GUARDNAME=No Guard>>>")
+        #input.append("<<<EVENTNAME=No Event>>>") Hmmm ... need to think more on this.
         input.append("<<<EVENTNAME>>>")
-        input.append("<<<STATENAMEIFNEXTSTATE::No Next State>>>")
-        input.append("<<<ACTIONNAME::No Action>>>")
-        input.append("<<<NEXTSTATENAME::No Next State>>>")
+        input.append("<<<STATENAMEIFNEXTSTATE=No Next State>>>")
+        input.append("<<<ACTIONNAME=No Action>>>")
+        input.append("<<<NEXTSTATENAME=No Next State>>>")
         input.append("<<<PER_GUARDTRANSITION_END>>>")
         input.append("<<<PER_EVENTTRANSITION_END>>>")
         input.append("<<<PER_STATETRANSITION_END>>>")
@@ -307,11 +307,11 @@ class TestFeatures(unittest.TestCase):
         input.append("<<<PER_STATETRANSITION_BEGIN>>>")
         input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
         input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
-        input.append("<<<GUARDNAME::No Guard>>>")
-        input.append("<<<EVENTNAME::No Event>>>")
-        input.append("<<<STATENAMEIFNEXTSTATE::No Next State>>>")
-        input.append("<<<ACTIONNAME::No Action>>>")
-        input.append("<<<NEXTSTATENAME::No Next State>>>")
+        input.append("<<<GUARDNAME=No Guard>>>")
+        input.append("<<<EVENTNAME=No Event>>>")
+        input.append("<<<STATENAMEIFNEXTSTATE=No Next State>>>")
+        input.append("<<<ACTIONNAME=No Action>>>")
+        input.append("<<<NEXTSTATENAME=No Next State>>>")
         input.append("<<<PER_GUARDTRANSITION_END>>>")
         input.append("<<<PER_EVENTTRANSITION_END>>>")
         input.append("<<<PER_STATETRANSITION_END>>>")
@@ -371,7 +371,7 @@ class TestFeatures(unittest.TestCase):
         # param, no default
         input = []
         input.append("<<<PER_STRUCT_BEGIN>>>")
-        input.append("<<<PyAttr::ninja>>>")
+        input.append("<<<PyAttr=ninja>>>")
         input.append("<<<PER_STRUCT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga", "bool")
@@ -391,7 +391,7 @@ class TestFeatures(unittest.TestCase):
         # multiple param, no default
         input = []
         input.append("<<<PER_STRUCT_BEGIN>>>")
-        input.append("<<<PyAttr::ninja>>> is a big fat <<<PyAttr::ninja>>>")
+        input.append("<<<PyAttr=ninja>>> is a big fat <<<PyAttr=ninja>>>")
         input.append("<<<PER_STRUCT_END>>>")
         output = TestFeatures.do_magic(input, i, [], LanguageCPP())
         self.assertEqual(len(output), 2)
@@ -400,7 +400,7 @@ class TestFeatures(unittest.TestCase):
         # no param
         input = []
         input.append("<<<PER_STRUCT_BEGIN>>>")
-        input.append("<<<PyAttr::ninja>>>")
+        input.append("<<<PyAttr=ninja>>>")
         input.append("<<<PER_STRUCT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga", "bool")
@@ -416,7 +416,7 @@ class TestFeatures(unittest.TestCase):
         # param, default
         input = []
         input.append("<<<PER_STRUCT_BEGIN>>>")
-        input.append("<<<PyAttr::ninja::yoyo>>>")
+        input.append("<<<PyAttr=ninja=yoyo>>>")
         input.append("<<<PER_STRUCT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga", "bool")
@@ -505,7 +505,7 @@ class TestFeatures(unittest.TestCase):
         input.append("// 4")
         
         i = Interface('')
-        i.AddUserTag("feefiefoefum", None) # Does it matter what this is?
+        i.AddUserTag("feefiefoefum", None) # None and "" are valid for if control blocks...but not replace.
         i.AddUserTag("abracadabra", None)
         s = Struct("someStruct")
         s2 = Struct("someOtherStruct")
@@ -540,7 +540,6 @@ class TestFeatures(unittest.TestCase):
         input.append("// 4")
         
         i = Interface('')
-        #i.AddUserTag("feefiefoefum", None) # Does it matter what this is?
         i.AddUserTag("abracadabra", None)
         s = Struct("someStruct")
         s2 = Struct("someOtherStruct")
@@ -572,8 +571,6 @@ class TestFeatures(unittest.TestCase):
         input.append("// 4")
         
         i = Interface('')
-        #i.AddUserTag("feefiefoefum", None) # Does it matter what this is?
-        #i.AddUserTag("abracadabra", None)
         s = Struct("someStruct")
         s2 = Struct("someOtherStruct")
         i.AddStruct(s)
@@ -585,6 +582,91 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[0], "// 1\n")
         self.assertEqual(output[1], " 0xBADFOOD\n")
         self.assertEqual(output[2], "// 4\n")
+
+    def test_if_else_endif_nested_usertags(self):
+        
+        input = []
+        input.append("<<<IF OtherNamespace>>>")
+        input.append("namespace <<<OtherNamespace>>> {")
+        input.append("<<<ENDIF>>>")
+        input.append("class <<<OtherClass>>>;")
+        input.append("<<<IF OtherNamespace>>>")
+        input.append("} // namespace <<<OtherNamespace>>>")
+        input.append("<<<ENDIF>>>")
+        input.append("///")
+        input.append("<<<IF OtherNamespace>>>")
+        input.append("extern template class <<<STATEMACHINENAME>>>StateMachine<<<<OtherNamespace>>>::<<<OtherClass>>>>;")
+        input.append("<<<ELSE>>>")
+        input.append("extern template class <<<STATEMACHINENAME>>>StateMachine<<<<OtherClass>>>>;")
+        input.append("<<<ENDIF>>>")
+        input.append("// 4")
+
+        #### All user tags with values...
+        i = Interface('')
+        i.AddUserTag("OtherNamespace", "Banana")
+        i.AddUserTag("OtherClass", "FruitSalad")
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 6)
+        self.assertEqual(output[0], "namespace Banana {\n")
+        self.assertEqual(output[1], "class FruitSalad;\n")
+        self.assertEqual(output[2], "} // namespace Banana\n")
+        self.assertEqual(output[3], "///\n")
+        self.assertEqual(output[4], "extern template class StrawberryStateMachine<Banana::FruitSalad>;\n")
+        self.assertEqual(output[5], "// 4\n")
+
+        #### No user tags with values...
+        i = Interface('')
+        #i.AddUserTag("OtherNamespace", "Banana")
+        #i.AddUserTag("OtherClass", "FruitSalad")
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 4)
+        self.assertEqual(output[0], "class <<<OtherClass>>>;\n")
+        self.assertEqual(output[1], "///\n")
+        self.assertEqual(output[2], "extern template class StrawberryStateMachine<<<<OtherClass>>>>;\n")
+        self.assertEqual(output[3], "// 4\n")
+
+        #### Empty strings are still valid tags! Allow replacing things with nothing.
+        i = Interface('')
+        i.AddUserTag("OtherNamespace", "")
+        i.AddUserTag("OtherClass", "")
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 6)
+        self.assertEqual(output[0], "namespace  {\n")
+        self.assertEqual(output[1], "class ;\n")
+        self.assertEqual(output[2], "} // namespace \n")
+        self.assertEqual(output[3], "///\n")
+        self.assertEqual(output[4], "extern template class StrawberryStateMachine<::>;\n")
+        self.assertEqual(output[5], "// 4\n")
+
+        #### NONE are still valid tags! Allow replacing things with nothing.
+        i = Interface('')
+        i.AddUserTag("OtherNamespace", None)
+        i.AddUserTag("OtherClass", None)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 6)
+        self.assertEqual(output[0], "namespace  {\n")
+        self.assertEqual(output[1], "class ;\n")
+        self.assertEqual(output[2], "} // namespace \n")
+        self.assertEqual(output[3], "///\n")
+        self.assertEqual(output[4], "extern template class StrawberryStateMachine<::>;\n")
+        self.assertEqual(output[5], "// 4\n")
+
+        #### One user tags with values...
+        i = Interface('')
+        #i.AddUserTag("OtherNamespace", "Banana")
+        i.AddUserTag("OtherClass", "FruitSalad")
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 4)
+        self.assertEqual(output[0], "class FruitSalad;\n")
+        self.assertEqual(output[1], "///\n")
+        self.assertEqual(output[2], "extern template class StrawberryStateMachine<FruitSalad>;\n")
+        self.assertEqual(output[3], "// 4\n")
+
 
     '''
     def test_split(self):

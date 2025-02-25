@@ -28,13 +28,13 @@ class TestFeatures(unittest.TestCase):
         return CGenerator(TestFeatures.workingfolder, TestFeatures.workingfolder, LanguagePython())
 
     def test_has_TAG(self):
-        a = "XXX::blabla<<<something::1>>>"
+        a = "XXX::blabla<<<something=1>>>"
         b = "XXX::blabla<<something>>"
         self.assertTrue(hasTag(a), "Failed to pick up tag")
         self.assertFalse(hasTag(b), "Failed to ignore tag")
 
     def test_has_specific_TAG(self):
-        a = "XXX::blabla<<<something::1>>>"
+        a = "XXX::blabla<<<something=1>>>"
         b = "XXX::blabla<<something>>"
         self.assertTrue(hasSpecificTag(a, "<<<something>>>"), "Failed to pick up specific tag")
         self.assertFalse(hasSpecificTag(b, "<<<something>>>"), "Failed to ignore specific tag")
@@ -43,62 +43,62 @@ class TestFeatures(unittest.TestCase):
 
 
     def test_TAG_has_default(self):
-        a = "XXX::blabla<<<something::1>>>"
+        a = "XXX::blabla<<<something=1>>>"
         b = "XXX::blabla<<<something>>>"
         self.assertTrue(hasDefault(a), "Failed to pick up default")
         self.assertFalse(hasDefault(b), "Failed to pick up default")
 
     def test_extract_default_and_TAG(self):
-        a = "XXX::blabla<<<something::1>>>"
+        a = "XXX::blabla<<<something=1>>>"
         b = "XXX::blabla<<<something>>>"
         c = "XXX::blabla<<something>>"
-        d = "XXX::blabla<<<something::this::and::this>>>"
+        d = "XXX::blabla<<<something=this=and=this>>>"
         res_a = extractDefaultAndTag(a)
         res_b = extractDefaultAndTag(b)
         res_c = extractDefaultAndTag(c)
         res_d = extractDefaultAndTag(d)
-        self.assertEqual(res_a[0],"<<<something::1>>>", "Wrong tag")
+        self.assertEqual(res_a[0],"<<<something=1>>>", "Wrong tag")
         self.assertEqual(res_a[1],"1", "Wrong default")
         self.assertEqual(res_b[0], "<<<something>>>", "Wrong tag")
         self.assertEqual(res_b[1], "", "Wrong default")
         self.assertEqual(res_c[0], "", "Wrong tag")
         self.assertEqual(res_c[1], "", "Wrong default")
-        self.assertEqual(res_d[0], "<<<something::this::and::this>>>", "Wrong tag")
-        self.assertEqual(res_d[1], "this::and::this", "Wrong default")
+        self.assertEqual(res_d[0], "<<<something=this=and=this>>>", "Wrong tag")
+        self.assertEqual(res_d[1], "this=and=this", "Wrong default")
 
     def test_extract_default_and_TAG_multiple(self):
-        a = "XXX::blabla<<<something::1>>> !@#!@$ <<<else::2>>>"
+        a = "XXX::blabla<<<something=1>>> !@#!@$ <<<else=2>>>"
         res_a = extractDefaultAndTagNamed(a, "something")
         res_b = extractDefaultAndTagNamed(a, "else")
-        self.assertEqual(res_a[0], "<<<something::1>>>", "Wrong tag")
+        self.assertEqual(res_a[0], "<<<something=1>>>", "Wrong tag")
         self.assertEqual(res_a[1], "1", "Wrong default")
-        self.assertEqual(res_b[0], "<<<else::2>>>", "Wrong tag")
+        self.assertEqual(res_b[0], "<<<else=2>>>", "Wrong tag")
         self.assertEqual(res_b[1], "2", "Wrong default")
 
     def test_extract_TAG_and_A_and_B(self):
-        a = "blab @#$KLF!WEFJ <<<some::thing::here>>>"
-        b = "blab @#$KLF!WEFJ <<<some::thing>>>"
+        a = "blab @#$KLF!WEFJ <<<some=thing=here>>>"
+        b = "blab @#$KLF!WEFJ <<<some=thing>>>"
         res_a = extractTagAndAandB(a)
         self.assertEqual(len(res_a), 3, "Wrong length")
-        self.assertEqual(res_a[0], "<<<some::thing::here>>>", "Wrong tag")
+        self.assertEqual(res_a[0], "<<<some=thing=here>>>", "Wrong tag")
         self.assertEqual(res_a[1], "thing", "Wrong A")
         self.assertEqual(res_a[2], "here", "Wrong B")
         res_b = extractTagAndAandB(b)
         self.assertEqual(len(res_b), 3, "Wrong length")
-        self.assertEqual(res_b[0], "<<<some::thing>>>", "Wrong tag")
+        self.assertEqual(res_b[0], "<<<some=thing>>>", "Wrong tag")
         self.assertEqual(res_b[1], "thing", "Wrong A")
         self.assertEqual(res_b[2], None, "Wrong B")
 
     def test_extract_TAG_and_A_and_B_multiple(self):
-        a = "blab @#$KLF!WEFJ <<<some::thing>>> 123498123481234 <<<some::thing>>>"
+        a = "blab @#$KLF!WEFJ <<<some=thing>>> 123498123481234 <<<some=thing>>>"
         res_a = extractTagAndAandB(a)
         self.assertEqual(len(res_a), 3, "Wrong length")
-        self.assertEqual(res_a[0], "<<<some::thing>>>", "Wrong tag")
+        self.assertEqual(res_a[0], "<<<some=thing>>>", "Wrong tag")
         self.assertEqual(res_a[1], "thing", "Wrong A")
         self.assertEqual(res_a[2], None, "Wrong B")
 
     def test_remove_default(self):
-        a = "XXX::blabla<<<something::1>>>"
+        a = "XXX::blabla<<<something=1>>>"
         b = "XXX::blabla<<<something>>>"
         res_a = removeDefault(a)
         res_b = removeDefault(b)
@@ -249,7 +249,7 @@ class TestFeatures(unittest.TestCase):
     def test_PairExpanderExtraParam(self):
         all_lines = []
         all_lines.append("First")
-        all_lines.append("<<<BEGIN::42>>>")
+        all_lines.append("<<<BEGIN=42>>>")
         all_lines.append("---")
         all_lines.append(">>>")
         all_lines.append("<<<END>>>")
@@ -296,7 +296,7 @@ class TestFeatures(unittest.TestCase):
 
         all_lines = []
         all_lines.append("First")
-        all_lines.append("<<<FOR_BEGIN::fee, fie, foe>>>")
+        all_lines.append("<<<FOR_BEGIN=fee, fie, foe>>>")
         all_lines.append("<<<FIRST>>>")
         all_lines.append("__<<<EACH>>>__")
         all_lines.append("A_<<<EACH>>> = <<<ALPH>>>")
@@ -306,13 +306,13 @@ class TestFeatures(unittest.TestCase):
         all_lines.append("Last")
         runTest(self, all_lines)
         # additional variants for the same output
-        all_lines[1] = "<<<FOR_BEGIN::   fee, fie, foe >>>"
+        all_lines[1] = "<<<FOR_BEGIN=   fee, fie, foe >>>"
         runTest(self, all_lines)
-        all_lines[1] = "<<<FOR_BEGIN:: ,  fee, fie, foe ,>>>"
+        all_lines[1] = "<<<FOR_BEGIN= ,  fee, fie, foe ,>>>"
         runTest(self, all_lines)
-        all_lines[1] = "<<<FOR_BEGIN::   fee, fie, foe ,>>>"
+        all_lines[1] = "<<<FOR_BEGIN=   fee, fie, foe ,>>>"
         runTest(self, all_lines)
-        all_lines[1] = "<<<FOR_BEGIN::  , fee, fie, foe     >>>"
+        all_lines[1] = "<<<FOR_BEGIN=  , fee, fie, foe     >>>"
         runTest(self, all_lines)
 
     def test_ForLoopExpanderNum(self):
@@ -336,13 +336,37 @@ class TestFeatures(unittest.TestCase):
 
         all_lines = []
         all_lines.append("First")
-        all_lines.append("<<<FOR_BEGIN::3>>>")
+        all_lines.append("<<<FOR_BEGIN=3>>>")
         all_lines.append("__<<<EACH>>>__")
         all_lines.append("A_<<<EACH>>> = <<<ALPH>>>")
         all_lines.append("A_<<<EACH>>> = <<<NUM>>>")
         all_lines.append("<<<FOR_END>>>")
         all_lines.append("Last")
         runTest(self, all_lines)
+
+    def test_replaceUserTags(self):
+        user_tags = {"A" :"1", "B":"2", "C":"3"}
+
+        all_lines = []
+        all_lines.append("<<<H=0>>>")
+        all_lines.append("<<<A>>>")
+        all_lines.append("<<<A>>><<<B>>>")
+        all_lines.append("<<<A>>><<<B>>><<<C>>>")
+        all_lines.append("<<<H>>> = <<<H>>>")
+        all_lines.append("<<<G>>>")
+        all_lines.append("Done")
+
+        transformed = []
+        for l in all_lines:
+            transformed.append(replaceUserTags(l, user_tags))
+        
+        self.assertEqual(transformed[0], "<<<H=0>>>")
+        self.assertEqual(transformed[1], "1")
+        self.assertEqual(transformed[2], "12")
+        self.assertEqual(transformed[3], "123")
+        self.assertEqual(transformed[4], "<<<H>>> = <<<H>>>")
+        self.assertEqual(transformed[5], "<<<G>>>")
+        self.assertEqual(transformed[6], "Done")
 
 
     ''' TODO : Testing
