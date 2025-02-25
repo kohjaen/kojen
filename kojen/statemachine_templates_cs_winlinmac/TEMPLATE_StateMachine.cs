@@ -14,7 +14,7 @@
  * @author  <<<AUTHOR>>>
  */
 
-#define SM_THREAD_<<<StateMachineThread::1>>>
+#define SM_THREAD_<<<StateMachineThread=1>>>
 
 using System.Threading;
 
@@ -53,7 +53,7 @@ namespace <<<NAMESPACE>>>
         public void Trigger<<<EVENTNAME>>>(<<<SIGNATURE>>>)
         {
             <<<EVENTNAME>>> evt = new ();
-            <<<EVENTMEMBERSLITEINSTANTIATE::evt>>>
+            <<<EVENTMEMBERSLITEINSTANTIATE=evt>>>
 #if SM_THREAD_1
             dispatchQ.Enqueue(evt);
 #else

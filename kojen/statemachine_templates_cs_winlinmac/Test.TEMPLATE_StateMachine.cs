@@ -10,7 +10,7 @@
  * @author  <<<AUTHOR>>>
  */
 
-#define VERBOSE_<<<Verbose::1>>>
+#define VERBOSE_<<<Verbose=1>>>
 
 using System;
 using System.Threading;

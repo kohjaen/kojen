@@ -13,7 +13,7 @@
  *
  * @author  <<<AUTHOR>>>
  */
-#define SM_THREAD_<<<StateMachineThread::1>>>
+#define SM_THREAD_<<<StateMachineThread=1>>>
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
