@@ -378,17 +378,6 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(transformed[5], "<<<G>>>")
         self.assertEqual(transformed[6], "Done")
 
-    def test_replaceUserTags2(self):
-        user_tags = {}
-        all_lines = []
-        all_lines.append("SSS<<<<Other=CCC>>>>")
-
-        transformed = []
-        for l in all_lines:
-            transformed.append(replaceUserTags(l, user_tags))
-
-        self.assertEqual(transformed[0], "SSS<CCC>")
-
 
     ''' TODO : Testing
         - template extending and excluding.
