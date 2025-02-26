@@ -597,7 +597,7 @@ class TestFeatures(unittest.TestCase):
         input.append("<<<IF OtherNamespace>>>")
         input.append("extern template class <<<STATEMACHINENAME>>>StateMachine<<<<OtherNamespace>>>::<<<OtherClass>>>>;")
         input.append("<<<ELSE>>>")
-        input.append("extern template class <<<STATEMACHINENAME>>>StateMachine<<<<OtherClass>>>>;")
+        input.append("extern template class <<<STATEMACHINENAME>>>StateMachine<<<<OtherClass=<<<STATEMACHINENAME>>>Controller>>>>;")
         input.append("<<<ENDIF>>>")
         input.append("// 4")
 
@@ -624,7 +624,7 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(len(output), 4)
         self.assertEqual(output[0], "class <<<OtherClass>>>;\n")
         self.assertEqual(output[1], "///\n")
-        self.assertEqual(output[2], "extern template class StrawberryStateMachine<<<<OtherClass>>>>;\n")
+        self.assertEqual(output[2], "extern template class StrawberryStateMachine<StrawberryController>;\n")
         self.assertEqual(output[3], "// 4\n")
 
         #### Empty strings are still valid tags! Allow replacing things with nothing.
@@ -666,6 +666,21 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[1], "///\n")
         self.assertEqual(output[2], "extern template class StrawberryStateMachine<FruitSalad>;\n")
         self.assertEqual(output[3], "// 4\n")
+
+    def test_duplicate_label_usertags(self):
+        input = []
+        input.append("[something(IsClean.<<<IsClean=Soap>>>)]")
+        i = Interface('')
+        i.AddUserTag("IsClean", "Toothpaste")
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "[something(IsClean.Toothpaste)]\n")
+
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "[something(IsClean.Soap)]\n")
 
 
     '''

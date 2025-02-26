@@ -40,6 +40,8 @@ class TestFeatures(unittest.TestCase):
         self.assertFalse(hasSpecificTag(b, "<<<something>>>"), "Failed to ignore specific tag")
         self.assertFalse(hasSpecificTag(a, "<<<nothing>>>"), "Failed to ignore specific tag")
         self.assertFalse(hasSpecificTag(b, "<<<nothing>>>"), "Failed to ignore specific tag")
+        c = "<<<EXCLUDE=abcdefghijklmnopqrstuvwxyz>>>"
+        self.assertTrue(hasSpecificTag(c, "<<<EXCLUDE>>>"), "Failed to pick up specific tag")
 
 
     def test_TAG_has_default(self):
@@ -53,10 +55,14 @@ class TestFeatures(unittest.TestCase):
         b = "XXX::blabla<<<something>>>"
         c = "XXX::blabla<<something>>"
         d = "XXX::blabla<<<something=this=and=this>>>"
+        e = "XXX::blabla<<<<something=sSs>>>>"
+        f = "<<<EXCLUDE=#if <<<SSS>>>_A_B,#e>>>"
         res_a = extractDefaultAndTag(a)
         res_b = extractDefaultAndTag(b)
         res_c = extractDefaultAndTag(c)
         res_d = extractDefaultAndTag(d)
+        res_e = extractDefaultAndTag(e)
+        res_f = extractDefaultAndTag(f)
         self.assertEqual(res_a[0],"<<<something=1>>>", "Wrong tag")
         self.assertEqual(res_a[1],"1", "Wrong default")
         self.assertEqual(res_b[0], "<<<something>>>", "Wrong tag")
@@ -65,6 +71,10 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_c[1], "", "Wrong default")
         self.assertEqual(res_d[0], "<<<something=this=and=this>>>", "Wrong tag")
         self.assertEqual(res_d[1], "this=and=this", "Wrong default")
+        self.assertEqual(res_e[0], "<<<something=sSs>>>", "Wrong tag")
+        self.assertEqual(res_e[1], "sSs", "Wrong default")
+        self.assertEqual(res_f[0], "<<<EXCLUDE=#if <<<SSS>>>_A_B,#e>>>", "Wrong tag")
+        self.assertEqual(res_f[1], "#if <<<SSS>>>_A_B,#e", "Wrong default")
 
     def test_extract_default_and_TAG_multiple(self):
         a = "XXX::blabla<<<something=1>>> !@#!@$ <<<else=2>>>"
