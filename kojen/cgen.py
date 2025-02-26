@@ -230,14 +230,41 @@ def hasDefault(a, delimiter = "="):
     return r
 
 def extractDefaultAndTag(a, delimiter = "="):
-    matches = tag_pattern.findall(a)
-    if matches:
-        # Get the last match to handle nested or multiple <<<...>>> patterns
-        last_match = matches[-1]
-        tag = f'<<<{last_match}>>>'
-        parts = last_match.split(delimiter, 1)
+    #default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")].replace(delimiter,"", 1)
+    #tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
+    #return [tag, default]
+    #matches = tag_pattern.findall(a)
+    #if matches:
+    #    # Get the last match to handle nested or multiple <<<...>>> patterns
+    #    last_match = matches[-1]
+    #    tag = f'<<<{last_match}>>>'
+    #    parts = last_match.split(delimiter, 1)
+    #    default_value = parts[1] if len(parts) > 1 else ''
+    #    return [tag, default_value]
+    #return ['', '']
+    istart = -1
+    iend = -1
+    start = []
+    end = []
+    for i in range(len(a)):
+        if a[i:i+3] == '<<<':
+            istart = i
+        else:
+            if istart != -1:
+                start.append(istart)
+                istart = -1
+        if a[i:i+3] == '>>>':
+            if iend == -1:
+                iend = i+3
+                end.append(iend)
+        else:
+            iend = -1
+    if start and end:
+        outermost_tag = a[start[0]:end[-1]]
+        inner_content = a[start[0]+3:end[-1]-3]
+        parts = inner_content.split(delimiter, 1)
         default_value = parts[1] if len(parts) > 1 else ''
-        return [tag, default_value]
+        return [outermost_tag, default_value]
     return ['', '']
 
 def extractDefaultAndTagNamed(a, named):
@@ -248,21 +275,26 @@ def extractDefaultAndTagNamed(a, named):
     raise Exception(named + " not found.")
 
 def extractTagAndAandB(a, delimiter = "="):
-    [tag, default] = extractDefaultAndTag(a, delimiter)
-    r = default.split(delimiter)
-    A = None if len(r) < 1 else r[0]
-    B = None if len(r) < 2 else r[1]
+    #[tag, default] = extractDefaultAndTag(a, delimiter)
+    #r = default.split(delimiter)
+    #A = None if len(r) < 1 else r[0]
+    #B = None if len(r) < 2 else r[1]
+    #return [tag, A, B]
+    tag = a[a.find("<<<"):a.find(">>>") + len(">>>")]
+    r = a[a.find("<<<") + len("<<<"):a.find(">>>")].split(delimiter)
+    A = None if len(r) < 2 else r[1]
+    B = None if len(r) < 3 else r[2]
     return [tag, A, B]
 
 def replaceUserTags(line, dict_key_vals):
     is_defined = [key for key in dict_key_vals if key in line]
     if not is_defined and not hasDefault(line): # if its not defined (even None or '') then leave it.
         return line
-    
+
     taganddefault    = extractDefaultAndTag(line)
     line             = removeDefault(line)#removeDefault2(line, taganddefault[1])
     taganddefault[0] = removeDefault(taganddefault[0])
-    
+
     for tag, value in dict_key_vals.items():
         if value == None: # None is allowed ... it should be '' and not 'None'.
             value = ""
