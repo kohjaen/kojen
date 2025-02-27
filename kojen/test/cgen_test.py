@@ -33,8 +33,8 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(len(items), 4, "Wrong length")
         k = [key for key in items]
         self.assertEqual(k[0],"TEMPLATE", "Wrong tag")
-        self.assertEqual(k[1],"template", "Wrong tag")
-        self.assertEqual(k[2],"_template", "Wrong tag")
+        self.assertEqual(k[1],"_template", "Wrong tag")
+        self.assertEqual(k[2],"template", "Wrong tag")
         self.assertEqual(k[3],"temPlate", "Wrong tag")
         self.assertEqual(items["TEMPLATE"], "thisIsIt", "Wrong tag")
         self.assertEqual(items["template"], "thisisit", "Wrong tag")

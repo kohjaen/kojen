@@ -340,8 +340,8 @@ def setFilenameReplace(dictionary_of_search_replace_tags_for_filename, desired_t
     NOTE: In Python, when you pass a dictionary (or any mutable object) to a function, it is passed by reference
     """
     dictionary_of_search_replace_tags_for_filename["TEMPLATE"] = desired_template_name              # As given
-    dictionary_of_search_replace_tags_for_filename["template"] = desired_template_name.lower()      # Lowercase
     dictionary_of_search_replace_tags_for_filename["_template"] = snake_case(desired_template_name) # Snakecase
+    dictionary_of_search_replace_tags_for_filename["template"] = desired_template_name.lower()      # Lowercase
     dictionary_of_search_replace_tags_for_filename["temPlate"] = camel_case_small(desired_template_name)  # camelCapsSmall
 
 
