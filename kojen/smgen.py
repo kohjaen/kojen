@@ -308,8 +308,7 @@ class CStateMachineGenerator(CGenerator):
 
 
         dict_to_replace_filenames = {}
-        dict_to_replace_filenames["TEMPLATE"] = smmodel.statemachinename
-        dict_to_replace_filenames["template"] = snake_case(smmodel.statemachinename)
+        setFilenameReplace(dict_to_replace_filenames, smmodel.statemachinename)
 
         return CGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames)
 

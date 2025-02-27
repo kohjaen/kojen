@@ -26,6 +26,20 @@ class TestFeatures(unittest.TestCase):
     def get_test_gen(cls):
         TestFeatures.create_template_file(["Dummy"])
         return CGenerator(TestFeatures.workingfolder, TestFeatures.workingfolder, LanguagePython())
+    
+    def test_setFilenameReplace(self):
+        items = {}
+        setFilenameReplace(items, "thisIsIt")
+        self.assertEqual(len(items), 4, "Wrong length")
+        k = [key for key in items]
+        self.assertEqual(k[0],"TEMPLATE", "Wrong tag")
+        self.assertEqual(k[1],"template", "Wrong tag")
+        self.assertEqual(k[2],"tem_plate", "Wrong tag")
+        self.assertEqual(k[3],"temPlate", "Wrong tag")
+        self.assertEqual(items["TEMPLATE"], "thisIsIt", "Wrong tag")
+        self.assertEqual(items["template"], "thisisit", "Wrong tag")
+        self.assertEqual(items["tem_plate"], "this_is_it", "Wrong tag")
+        self.assertEqual(items["temPlate"], "thisIsIt", "Wrong tag")
 
     def test_has_TAG(self):
         a = "XXX::blabla<<<something=1>>>"
