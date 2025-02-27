@@ -34,11 +34,11 @@ class TestFeatures(unittest.TestCase):
         k = [key for key in items]
         self.assertEqual(k[0],"TEMPLATE", "Wrong tag")
         self.assertEqual(k[1],"template", "Wrong tag")
-        self.assertEqual(k[2],"tem_plate", "Wrong tag")
+        self.assertEqual(k[2],"_template", "Wrong tag")
         self.assertEqual(k[3],"temPlate", "Wrong tag")
         self.assertEqual(items["TEMPLATE"], "thisIsIt", "Wrong tag")
         self.assertEqual(items["template"], "thisisit", "Wrong tag")
-        self.assertEqual(items["tem_plate"], "this_is_it", "Wrong tag")
+        self.assertEqual(items["_template"], "this_is_it", "Wrong tag")
         self.assertEqual(items["temPlate"], "thisIsIt", "Wrong tag")
 
     def test_has_TAG(self):
