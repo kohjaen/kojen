@@ -308,7 +308,7 @@ class CStateMachineGenerator(CGenerator):
 
 
         dict_to_replace_filenames = {}
-        dict_to_replace_filenames["TEMPLATE_"] = smmodel.statemachinename
+        setFilenameReplace(dict_to_replace_filenames, smmodel.statemachinename)
 
         return CGenerator.loadtemplates_firstfiltering(self,dict_to_replace_lines,dict_to_replace_filenames)
 
@@ -432,7 +432,7 @@ class CStateMachineGenerator(CGenerator):
                 # Python attributes ... someone piggybacks the nice interface
                 if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
                     [tag, attr, useifnotexist] = extractTagAndAandB(newline)
-                    if hasattr(self.events_interface[name], attr):
+                    if hasattr(self.events_interface[name], str(attr)):
                         newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
                     elif useifnotexist:
                         newline = newline.replace(tag, useifnotexist)
@@ -527,7 +527,7 @@ class CStateMachineGenerator(CGenerator):
                 # Python attributes ... someone piggybacks the nice interface
                 if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
                     [tag, attr, useifnotexist] = extractTagAndAandB(newline)
-                    if hasattr(self.events_interface[name], attr):
+                    if hasattr(self.events_interface[name], str(attr)):
                         newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
                     elif useifnotexist:
                         newline = newline.replace(tag, useifnotexist)

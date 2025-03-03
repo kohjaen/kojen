@@ -212,7 +212,7 @@ def snake_case(a) -> str:
 def caps(a) -> str:
     return a.upper()
 
-tag_pattern = re.compile(r'<<<(.*?)>>>')
+tag_pattern = re.compile(r'<<<([^<>]*)>>>')
 def hasTag(a):
     b = tag_pattern.findall(a)
     return len(b) > 0
@@ -223,9 +223,6 @@ def hasSpecificTag(a, tag):
     if res:
         res = tag.replace("<<<", "").replace(">>>", "") in a
     return res
-    #b = tag_pattern.findall(a)
-    #r = any(tag in string for string in b)
-    #return r
 
 def hasDefault(a, delimiter = "="):
     b = tag_pattern.findall(a)
@@ -233,9 +230,42 @@ def hasDefault(a, delimiter = "="):
     return r
 
 def extractDefaultAndTag(a, delimiter = "="):
-    default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")].replace(delimiter,"", 1)
-    tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
-    return [tag, default]
+    #default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")].replace(delimiter,"", 1)
+    #tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
+    #return [tag, default]
+    #matches = tag_pattern.findall(a)
+    #if matches:
+    #    # Get the last match to handle nested or multiple <<<...>>> patterns
+    #    last_match = matches[-1]
+    #    tag = f'<<<{last_match}>>>'
+    #    parts = last_match.split(delimiter, 1)
+    #    default_value = parts[1] if len(parts) > 1 else ''
+    #    return [tag, default_value]
+    #return ['', '']
+    istart = -1
+    iend = -1
+    start = []
+    end = []
+    for i in range(len(a)):
+        if a[i:i+3] == '<<<':
+            istart = i
+        else:
+            if istart != -1:
+                start.append(istart)
+                istart = -1
+        if a[i:i+3] == '>>>':
+            if iend == -1:
+                iend = i+3
+                end.append(iend)
+        else:
+            iend = -1
+    if start and end:
+        outermost_tag = a[start[0]:end[-1]]
+        inner_content = a[start[0]+3:end[-1]-3]
+        parts = inner_content.split(delimiter, 1)
+        default_value = parts[1] if len(parts) > 1 else ''
+        return [outermost_tag, default_value]
+    return ['', '']
 
 def extractDefaultAndTagNamed(a, named):
     all = a.split(">>>")
@@ -245,6 +275,11 @@ def extractDefaultAndTagNamed(a, named):
     raise Exception(named + " not found.")
 
 def extractTagAndAandB(a, delimiter = "="):
+    #[tag, default] = extractDefaultAndTag(a, delimiter)
+    #r = default.split(delimiter)
+    #A = None if len(r) < 1 else r[0]
+    #B = None if len(r) < 2 else r[1]
+    #return [tag, A, B]
     tag = a[a.find("<<<"):a.find(">>>") + len(">>>")]
     r = a[a.find("<<<") + len("<<<"):a.find(">>>")].split(delimiter)
     A = None if len(r) < 2 else r[1]
@@ -255,24 +290,34 @@ def replaceUserTags(line, dict_key_vals):
     is_defined = [key for key in dict_key_vals if key in line]
     if not is_defined and not hasDefault(line): # if its not defined (even None or '') then leave it.
         return line
-    
+
     taganddefault    = extractDefaultAndTag(line)
-    line             = removeDefault(line)
+    line             = removeDefault(line)#removeDefault2(line, taganddefault[1])
     taganddefault[0] = removeDefault(taganddefault[0])
-    
+
     for tag, value in dict_key_vals.items():
         if value == None: # None is allowed ... it should be '' and not 'None'.
             value = ""
-        line = line.replace(tag, str(value))
+        line = line.replace(f'<<<{tag}>>>', str(value))
     if taganddefault[1].strip():
         line = line.replace(taganddefault[0], taganddefault[1])
     line = line.replace('<<<','').replace('>>>','')
     return line
 
+def removeDefault2(a, default, delimiter = "="):
+    return a.replace(default,"").replace(delimiter, "")
 
 def removeDefault(a, delimiter = "="):
-    default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")]
-    return a.replace(default, "")
+    matches = tag_pattern.findall(a)
+    if matches:
+        # Get the last match to handle nested or multiple <<<...>>> patterns
+        last_match = matches[-1]
+        parts = last_match.split(delimiter, 1)
+        tag_without_default = parts[0]
+        new_tag = f'<<<{tag_without_default}>>>'
+        # Replace the old tag with the new tag in the input string
+        return a.replace(f'<<<{last_match}>>>', new_tag)
+    return a
 
 
 def replaceDefault(a, b, delimiter = "="):
@@ -287,6 +332,18 @@ def cleanTag(a):
 
 def getWhitespace(a):
     return a[0:a.find("<<<")]
+
+
+def setFilenameReplace(dictionary_of_search_replace_tags_for_filename, desired_template_name):
+    """
+    'Template' in a filename can have the following forms, which will effect the output filename.
+    NOTE: In Python, when you pass a dictionary (or any mutable object) to a function, it is passed by reference
+    """
+    dictionary_of_search_replace_tags_for_filename["TEMPLATE"] = desired_template_name              # As given
+    dictionary_of_search_replace_tags_for_filename["_template"] = snake_case(desired_template_name) # Snakecase
+    dictionary_of_search_replace_tags_for_filename["template"] = desired_template_name.lower()      # Lowercase
+    dictionary_of_search_replace_tags_for_filename["temPlate"] = camel_case_small(desired_template_name)  # camelCapsSmall
+
 
 
 '''------------------------------------------------------------------------------------------------------'''

@@ -42,9 +42,9 @@ except (ModuleNotFoundError, ImportError) as e:
     from preservative import *
 
 try:
-    from .cgen import CGenerator, CCodeModel, FileCopyUtil
+    from .cgen import CGenerator, CCodeModel, FileCopyUtil, snake_case, setFilenameReplace
 except (ModuleNotFoundError, ImportError) as e:
-    from cgen import CGenerator, CCodeModel, FileCopyUtil
+    from cgen import CGenerator, CCodeModel, FileCopyUtil, snake_case, setFilenameReplace
 
 from cogapp import *
 import shutil
@@ -62,7 +62,7 @@ class CCogGenerator(CGenerator):
     def __init__(self, inputfiledir, outputfiledir,  classname, language=None, author='Anonymous', group='', brief=''):
         CGenerator.__init__(self, inputfiledir, outputfiledir, language, author, group, brief)
         self.dict_to_replace_filenames = {}
-        self.dict_to_replace_filenames["TEMPLATE_"] = classname
+        setFilenameReplace(self.dict_to_replace_filenames, classname)
 
     def loadtemplates_firstfiltering(self, ccmodel):
         """
