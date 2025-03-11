@@ -505,6 +505,17 @@ class CStateMachineGenerator(CGenerator):
                         newline = newline.replace(__TAG_SIGNATURE_DEF__ if has_signature_defaults else __TAG_SIGNATURE__, self.get_event_signature(name, has_signature_defaults))
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x: x.group(0).replace(' , )', ')').replace(', )', ')').replace(',)', ')').replace('( , ', '(').replace('( ,', '(').replace('(,', '('), newline)
+                if hasSpecificTag(newline, __TAG_PARAMETERS__):
+                    [cleantag, accessor, unused] = extractTagAndAandB(newline)
+                    parameters = self.get_event_parameters(name)
+                    if not accessor:
+                        accessor = ""
+                    accessor = accessor.strip()
+                    paramstring = ""
+                    for p in parameters:
+                        paramstring += accessor + p + ', '
+                    paramstring = paramstring.rstrip(", ")
+                    newline = newline.replace(cleantag, paramstring)
                 # __TAG_MEMBERINST__ -> PTR
                 if hasSpecificTag(newline, __TAG_MEMBERINST__) and hasDefault(newline):
                     line_member = extractDefaultAndTag(newline)
