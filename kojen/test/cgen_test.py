@@ -26,7 +26,7 @@ class TestFeatures(unittest.TestCase):
     def get_test_gen(cls):
         TestFeatures.create_template_file(["Dummy"])
         return CGenerator(TestFeatures.workingfolder, TestFeatures.workingfolder, LanguagePython())
-    
+
     def test_setFilenameReplace(self):
         items = {}
         setFilenameReplace(items, "thisIsIt")
@@ -98,6 +98,13 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_a[1], "1", "Wrong default")
         self.assertEqual(res_b[0], "<<<else=2>>>", "Wrong tag")
         self.assertEqual(res_b[1], "2", "Wrong default")
+
+    def test_extract_TAG_and_A_and_B_NONE(self):
+        a = "blab @#$KLF!WEFJ <<<some>>>"
+        [some, a, b] = extractTagAndAandB(a)
+        self.assertEqual(some, "<<<some>>>", "Wrong tag")
+        self.assertEqual(a, None, "Wrong A")
+        self.assertEqual(b, None, "Wrong B")
 
     def test_extract_TAG_and_A_and_B(self):
         a = "blab @#$KLF!WEFJ <<<some=thing=here>>>"

@@ -43,7 +43,7 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_nosignature(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTSIGNATURE=p1, p2, p3,>>>")
+        input.append("<<<SIGNATURE=p1, p2, p3,>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         i = Interface('')
@@ -57,8 +57,8 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_signature1(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("<<<EVENTSIGNATURE=p1, p2, p3,>>>")
-        input.append("<<<EVENTSIGNATUREWITHDEFAULTS=p1, p2, p3,>>>")
+        input.append("<<<SIGNATURE=p1, p2, p3,>>>")
+        input.append("<<<SIGNATUREWITHDEFAULTS=p1, p2, p3,>>>")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("somestruct")
         s.AddType("binga","bungaBunga", 0x66)
@@ -154,6 +154,57 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[0], "(binga, yo)\n") # Python
         self.assertEqual(output[1], "(binga=0x66, yo)\n")
 
+    def test_event_custom_params_call(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("(<<<PARAMETERS>>>)")
+        input.append("<<<PER_EVENT_END>>>")
+        s = Struct("s")
+        s.AddType("a","bool", "0x66")
+        s.AddType("b","class", "0x66")
+        s.AddType("c","object", "0x66")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "(a, b, c)\n") # C++
+
+    def test_event_custom_params_call2(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("(<<<PARAMETERS>>>, s)")
+        input.append("<<<PER_EVENT_END>>>")
+        s = Struct("s")
+        s.AddType("a","bool", "0x66")
+        s.AddType("b","class", "0x66")
+        s.AddType("c","object", "0x66")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "(a, b, c, s)\n") # C++
+
+    def test_event_custom_params_call3(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("(<<<PARAMETERS=actual-> >>>, s)")
+        input.append("<<<PER_EVENT_END>>>")
+        s = Struct("s")
+        s.AddType("a","bool", "0x66")
+        s.AddType("b","class", "0x66")
+        s.AddType("c","object", "0x66")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "(actual->a, actual->b, actual->c, s)\n") # C++
+
     def createMsgInputWithDefaults(self):
         input = []
         input.append("<<<PER_MSG_BEGIN>>>")
@@ -161,7 +212,7 @@ class TestFeatures(unittest.TestCase):
         input.append("<<<SIGNATUREWITHDEFAULTS>>>")
         input.append("<<<PER_MSG_END>>>")
         return input
-    
+
     def createIfNestedMsgWithDefalts(self, allDefaults = True):
         s = Struct("s")
         s.AddType("myApple", "apple", 1)

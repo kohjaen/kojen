@@ -93,6 +93,9 @@ class Language:
     def PtrToTypeName(self, typename):
         return ""
 
+    def GetFactoryFunctionCallParams(self, struct) -> list:
+        raise RuntimeError("Language Feature Not Implemented")
+
     def GetFactoryCreateParams(self, struct, interface, with_defaults=False) -> list:
         raise RuntimeError("Language Feature Not Implemented")
 

@@ -97,11 +97,14 @@ __TAG_DECLSPEC_DLL_EXPORT__         = "<<<DLL_EXPORT>>>"
 ### CONSOLODATE AND unit test the new recursive features with defaults
 __TAG_STRUCTNAME__                  = '<<<STRUCTNAME>>>'        # As given
 __TAG_STRUCTNAME_SMALL_CAMEL__      = '<<<structName>>>'        # camelCaps
+__TAG_STRUCTNAME_SNAKE__            = '<<<STRUCT_NAME>>>'       # snake case
 __TAG_MSGNAME__                     = '<<<MSGNAME>>>'           # As given
-__TAG_MSGID__                       = '<<<MSGID>>>'
 __TAG_MSGNAME_SMALL_CAMEL__         = '<<<msgName>>>'           # camelCaps
+__TAG_MSGNAME_SNAKE__               = '<<<MSG_NAME>>>'          # snake case
+__TAG_MSGID__                       = '<<<MSGID>>>'
 __TAG_PROTOMSGNAME__                = '<<<PROTOMSGNAME>>>'      # As given
 __TAG_PROTOMSGNAME_SMALL_CAMEL__    = '<<<protoMsgName>>>'      # camelCaps
+__TAG_PROTOMSGNAME_SNAKE__          = '<<<PROTO_MSG_NAME>>>'    # snake case
 __TAG_ATTRIBUTE_TYPE__              = "<<<ATTRIBUTETYPE>>>"
 __TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
 __TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
@@ -116,12 +119,13 @@ __TAG_MSG_END__                     = "<<<PER_MSG_END>>>"
 __TAG_PROTOMSG_BEGIN__              = "<<<PER_PROTOMSG_BEGIN>>>"
 __TAG_PROTOMSG_END__                = "<<<PER_PROTOMSG_END>>>"
 ###
-__TAG_SIGNATURE__                   = "<<<SIGNATURE>>>"
-__TAG_SIGNATURE_DEF__               = "<<<SIGNATUREWITHDEFAULTS>>>"
-__TAG_MEMBERINST__                  = "<<<MEMBERSINSTANTIATE>>>"
-__TAG_LITE_MEMBERINST__             = "<<<MEMBERSLITEINSTANTIATE>>>"
-__TAG_MEMBERDECL__                  = "<<<MEMBERSDECLARE>>>"
-__TAG_AGGREGATE_INIT__              = "<<<AGGREGATEINITIALIZATION>>>"
+__TAG_SIGNATURE__                   = "<<<SIGNATURE>>>"                 # function signature with types and names (language dependant)
+__TAG_SIGNATURE_DEF__               = "<<<SIGNATUREWITHDEFAULTS>>>"     # function signature with types and names and defaults (language dependant)
+__TAG_PARAMETERS__                  = "<<<PARAMETERS>>>"                # function parameters with names, and optional other parameters (and calling convention) (language dependant)
+__TAG_MEMBERINST__                  = "<<<MEMBERSINSTANTIATE>>>"        # Old school instantiation ... 
+__TAG_LITE_MEMBERINST__             = "<<<MEMBERSLITEINSTANTIATE>>>"    # Old school instantiation ... 
+__TAG_MEMBERDECL__                  = "<<<MEMBERSDECLARE>>>"            # declare members with types (language dependant) e.g. struct members.
+__TAG_AGGREGATE_INIT__              = "<<<AGGREGATEINITIALIZATION>>>"   # Modern single line initialization (C++ aggregate -> language dependant)
 
 # Python2 -> 3 shennanigans...try support both
 try:
@@ -321,6 +325,15 @@ class CStateMachineGenerator(CGenerator):
 
         return ""
 
+    def get_event_parameters(self,name):
+        if self.events_interface is None or self.language is None:
+            return ""
+        for s in self.events_interface.All():
+            if s.Name == name:
+                return self.language.GetFactoryFunctionCallParams(s)
+
+        return ""
+
     def instantiate_event_struct_member(self, name, whitespace_cnt, is_ptr=True, instancename="data"):
         if self.events_interface is None or self.language is None:
             return ""
@@ -397,6 +410,17 @@ class CStateMachineGenerator(CGenerator):
                         newline = newline.replace(__TAG_SIGNATURE_DEF__ if has_signature_defaults else __TAG_SIGNATURE__, self.get_event_signature(name, has_signature_defaults))
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
+                if hasSpecificTag(newline, __TAG_PARAMETERS__):
+                    [cleantag, accessor, unused] = extractTagAndAandB(newline)
+                    parameters = self.get_event_parameters(name)
+                    if not accessor:
+                        accessor = ""
+                    accessor = accessor.strip()
+                    paramstring = ""
+                    for p in parameters:
+                        paramstring += accessor + p + ', '
+                    paramstring = paramstring.rstrip(", ")
+                    newline = newline.replace(cleantag, paramstring)
                 # __TAG_MEMBERINST__ -> PTR
                 if hasSpecificTag(newline,__TAG_MEMBERINST__) and hasDefault(newline):
                     line_member = extractDefaultAndTag(newline)
@@ -459,10 +483,13 @@ class CStateMachineGenerator(CGenerator):
 
                 newline = line.replace(__TAG_STRUCTNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_STRUCTNAME__, name)
+                newline = newline.replace(__TAG_STRUCTNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_MSGNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_MSGNAME__, name)
+                newline = newline.replace(__TAG_MSGNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_PROTOMSGNAME__, name)
                 newline = newline.replace(__TAG_PROTOMSGNAME_SMALL_CAMEL__, camel_case_small(name))
+                newline = newline.replace(__TAG_PROTOMSGNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')

@@ -160,6 +160,13 @@ class LanguageCPP(Language):
                         factoryparams.append((mem[0] + ref, mem[1]))
         return factoryparams
 
+    def GetFactoryFunctionCallParams(self, struct) -> list:
+        structmembers = struct.Decompose()
+        function_call_params = []
+        for mem in structmembers:
+            function_call_params.append(mem[1])
+        return function_call_params
+
     '''USED
     Declares the guts of a struct declaration
     '''

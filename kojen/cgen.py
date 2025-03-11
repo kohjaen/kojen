@@ -212,7 +212,8 @@ def snake_case(a) -> str:
 def caps(a) -> str:
     return a.upper()
 
-tag_pattern = re.compile(r'<<<([^<>]*)>>>')
+#tag_pattern = re.compile(r'<<<([^<>]*)>>>')
+tag_pattern = re.compile(r'<<<(.*?)>>>')
 def hasTag(a):
     b = tag_pattern.findall(a)
     return len(b) > 0
