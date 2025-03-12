@@ -418,7 +418,7 @@ class CStateMachineGenerator(CGenerator):
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
                 if hasSpecificTag(newline, __TAG_PARAMETERS__):
-                    [cleantag, accessor, unused] = extractTagAndAandB(newline)
+                    [cleantag, accessor, user_params] = extractTagAndAandB(newline)
                     parameters = self.get_event_parameters(name)
                     if not accessor:
                         accessor = ""
@@ -427,6 +427,9 @@ class CStateMachineGenerator(CGenerator):
                     for p in parameters:
                         paramstring += accessor + p + ', '
                     paramstring = paramstring.rstrip(", ")
+                    if user_params:
+                        paramstring = paramstring + ", " + user_params
+                    paramstring = paramstring.strip(',').strip(' ')
                     newline = newline.replace(cleantag, paramstring)
                 # __TAG_MEMBERINST__ -> PTR
                 if hasSpecificTag(newline,__TAG_MEMBERINST__) and hasDefault(newline):
@@ -525,7 +528,7 @@ class CStateMachineGenerator(CGenerator):
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x: x.group(0).replace(' , )', ')').replace(', )', ')').replace(',)', ')').replace('( , ', '(').replace('( ,', '(').replace('(,', '('), newline)
                 if hasSpecificTag(newline, __TAG_PARAMETERS__):
-                    [cleantag, accessor, unused] = extractTagAndAandB(newline)
+                    [cleantag, accessor, user_params] = extractTagAndAandB(newline)
                     parameters = self.get_event_parameters(name)
                     if not accessor:
                         accessor = ""
@@ -534,6 +537,9 @@ class CStateMachineGenerator(CGenerator):
                     for p in parameters:
                         paramstring += accessor + p + ', '
                     paramstring = paramstring.rstrip(", ")
+                    if user_params:
+                        paramstring = paramstring + ", " + user_params
+                    paramstring = paramstring.strip(',').strip(' ')
                     newline = newline.replace(cleantag, paramstring)
                 # __TAG_MEMBERINST__ -> PTR
                 if hasSpecificTag(newline, __TAG_MEMBERINST__) and hasDefault(newline):

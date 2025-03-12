@@ -6,7 +6,7 @@ from kojen.LanguagePython import LanguagePython
 from kojen.LanguageCPP import LanguageCPP
 from kojen.LanguageCsharp import LanguageCsharp
 from kojen.smgen import CStateMachineGenerator
-from kojen.kojentypes import Interface, Struct, Message, MessageHeader
+from kojen.kojentypes import Enum, Interface, Struct, Message, MessageHeader
 
 class TestFeatures(unittest.TestCase):
 
@@ -158,6 +158,20 @@ class TestFeatures(unittest.TestCase):
     def test_event_custom_params_call(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("(<<<PARAMETERS==s, s, s>>>)")
+        input.append("<<<PER_EVENT_END>>>")
+        s = Struct("s")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "(s, s, s)\n") # C++
+
+    def test_event_custom_params_call2(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("(<<<PARAMETERS>>>)")
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
@@ -172,27 +186,10 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(len(output), 1)
         self.assertEqual(output[0], "(a, b, c)\n") # C++
 
-    def test_event_custom_params_call2(self):
-        input = []
-        input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(<<<PARAMETERS>>>, s)")
-        input.append("<<<PER_EVENT_END>>>")
-        s = Struct("s")
-        s.AddType("a","bool", "0x66")
-        s.AddType("b","class", "0x66")
-        s.AddType("c","object", "0x66")
-        i = Interface('')
-        i.AddStruct(s)
-
-        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
-
-        self.assertEqual(len(output), 1)
-        self.assertEqual(output[0], "(a, b, c, s)\n") # C++
-
     def test_event_custom_params_call3(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
-        input.append("(<<<PARAMETERS=actual-> >>>, s)")
+        input.append("(<<<PARAMETERS==s, t, u,>>>)")# No accessor, but additional user-params
         input.append("<<<PER_EVENT_END>>>")
         s = Struct("s")
         s.AddType("a","bool", "0x66")
@@ -204,7 +201,24 @@ class TestFeatures(unittest.TestCase):
         output = TestFeatures.do_magic(input, i, [], LanguageCPP())
 
         self.assertEqual(len(output), 1)
-        self.assertEqual(output[0], "(actual->a, actual->b, actual->c, s)\n") # C++
+        self.assertEqual(output[0], "(a, b, c, s, t, u)\n") # C++
+
+    def test_event_custom_params_call4(self):
+        input = []
+        input.append("<<<PER_EVENT_BEGIN>>>")
+        input.append("(<<<PARAMETERS=actual->=s, t, u,>>>)")
+        input.append("<<<PER_EVENT_END>>>")
+        s = Struct("s")
+        s.AddType("a","bool", "0x66")
+        s.AddType("b","class", "0x66")
+        s.AddType("c","object", "0x66")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "(actual->a, actual->b, actual->c, s, t, u)\n") # C++
 
     def createMsgInputWithDefaults(self):
         input = []
