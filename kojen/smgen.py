@@ -110,6 +110,7 @@ __TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
 __TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
 __TAG_PAYLOAD_NAME__                = "<<<PAYLOADNAME>>>"
 __TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"
+__TAG_PYTHON_ATTR_IF__              = '<<<IF_PyAttr>>>'
 __TAG_DOCUMENTATION__               = "<<<DOCUMENTATION>>>"
 
 __TAG_STRUCT_BEGIN__                = "<<<PER_STRUCT_BEGIN>>>"
@@ -481,7 +482,7 @@ class CStateMachineGenerator(CGenerator):
             return line
         def not_processing_if_function(line, struct) -> str:
             return line
-        return IfProcessor().Expand(snippet_to_expand, if_test_function, not_processing_if_function, processing_if_function, struct)
+        return IfProcessor(__TAG_PYTHON_ATTR_IF__).Expand(snippet_to_expand, if_test_function, not_processing_if_function, processing_if_function, struct)
 
     ### CONSOLODATE ... this is essentially a copy-paste of the above ...
     def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items) -> None:

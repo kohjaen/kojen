@@ -803,7 +803,7 @@ class TestFeatures(unittest.TestCase):
     def test_pyattr_message_if_elif_else_endif_tags(self):
         input = []
         input.append(smgen.__TAG_MSG_BEGIN__)
-        input.append("<<<IF attribute_one>>>")
+        input.append("<<<IF_PyAttr attribute_one>>>")
         input.append("Got <<<PyAttr=attribute_one>>> <<<MSGNAME>>>")
         input.append("<<<ELSEIF attribute_two>>>")
         input.append("Got <<<PyAttr=attribute_two>>> <<<MSGNAME>>>")
@@ -829,7 +829,7 @@ class TestFeatures(unittest.TestCase):
     def test_pyattr_struct_if_elif_else_endif_tags(self):
         input = []
         input.append(smgen.__TAG_STRUCT_BEGIN__) # 0
-        input.append("<<<IF attribute_one>>>")
+        input.append("<<<IF_PyAttr attribute_one>>>")
         input.append("Got <<<PyAttr=attribute_one>>> <<<STRUCTNAME>>>")
         input.append("<<<ELSEIF attribute_two>>>")
         input.append("Got <<<PyAttr=attribute_two>>> <<<STRUCTNAME>>>")
@@ -854,7 +854,7 @@ class TestFeatures(unittest.TestCase):
     def test_pyattr_state_if_elif_else_endif_tags(self):
         input = []
         input.append(smgen.__TAG_PS_BEGIN__) # 0
-        input.append("<<<IF attribute_one>>>")
+        input.append("<<<IF_PyAttr attribute_one>>>")
         input.append("Got <<<PyAttr=attribute_one>>> <<<STATENAME>>>")
         input.append("<<<ELSEIF attribute_two>>>")
         input.append("Got <<<PyAttr=attribute_two>>> <<<STATENAME>>>")
@@ -879,7 +879,7 @@ class TestFeatures(unittest.TestCase):
     def test_pyattr_event_if_elif_else_endif_tags(self):
         input = []
         input.append(smgen.__TAG_PE_BEGIN__) # 0
-        input.append("<<<IF attribute_one>>>")
+        input.append("<<<IF_PyAttr attribute_one>>>")
         input.append("Got <<<PyAttr=attribute_one>>> <<<EVENTNAME>>>")
         input.append("<<<ELSEIF attribute_two>>>")
         input.append("Got <<<PyAttr=attribute_two>>> <<<EVENTNAME>>>")
@@ -904,7 +904,7 @@ class TestFeatures(unittest.TestCase):
     def test_pyattr_action_if_elif_else_endif_tags(self):
         input = []
         input.append(smgen.__TAG_PA_BEGIN__) # 0
-        input.append("<<<IF attribute_one>>>")
+        input.append("<<<IF_PyAttr attribute_one>>>")
         input.append("Got <<<PyAttr=attribute_one>>> <<<ACTIONNAME>>>")
         input.append("<<<ELSEIF attribute_two>>>")
         input.append("Got <<<PyAttr=attribute_two>>> <<<ACTIONNAME>>>")
@@ -929,7 +929,7 @@ class TestFeatures(unittest.TestCase):
     def test_pyattr_guard_if_elif_else_endif_tags(self):
         input = []
         input.append(smgen.__TAG_PG_BEGIN__) # 0
-        input.append("<<<IF attribute_one>>>")
+        input.append("<<<IF_PyAttr attribute_one>>>")
         input.append("Got <<<PyAttr=attribute_one>>> <<<ACTIONNAME>>>")
         input.append("<<<ELSEIF attribute_two>>>")
         input.append("Got <<<PyAttr=attribute_two>>> <<<ACTIONNAME>>>")

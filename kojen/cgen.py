@@ -161,6 +161,9 @@ class PairExpander:
 '''------------------------------------------------------------------------------------------------------'''
 
 class IfProcessor:
+    def __init__(self, start_tag = __TAG_IF__) -> None:
+        self.start_tag = start_tag
+
     def Expand(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> list[str]:
         new_lines = []
         is_processing_if = False
@@ -188,7 +191,7 @@ class IfProcessor:
                     continue
             else:
                 can_append_line = True
-                has_if = hasSpecificTag(line, __TAG_IF__)
+                has_if = hasSpecificTag(line, self.start_tag)
                 if has_if:
                     is_processing_if = True
                     # get the expression in the IF ... delimiter is ' '.
