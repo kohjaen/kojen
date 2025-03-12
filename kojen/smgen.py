@@ -371,11 +371,17 @@ class CStateMachineGenerator(CGenerator):
                 return result.rsplit('\n', 1)[0]
         return ""
 
-    def innerexpand_secondfiltering(self, snippet_to_expand, alllinesexpanded, items):
+    def innerexpand_secondfiltering(self, snippet_to_expand, alllinesexpanded, items) -> None:
         alpha = reset_alphabet()
         cnt = 0
         for name in items:
-            for line in snippet_to_expand:
+            # Step one : PyAttr based If processing
+            if name in self.events_interface: # Not all events are defined as structs, may be TT only.
+                new_snippet_to_expand = self.innerexpand_secondfiltering_IF(snippet_to_expand, self.events_interface[name])
+            else:
+                new_snippet_to_expand = snippet_to_expand
+            # Step two : old processing
+            for line in new_snippet_to_expand:
                 # If there is no tag ... don't waste time
                 if not hasTag(line):
                     if line.isspace():
@@ -468,12 +474,24 @@ class CStateMachineGenerator(CGenerator):
             cnt = cnt + 1
             alpha = get_next_alphabet(alpha)
 
+    def innerexpand_secondfiltering_IF(self, snippet_to_expand, struct) -> list[str]:
+        def if_test_function(user_tag, struct) -> bool:
+            return hasattr(struct, user_tag)
+        def processing_if_function(line, struct) -> str:
+            return line
+        def not_processing_if_function(line, struct) -> str:
+            return line
+        return IfProcessor().Expand(snippet_to_expand, if_test_function, not_processing_if_function, processing_if_function, struct)
+
     ### CONSOLODATE ... this is essentially a copy-paste of the above ...
-    def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items):
+    def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items) -> None:
         alpha = reset_alphabet()
         cnt = 0
         for name in items:
-            for line in snippet_to_expand:
+            # Step one : PyAttr based If processing
+            new_snippet_to_expand = self.innerexpand_secondfiltering_IF(snippet_to_expand, self.events_interface[name])
+            # Step two : old processing
+            for line in new_snippet_to_expand:
                 # If there is no tag ... don't waste time
                 if not hasTag(line):
                     if line.isspace():

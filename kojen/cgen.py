@@ -160,6 +160,51 @@ class PairExpander:
 
 '''------------------------------------------------------------------------------------------------------'''
 
+class IfProcessor:
+    def Expand(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> list[str]:
+        new_lines = []
+        is_processing_if = False
+        can_process_else = True
+        can_append_line = True
+        for line in all_lines:
+            if is_processing_if:
+                has_elseif       = hasSpecificTag(line, __TAG_ELSEIF__)
+                has_else         = hasSpecificTag(line, __TAG_ELSE__) and not has_elseif
+                has_endif        = hasSpecificTag(line, __TAG_ENDIF__)
+                if not has_elseif and not has_else and not has_endif:
+                    line = processing_if_function(line, *args) # still processing if ...
+                if has_elseif and not has_else and not has_endif:
+                    [unused, user_tag] = extractDefaultAndTag(line, " ")
+                    can_append_line = if_test_function(user_tag, *args)
+                    can_process_else = not can_append_line and can_process_else # -> if a usertag is not found in an if.
+                    continue
+                elif not has_elseif and has_else and not has_endif:
+                    can_append_line = can_process_else
+                    continue
+                elif not has_elseif and not has_else and has_endif: # End ...
+                    is_processing_if = False
+                    can_append_line = True
+                    can_process_else = True
+                    continue
+            else:
+                can_append_line = True
+                has_if = hasSpecificTag(line, __TAG_IF__)
+                if has_if:
+                    is_processing_if = True
+                    # get the expression in the IF ... delimiter is ' '.
+                    [unused, user_tag] = extractDefaultAndTag(line, " ")
+                    can_append_line = if_test_function(user_tag, *args)
+                    can_process_else = not can_append_line and can_process_else# -> if a usertag is not found in an if.
+                    continue
+                else:
+                    line = not_processing_if_function(line, *args)
+            if can_append_line:
+                new_lines.append(line)
+        return new_lines
+
+
+'''------------------------------------------------------------------------------------------------------'''
+
 
 def get_next_alphabet(alpha) -> int:
     alpha = alpha + 1
@@ -619,6 +664,29 @@ class CGenerator:
 
 
     def do_user_tags(self, codemodel, dict_key_vals, delimiter="="):
+
+        def if_test_function(user_tag) -> bool:
+            return user_tag in dict_key_vals
+
+        def not_processing_if_function(line) -> str:
+            has_tag      = hasTag(line)
+            has_for      = hasSpecificTag(line, __TAG_FOR_BEGIN__)
+            if has_tag and not has_for:
+                line = replaceUserTags(line, dict_key_vals)
+            elif has_tag and has_for:
+                taganddefault = extractDefaultAndTag(line)
+                key = cleanTag(removeDefault("<<<" + taganddefault[1] + ">>>"))
+                if key in dict_key_vals:
+                    line = replaceDefault(line, dict_key_vals[key])
+                elif key in defaults_in_files_FOR:
+                    line = replaceDefault(line, defaults_in_files_FOR[key])
+                else:
+                    line = "//POO"
+            return line
+
+        def processing_if_function(line) -> str:
+            return replaceUserTags(line, dict_key_vals)
+
         # get defaults : for loop processing introduces multiple uses of tags across multiple files.
         # first is the law!
         defaults_in_files_FOR = {}
@@ -638,61 +706,10 @@ class CGenerator:
                                 defaults_in_files_FOR[key] = taganddefault[1]
 
         for fn, lines in codemodel.filenames_to_lines.items():
-            new_lines = []
-
-            is_processing_if = False
-            can_process_else = True
-            can_append_line = True
-
-            # this should be called last, so at this point any tags should be user defined.
-            for line in lines:
-                if is_processing_if:
-                    has_elseif       = hasSpecificTag(line, __TAG_ELSEIF__)
-                    has_else         = hasSpecificTag(line, __TAG_ELSE__) and not has_elseif
-                    has_endif        = hasSpecificTag(line, __TAG_ENDIF__)
-                    if not has_elseif and not has_else and not has_endif:
-                        line = replaceUserTags(line, dict_key_vals) # still processing if ...
-                    if has_elseif and not has_else and not has_endif:
-                        [unused, user_tag] = extractDefaultAndTag(line, " ")
-                        can_append_line = user_tag in dict_key_vals
-                        can_process_else = not can_append_line and can_process_else # -> if a usertag is not found in an if.
-                        continue
-                    elif not has_elseif and has_else and not has_endif:
-                        can_append_line = can_process_else
-                        continue
-                    elif not has_elseif and not has_else and has_endif: # End ...
-                        is_processing_if = False
-                        can_append_line = True
-                        can_process_else = True
-                        continue
-                else:
-                    can_append_line = True
-                    has_tag      = hasTag(line)
-                    has_for      = hasSpecificTag(line, __TAG_FOR_BEGIN__)
-                    has_if       = hasSpecificTag(line, __TAG_IF__)
-                    if has_tag and not has_for and not has_if:
-                        line = replaceUserTags(line, dict_key_vals)
-                    elif has_tag and has_for and not has_if:
-                        taganddefault = extractDefaultAndTag(line)
-                        key = cleanTag(removeDefault("<<<" + taganddefault[1] + ">>>"))
-                        if key in dict_key_vals:
-                            line = replaceDefault(line, dict_key_vals[key])
-                        elif key in defaults_in_files_FOR:
-                            line = replaceDefault(line, defaults_in_files_FOR[key])
-                        else:
-                            line = "//POO"
-                    elif has_tag and not has_for and has_if:
-                        is_processing_if = True
-                        # get the expression in the IF ... delimiter is ' '.
-                        [unused, user_tag] = extractDefaultAndTag(line, " ")
-                        can_append_line = user_tag in dict_key_vals
-                        can_process_else = not can_append_line and can_process_else# -> if a usertag is not found in an if.
-                        continue
-
-                if can_append_line:
-                    new_lines.append(line)
+            new_lines = IfProcessor().Expand(lines, if_test_function, not_processing_if_function, processing_if_function)
             # replace
             codemodel.filenames_to_lines[fn] = new_lines
+
 
 
     def do_for(self, codemodel):

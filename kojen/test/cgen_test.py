@@ -2,6 +2,7 @@ import unittest
 
 from kojen.LanguagePython import LanguagePython
 from kojen.cgen import *
+from kojen.kojentypes import Interface, Message
 
 class TestFeatures(unittest.TestCase):
 
@@ -27,6 +28,22 @@ class TestFeatures(unittest.TestCase):
         TestFeatures.create_template_file(["Dummy"])
         return CGenerator(TestFeatures.workingfolder, TestFeatures.workingfolder, LanguagePython())
 
+    def test_PurgeMessageHeaders(self):
+        m1 = Message("m1", 1)
+        m1.AddType("name", "type")
+        m2 = Message("m2", 2)
+        m2.AddType("name", "type")
+
+        i = Interface("")
+        i.AddMessage(m1)
+        i.AddMessage(m2)
+
+        pre = i.Decompose()
+        i.PurgeMessageHeaders()
+        post = i.Decompose()
+        self.assertNotEqual(pre, post)
+        self.assertEqual(len(pre), len(post)+2 )
+        
     def test_setFilenameReplace(self):
         items = {}
         setFilenameReplace(items, "thisIsIt")

@@ -1,6 +1,7 @@
 import unittest
 import shutil
 import os
+from kojen import smgen
 from kojen.LanguagePython import LanguagePython
 from kojen.LanguageCPP import LanguageCPP
 from kojen.LanguageCsharp import LanguageCsharp
@@ -798,6 +799,157 @@ class TestFeatures(unittest.TestCase):
         output = TestFeatures.do_magic(input, i, [], LanguageCPP(), "", "Strawberry")
         self.assertEqual(len(output), 1)
         self.assertEqual(output[0], "[something(IsClean.Soap)]\n")
+
+    def test_pyattr_message_if_elif_else_endif_tags(self):
+        input = []
+        input.append(smgen.__TAG_MSG_BEGIN__)
+        input.append("<<<IF attribute_one>>>")
+        input.append("Got <<<PyAttr=attribute_one>>> <<<MSGNAME>>>")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got <<<PyAttr=attribute_two>>> <<<MSGNAME>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append(smgen.__TAG_MSG_END__)
+
+        i = Interface('')
+        m = Message("someMessage", 1)
+        m.attribute_one = 'this'
+        m2 = Message("someOtherMessage", 2)
+        m2.attribute_two = 'that'
+        i.AddMessage(m)
+        i.AddMessage(m2)
+
+        # param, no default
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], f"Got this someMessage\n")
+        self.assertEqual(output[1], f"Got that someOtherMessage\n")
+
+    def test_pyattr_struct_if_elif_else_endif_tags(self):
+        input = []
+        input.append(smgen.__TAG_STRUCT_BEGIN__) # 0
+        input.append("<<<IF attribute_one>>>")
+        input.append("Got <<<PyAttr=attribute_one>>> <<<STRUCTNAME>>>")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got <<<PyAttr=attribute_two>>> <<<STRUCTNAME>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append(smgen.__TAG_STRUCT_END__) #8
+        
+        i = Interface('')
+        s = Struct("someStruct")
+        s.attribute_one = 'this'
+        s2 = Struct("someOtherStruct")
+        s2.attribute_two = 'that'
+        i.AddStruct(s)
+        i.AddStruct(s2)
+
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], f"Got this someStruct\n")
+        self.assertEqual(output[1], f"Got that someOtherStruct\n")
+
+    def test_pyattr_state_if_elif_else_endif_tags(self):
+        input = []
+        input.append(smgen.__TAG_PS_BEGIN__) # 0
+        input.append("<<<IF attribute_one>>>")
+        input.append("Got <<<PyAttr=attribute_one>>> <<<STATENAME>>>")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got <<<PyAttr=attribute_two>>> <<<STATENAME>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append(smgen.__TAG_PS_END__) #8
+        
+        i = Interface('')
+        state = Struct("someState")
+        state.attribute_one = 'this'
+        state2 = Struct("someOtherState")
+        state2.attribute_two = 'that'
+        i.AddStruct(state)
+        i.AddStruct(state2)
+        
+        output = TestFeatures.do_magic(input, i, [["someState", "e", "someOtherState", "a", "g"]], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], f"Got this someState\n")
+        self.assertEqual(output[1], f"Got that someOtherState\n")
+
+    def test_pyattr_event_if_elif_else_endif_tags(self):
+        input = []
+        input.append(smgen.__TAG_PE_BEGIN__) # 0
+        input.append("<<<IF attribute_one>>>")
+        input.append("Got <<<PyAttr=attribute_one>>> <<<EVENTNAME>>>")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got <<<PyAttr=attribute_two>>> <<<EVENTNAME>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append(smgen.__TAG_PE_END__) #8
+        
+        i = Interface('')
+        state = Struct("someEvent")
+        state.attribute_one = 'this'
+        state2 = Struct("someOtherEvent")
+        state2.attribute_two = 'that'
+        i.AddStruct(state)
+        i.AddStruct(state2)
+        
+        output = TestFeatures.do_magic(input, i, [["s", "someEvent", "so", "a", "g"],["s2", "someOtherEvent", "so2", "a2", "g2"]], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], f"Got this someEvent\n")
+        self.assertEqual(output[1], f"Got that someOtherEvent\n")
+    
+    def test_pyattr_action_if_elif_else_endif_tags(self):
+        input = []
+        input.append(smgen.__TAG_PA_BEGIN__) # 0
+        input.append("<<<IF attribute_one>>>")
+        input.append("Got <<<PyAttr=attribute_one>>> <<<ACTIONNAME>>>")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got <<<PyAttr=attribute_two>>> <<<ACTIONNAME>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append(smgen.__TAG_PA_END__) #8
+        
+        i = Interface('')
+        state = Struct("someAction")
+        state.attribute_one = 'this'
+        state2 = Struct("someOtherAction")
+        state2.attribute_two = 'that'
+        i.AddStruct(state)
+        i.AddStruct(state2)
+        
+        output = TestFeatures.do_magic(input, i, [["s", "e", "so", "someAction", "g"],["s2", "e2", "so2", "someOtherAction", "g2"]], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], f"Got this someAction\n")
+        self.assertEqual(output[1], f"Got that someOtherAction\n")
+
+    def test_pyattr_guard_if_elif_else_endif_tags(self):
+        input = []
+        input.append(smgen.__TAG_PG_BEGIN__) # 0
+        input.append("<<<IF attribute_one>>>")
+        input.append("Got <<<PyAttr=attribute_one>>> <<<ACTIONNAME>>>")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got <<<PyAttr=attribute_two>>> <<<ACTIONNAME>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append(smgen.__TAG_PG_END__) #8
+        
+        i = Interface('')
+        state = Struct("someGuard")
+        state.attribute_one = 'this'
+        state2 = Struct("someOtherGuard")
+        state2.attribute_two = 'that'
+        i.AddStruct(state)
+        i.AddStruct(state2)
+        
+        output = TestFeatures.do_magic(input, i, [["s", "e", "so", "a", "someGuard"],["s2", "e2", "so2", "a2", "someOtherGuard"]], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], f"Got this someGuard\n")
+        self.assertEqual(output[1], f"Got that someOtherGuard\n")
 
 
     '''
