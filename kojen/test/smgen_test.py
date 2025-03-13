@@ -6,7 +6,7 @@ from kojen.LanguagePython import LanguagePython
 from kojen.LanguageCPP import LanguageCPP
 from kojen.LanguageCsharp import LanguageCsharp
 from kojen.smgen import CStateMachineGenerator
-from kojen.kojentypes import Enum, Interface, Struct, Message, MessageHeader
+from kojen.kojentypes import Interface, Struct, Message, MessageHeader
 
 class TestFeatures(unittest.TestCase):
 
@@ -944,9 +944,9 @@ class TestFeatures(unittest.TestCase):
         input = []
         input.append(smgen.__TAG_PG_BEGIN__) # 0
         input.append("<<<IF_PyAttr attribute_one>>>")
-        input.append("Got <<<PyAttr=attribute_one>>> <<<ACTIONNAME>>>")
+        input.append("Got <<<PyAttr=attribute_one>>> <<<GUARDNAME>>>")
         input.append("<<<ELSEIF attribute_two>>>")
-        input.append("Got <<<PyAttr=attribute_two>>> <<<ACTIONNAME>>>")
+        input.append("Got <<<PyAttr=attribute_two>>> <<<GUARDNAME>>>")
         input.append("<<<ELSE>>>")
         input.append("0xBADFOOD")
         input.append("<<<ENDIF>>>")
@@ -964,6 +964,120 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(len(output), 2)
         self.assertEqual(output[0], f"Got this someGuard\n")
         self.assertEqual(output[1], f"Got that someOtherGuard\n")
+
+    def test_pyattr_multiply_defined_guard_if_elif_else_endif_tags(self):
+        # Mechanism is the same for all ... testing for one should be sufficient.
+        input = []
+        input.append(smgen.__TAG_PG_BEGIN__) # 0
+        input.append("<<<IF_PyAttr attribute_one>>>")
+        input.append("Got <<<PyAttr=attribute_one>>> <<<GUARDNAME>>>")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got <<<PyAttr=attribute_two>>> <<<GUARDNAME>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append(smgen.__TAG_PG_END__) #8
+        
+        i = Interface('')
+        state = Struct("someGuard")
+        state.attribute_one = 'this'
+        state.attribute_two = 'that'
+        i.AddStruct(state)
+        
+        output = TestFeatures.do_magic(input, i, [["s", "e", "so", "a", "someGuard"]], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], f"Got this someGuard\n")
+        self.assertEqual(output[1], f"Got that someGuard\n")
+
+    def test_pyattr_ifany_if_elif_else_endif_tags_none(self):
+        input = []
+        input.append("<<<IF_ANY_PyAttr attribute_one>>>")
+        input.append("Got 1")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got 2")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        
+        i = Interface('')
+        state = Struct("someStruct")
+        i.AddStruct(state)
+        state2 = Struct("someStruct2")
+        state2.AddType("p1", "uint32_t")
+        i.AddStruct(state2)
+        state3 = Struct("someStruct3")
+        state3.AddType("p1", "uint32_t")
+        i.AddStruct(state3)
+        state4 = Struct("someStruct4")
+        state4.AddType("p1", "uint32_t")
+        i.AddStruct(state4)
+        
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "0xBADFOOD\n")
+
+    def test_pyattr_ifany_if_elif_else_endif_tags_one(self):
+        # Note : the attributes do not work here ... as this checks all, and is not in expanded tag pairs.
+        input = []
+        input.append("<<<IF_ANY_PyAttr attribute_one>>>")
+        input.append("Got 1")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got 2")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        
+        i = Interface('')
+        state = Struct("someStruct")
+        state.attribute_one = None
+        #state.attribute_two = 'that'
+        i.AddStruct(state)
+        state2 = Struct("someStruct2")
+        state2.AddType("p1", "uint32_t")
+        i.AddStruct(state2)
+        state3 = Struct("someStruct3")
+        state3.AddType("p1", "uint32_t")
+        i.AddStruct(state3)
+        state4 = Struct("someStruct4")
+        state4.AddType("p1", "uint32_t")
+        state4.attribute_one = 'whatever'
+        i.AddStruct(state4)
+        
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "Got 1\n")
+
+    def test_pyattr_ifany_if_elif_else_endif_tags_two(self):
+        # Note : the attributes do not work here ... as this checks all, and is not in expanded tag pairs.
+        input = []
+        input.append("<<<IF_ANY_PyAttr attribute_one>>>")
+        input.append("Got 1")
+        input.append("<<<ELSEIF attribute_two>>>")
+        input.append("Got 2")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        
+        i = Interface('')
+        state = Struct("someStruct")
+        state.attribute_one = None
+        i.AddStruct(state)
+        state2 = Struct("someStruct2")
+        state2.AddType("p1", "uint32_t")
+        i.AddStruct(state2)
+        state3 = Struct("someStruct3")
+        state3.AddType("p1", "uint32_t")
+        state3.attribute_two = 'uuuuum'
+        i.AddStruct(state3)
+        state4 = Struct("someStruct4")
+        state4.AddType("p1", "uint32_t")
+        state4.attribute_one = 'whatever'
+        i.AddStruct(state4)
+        
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], "Got 1\n")
+        self.assertEqual(output[1], "Got 2\n")
 
 
     '''

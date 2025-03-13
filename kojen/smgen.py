@@ -109,8 +109,9 @@ __TAG_ATTRIBUTE_TYPE__              = "<<<ATTRIBUTETYPE>>>"
 __TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
 __TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
 __TAG_PAYLOAD_NAME__                = "<<<PAYLOADNAME>>>"
-__TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"
-__TAG_PYTHON_ATTR_IF__              = '<<<IF_PyAttr>>>'
+__TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"            # Use Python Attributes in code replace
+__TAG_PYTHON_ATTR_IF__              = '<<<IF_PyAttr>>>'         # Use the presence of a Python Attribute for a struct/message etc for If/Else process (but not code replace)
+__TAG_PYTHON_ATTR_IF_ANY__          = '<<<IF_ANY_PyAttr>>>'     # Use the presence of a Python Attribute in ANY elements for If/Else processing. Not limited to struct/message, but entire interface.
 __TAG_DOCUMENTATION__               = "<<<DOCUMENTATION>>>"
 
 __TAG_STRUCT_BEGIN__                = "<<<PER_STRUCT_BEGIN>>>"
@@ -378,7 +379,7 @@ class CStateMachineGenerator(CGenerator):
         for name in items:
             # Step one : PyAttr based If processing
             if name in self.events_interface: # Not all events are defined as structs, may be TT only.
-                new_snippet_to_expand = self.innerexpand_secondfiltering_IF(snippet_to_expand, self.events_interface[name])
+                new_snippet_to_expand = self.innerexpand_secondfiltering_pertagpair_IFPyAttr(snippet_to_expand, self.events_interface[name])
             else:
                 new_snippet_to_expand = snippet_to_expand
             # Step two : old processing
@@ -478,7 +479,7 @@ class CStateMachineGenerator(CGenerator):
             cnt = cnt + 1
             alpha = get_next_alphabet(alpha)
 
-    def innerexpand_secondfiltering_IF(self, snippet_to_expand, struct) -> list[str]:
+    def innerexpand_secondfiltering_pertagpair_IFPyAttr(self, snippet_to_expand, struct) -> list[str]:
         def if_test_function(user_tag, struct) -> bool:
             return hasattr(struct, user_tag)
         def processing_if_function(line, struct) -> str:
@@ -493,7 +494,7 @@ class CStateMachineGenerator(CGenerator):
         cnt = 0
         for name in items:
             # Step one : PyAttr based If processing
-            new_snippet_to_expand = self.innerexpand_secondfiltering_IF(snippet_to_expand, self.events_interface[name])
+            new_snippet_to_expand = self.innerexpand_secondfiltering_pertagpair_IFPyAttr(snippet_to_expand, self.events_interface[name])
             # Step two : old processing
             for line in new_snippet_to_expand:
                 # If there is no tag ... don't waste time
@@ -791,11 +792,24 @@ class CStateMachineGenerator(CGenerator):
         if tmp_val == "" or tmp_val.lower() == 'none':
             val = source_state
         return val
+    
+    def innerexpand_secondfiltering_IFANYPyAttr(self, all_lines) -> list[str]:
+        def if_test_function(attribute) -> bool:
+            for name in self.events_interface:
+                if hasattr(self.events_interface[name], attribute):
+                    return True
+            return False
+        def processing_if_function(line) -> str:
+            return line
+        def not_processing_if_function(line) -> str:
+            return line
+        return IfProcessor(__TAG_PYTHON_ATTR_IF_ANY__).Expand(all_lines, if_test_function, not_processing_if_function, processing_if_function)
 
 
     def expand_secondfiltering(self, smmodel, cmmodel):
         for file in cmmodel.filenames_to_lines:
             all_lines_expanded = self.filterInitialState(cmmodel.filenames_to_lines[file], smmodel)
+            all_lines_expanded = self.innerexpand_secondfiltering_IFANYPyAttr(all_lines_expanded)
             all_lines_expanded = SingleExpander(__TAG_TTT_PLANT_UML__).Expand(all_lines_expanded, self.innerexpand_plant, smmodel)
             all_lines_expanded = SingleExpander(__TAG_TTT_BOOST_MSM__).Expand(all_lines_expanded, self.innerexpand_msm, smmodel)
             all_lines_expanded = SingleExpander(__TAG_TTT_BOOST_MSMLITE__).Expand(all_lines_expanded, self.innerexpand_msmlite, smmodel)
