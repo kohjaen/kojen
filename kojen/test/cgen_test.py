@@ -117,8 +117,8 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_b[1], "2", "Wrong default")
 
     def test_extract_TAG_and_A_and_B_NONE(self):
-        a = "blab @#$KLF!WEFJ <<<some>>>"
-        [some, a, b] = extractTagAndAandB(a)
+        a = "blab @#$KLF!WEFJ <<<what>>>"
+        [some, a, b] = extractTagAndAandB(a, "<<<some>>>")
         self.assertEqual(some, "<<<some>>>", "Wrong tag")
         self.assertEqual(a, None, "Wrong A")
         self.assertEqual(b, None, "Wrong B")
@@ -126,12 +126,12 @@ class TestFeatures(unittest.TestCase):
     def test_extract_TAG_and_A_and_B(self):
         a = "blab @#$KLF!WEFJ <<<some=thing=here>>>"
         b = "blab @#$KLF!WEFJ <<<some=thing>>>"
-        res_a = extractTagAndAandB(a)
+        res_a = extractTagAndAandB(a, "<<<some>>>")
         self.assertEqual(len(res_a), 3, "Wrong length")
         self.assertEqual(res_a[0], "<<<some=thing=here>>>", "Wrong tag")
         self.assertEqual(res_a[1], "thing", "Wrong A")
         self.assertEqual(res_a[2], "here", "Wrong B")
-        res_b = extractTagAndAandB(b)
+        res_b = extractTagAndAandB(b, "<<<some>>>")
         self.assertEqual(len(res_b), 3, "Wrong length")
         self.assertEqual(res_b[0], "<<<some=thing>>>", "Wrong tag")
         self.assertEqual(res_b[1], "thing", "Wrong A")
@@ -139,11 +139,25 @@ class TestFeatures(unittest.TestCase):
 
     def test_extract_TAG_and_A_and_B_multiple(self):
         a = "blab @#$KLF!WEFJ <<<some=thing>>> 123498123481234 <<<some=thing>>>"
-        res_a = extractTagAndAandB(a)
+        res_a = extractTagAndAandB(a, "<<<some>>>")
         self.assertEqual(len(res_a), 3, "Wrong length")
         self.assertEqual(res_a[0], "<<<some=thing>>>", "Wrong tag")
         self.assertEqual(res_a[1], "thing", "Wrong A")
         self.assertEqual(res_a[2], None, "Wrong B")
+
+    def test_extract_nested_TAG_and_A_and_B(self):
+        a = "blab @<<<BLA>>>(<<<BLA2 = <<<BLA3=one=two>>> c, d>>>"
+        b = "blab @<<<BLA>>>(<<<BLA2 = <<<BLA3=one>>> c, d>>>"
+        res_a = extractTagAndAandB(a, "<<<BLA3>>>")
+        self.assertEqual(len(res_a), 3, "Wrong length")
+        self.assertEqual(res_a[0], "<<<BLA3=one=two>>>", "Wrong tag")
+        self.assertEqual(res_a[1], "one", "Wrong A")
+        self.assertEqual(res_a[2], "two", "Wrong B")
+        res_b = extractTagAndAandB(b, "<<<BLA3>>>")
+        self.assertEqual(len(res_b), 3, "Wrong length")
+        self.assertEqual(res_b[0], "<<<BLA3=one>>>", "Wrong tag")
+        self.assertEqual(res_b[1], "one", "Wrong A")
+        self.assertEqual(res_b[2], None, "Wrong B")
 
     def test_remove_default(self):
         a = "XXX::blabla<<<something=1>>>"

@@ -323,17 +323,16 @@ def extractDefaultAndTagNamed(a, named) -> list[str]:
             return extractDefaultAndTag(b + ">>>")
     raise Exception(named + " not found.")
 
-def extractTagAndAandB(a, delimiter = "=") -> list[str]:
-    #[tag, default] = extractDefaultAndTag(a, delimiter)
-    #r = default.split(delimiter)
-    #A = None if len(r) < 1 else r[0]
-    #B = None if len(r) < 2 else r[1]
-    #return [tag, A, B]
-    tag = a[a.find("<<<"):a.find(">>>") + len(">>>")]
-    r = a[a.find("<<<") + len("<<<"):a.find(">>>")].split(delimiter)
-    A = None if len(r) < 2 else r[1]
-    B = None if len(r) < 3 else r[2]
-    return [tag, A, B]
+def extractTagAndAandB(a, default_tag, delimiter = "=") -> list[str]:
+    t = default_tag.replace(">>>", "")
+    pos = a.find(t)
+    if pos != -1:
+        tag = a[pos:a.find(">>>", pos) + len(">>>")]
+        r = a[pos + len("<<<"):a.find(">>>", pos)].split(delimiter)
+        A = None if len(r) < 2 else r[1]
+        B = None if len(r) < 3 else r[2]
+        return [tag, A, B]
+    return [default_tag, None, None]
 
 def replaceUserTags(line, dict_key_vals) -> str:
     is_defined = [key for key in dict_key_vals if key in line]

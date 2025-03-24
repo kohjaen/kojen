@@ -406,6 +406,14 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
+                if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
+                    [tag, attr, useifnotexist] = extractTagAndAandB(newline, __TAG_PYTHON_ATTR__)
+                    if hasattr(self.events_interface[name], str(attr)):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
+                    elif useifnotexist:
+                        newline = newline.replace(tag, useifnotexist)
+                    else:
+                        continue
                 if hasSpecificTag(newline,__TAG_SIGNATURE__):
                     has_signature_defaults = __TAG_SIGNATURE_DEF__ in newline
                     if hasDefault(newline):
@@ -419,7 +427,7 @@ class CStateMachineGenerator(CGenerator):
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
                 if hasSpecificTag(newline, __TAG_PARAMETERS__):
-                    [cleantag, accessor, user_params] = extractTagAndAandB(newline)
+                    [cleantag, accessor, user_params] = extractTagAndAandB(newline, __TAG_PARAMETERS__)
                     parameters = self.get_event_parameters(name)
                     if not accessor:
                         accessor = ""
@@ -464,15 +472,6 @@ class CStateMachineGenerator(CGenerator):
                         membertype = mem[0]
                         alllinesexpanded.append(newline.replace(__TAG_ATTRIBUTE_TYPE__, membertype).replace(__TAG_ATTRIBUTE_NAME__, membername))
                     continue
-                # Python attributes ... someone piggybacks the nice interface
-                if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
-                    [tag, attr, useifnotexist] = extractTagAndAandB(newline)
-                    if hasattr(self.events_interface[name], str(attr)):
-                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
-                    elif useifnotexist:
-                        newline = newline.replace(tag, useifnotexist)
-                    else:
-                        continue
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
@@ -516,6 +515,14 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
+                if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
+                    [tag, attr, useifnotexist] = extractTagAndAandB(newline, __TAG_PYTHON_ATTR__)
+                    if hasattr(self.events_interface[name], str(attr)):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
+                    elif useifnotexist:
+                        newline = newline.replace(tag, useifnotexist)
+                    else:
+                        continue
                 if hasSpecificTag(newline, __TAG_SIGNATURE__):
                     has_signature_defaults = __TAG_SIGNATURE_DEF__ in newline
                     if hasDefault(newline):
@@ -529,7 +536,7 @@ class CStateMachineGenerator(CGenerator):
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x: x.group(0).replace(' , )', ')').replace(', )', ')').replace(',)', ')').replace('( , ', '(').replace('( ,', '(').replace('(,', '('), newline)
                 if hasSpecificTag(newline, __TAG_PARAMETERS__):
-                    [cleantag, accessor, user_params] = extractTagAndAandB(newline)
+                    [cleantag, accessor, user_params] = extractTagAndAandB(newline, __TAG_PARAMETERS__)
                     parameters = self.get_event_parameters(name)
                     if not accessor:
                         accessor = ""
@@ -588,15 +595,6 @@ class CStateMachineGenerator(CGenerator):
                         if not isProtocol:
                             alllinesexpanded.append(newline.replace(__TAG_PAYLOAD_TYPE__, membertype).replace(__TAG_PAYLOAD_NAME__, membername))
                     continue
-                # Python attributes ... someone piggybacks the nice interface
-                if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
-                    [tag, attr, useifnotexist] = extractTagAndAandB(newline)
-                    if hasattr(self.events_interface[name], str(attr)):
-                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
-                    elif useifnotexist:
-                        newline = newline.replace(tag, useifnotexist)
-                    else:
-                        continue
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
