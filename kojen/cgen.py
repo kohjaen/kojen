@@ -313,7 +313,7 @@ def extractDefaultAndTag(a, delimiter = "=") -> list[str]:
         inner_content = a[start[0]+3:end[-1]-3]
         parts = inner_content.split(delimiter, 1)
         default_value = parts[1] if len(parts) > 1 else ''
-        return [outermost_tag, default_value]
+        return [outermost_tag, default_value.strip()]
     return ['', '']
 
 def extractDefaultAndTagNamed(a, named) -> list[str]:
@@ -329,8 +329,8 @@ def extractTagAndAandB(a, default_tag, delimiter = "=") -> list[str]:
     if pos != -1:
         tag = a[pos:a.find(">>>", pos) + len(">>>")]
         r = a[pos + len("<<<"):a.find(">>>", pos)].split(delimiter)
-        A = None if len(r) < 2 else r[1]
-        B = None if len(r) < 3 else r[2]
+        A = None if len(r) < 2 else r[1].strip()
+        B = None if len(r) < 3 else r[2].strip()
         return [tag, A, B]
     return [default_tag, None, None]
 
