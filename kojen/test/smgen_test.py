@@ -989,6 +989,26 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[0], f"Got this someGuard\n")
         self.assertEqual(output[1], f"Got that someGuard\n")
 
+    def test_any_pyattr(self):
+        input = []
+        input.append("**********")
+        input.append("Got <<<ANY_PyAttr=attribute_one>>> nothing")      # No value if attribute present = removal
+        input.append("Got <<<ANY_PyAttr=attribute_one=some>>> blaaaa")  # Value if attribute present = substitution
+        input.append("Got <<<ANY_PyAttr=attribute_two=blong>>> bloooo") # No attribute present = removal
+        input.append("**********")
+        
+        i = Interface('')
+        state = Struct("someGuard")
+        state.attribute_one = 'this'
+        #state.attribute_two = 'that'
+        i.AddStruct(state)
+        
+        output = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output), 5)
+        self.assertEqual(output[1], f"Got  nothing\n")
+        self.assertEqual(output[2], f"Got some blaaaa\n")
+        self.assertEqual(output[3], f"Got  bloooo\n")
+
     def test_pyattr_ifany_if_elif_else_endif_tags_none(self):
         input = []
         input.append("<<<IF_ANY_PyAttr attribute_one>>>")

@@ -110,6 +110,7 @@ __TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
 __TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
 __TAG_PAYLOAD_NAME__                = "<<<PAYLOADNAME>>>"
 __TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"            # Use Python Attributes in code replace
+__TAG_PYTHON_ATTR_ANY__             = '<<<ANY_PyAttr>>>'        # Use the presence of a Python Attribute in ANY elements in a struct/message. Not limited to struct/message, but entire interface.
 __TAG_PYTHON_ATTR_IF__              = '<<<IF_PyAttr>>>'         # Use the presence of a Python Attribute for a struct/message etc for If/Else process (but not code replace)
 __TAG_PYTHON_ATTR_IF_ANY__          = '<<<IF_ANY_PyAttr>>>'     # Use the presence of a Python Attribute in ANY elements for If/Else processing. Not limited to struct/message, but entire interface.
 __TAG_DOCUMENTATION__               = "<<<DOCUMENTATION>>>"
@@ -801,7 +802,22 @@ class CStateMachineGenerator(CGenerator):
             return line
         def not_processing_if_function(line) -> str:
             return line
-        return IfProcessor(__TAG_PYTHON_ATTR_IF_ANY__).Expand(all_lines, if_test_function, not_processing_if_function, processing_if_function)
+
+        def process_any_attr_present(all_lines) -> list[str]:
+            new_all_lines = []
+            for line in all_lines:
+                new_line = line
+                if hasSpecificTag(line, __TAG_PYTHON_ATTR_ANY__) and hasDefault(line):
+                    [tag, attr, useifexist] = extractTagAndAandB(line, __TAG_PYTHON_ATTR_ANY__)
+                    if if_test_function(attr) and useifexist:
+                        new_line = new_line.replace(tag, useifexist)
+                    else:
+                        new_line = new_line.replace(tag, "")
+                new_all_lines.append(new_line)
+            return new_all_lines
+
+        new_lines = process_any_attr_present(all_lines)
+        return IfProcessor(__TAG_PYTHON_ATTR_IF_ANY__).Expand(new_lines, if_test_function, not_processing_if_function, processing_if_function)
 
 
     def expand_secondfiltering(self, smmodel, cmmodel):
