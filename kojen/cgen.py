@@ -8,6 +8,7 @@ import datetime
 import sys
 import time
 from pathlib import Path
+from typing import List
 try:
 	from .preservative import *
 except (ModuleNotFoundError, ImportError) as e:
@@ -164,7 +165,7 @@ class IfProcessor:
     def __init__(self, start_tag = __TAG_IF__) -> None:
         self.start_tag = start_tag
 
-    def Expand(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> list[str]:
+    def Expand(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> List[str]:
         new_lines = []
         is_processing_if = False
         can_process_else = True
@@ -278,7 +279,7 @@ def hasDefault(a, delimiter = "=") -> bool:
     r = any(delimiter in string for string in b)
     return r
 
-def extractDefaultAndTag(a, delimiter = "=") -> list[str]:
+def extractDefaultAndTag(a, delimiter = "=") -> List[str]:
     #default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")].replace(delimiter,"", 1)
     #tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
     #return [tag, default]
@@ -316,14 +317,14 @@ def extractDefaultAndTag(a, delimiter = "=") -> list[str]:
         return [outermost_tag, default_value.strip()]
     return ['', '']
 
-def extractDefaultAndTagNamed(a, named) -> list[str]:
+def extractDefaultAndTagNamed(a, named) -> List[str]:
     all = a.split(">>>")
     for b in all:
         if named in b:
             return extractDefaultAndTag(b + ">>>")
     raise Exception(named + " not found.")
 
-def extractTagAndAandB(a, default_tag, delimiter = "=") -> list[str]:
+def extractTagAndAandB(a, default_tag, delimiter = "=") -> List[str]:
     t = default_tag.replace(">>>", "")
     pos = a.find(t)
     if pos != -1:
@@ -431,7 +432,7 @@ class CGenerator:
         return file
 
     ''' This will remove multiple newlines directly after each, leaving only 1'''
-    def filter_multiple_newlines(self,list_of_lines_in_file) -> list[str]:
+    def filter_multiple_newlines(self,list_of_lines_in_file) -> List[str]:
         last = ''
         for i in range(len(list_of_lines_in_file)):
             was_filtered = False
@@ -493,7 +494,7 @@ class CGenerator:
             raise Exception("Unsupported FOR args.")
 
 
-    def processExtends(self, path_to_parent_folder, inner_template_file, ignore_lines_with, ignore_lines_between) -> list[str]:
+    def processExtends(self, path_to_parent_folder, inner_template_file, ignore_lines_with, ignore_lines_between) -> List[str]:
         result = []
 
         templateFilePath = Path(inner_template_file)

@@ -157,6 +157,7 @@ except  (ModuleNotFoundError, ImportError) as e:
     from .plant import TTToDot
 
 import re
+from typing import List
 
 # Model that describes a state machine.
 class CStateMachineModel:
@@ -479,7 +480,7 @@ class CStateMachineGenerator(CGenerator):
             cnt = cnt + 1
             alpha = get_next_alphabet(alpha)
 
-    def innerexpand_secondfiltering_pertagpair_IFPyAttr(self, snippet_to_expand, struct) -> list[str]:
+    def innerexpand_secondfiltering_pertagpair_IFPyAttr(self, snippet_to_expand, struct) -> List[str]:
         def if_test_function(user_tag, struct) -> bool:
             return hasattr(struct, user_tag)
         def processing_if_function(line, struct) -> str:
@@ -792,7 +793,7 @@ class CStateMachineGenerator(CGenerator):
             val = source_state
         return val
     
-    def innerexpand_secondfiltering_IFANYPyAttr(self, all_lines) -> list[str]:
+    def innerexpand_secondfiltering_IFANYPyAttr(self, all_lines) -> List[str]:
         def if_test_function(attribute) -> bool:
             for name in self.events_interface:
                 if hasattr(self.events_interface[name], attribute):
@@ -803,7 +804,7 @@ class CStateMachineGenerator(CGenerator):
         def not_processing_if_function(line) -> str:
             return line
 
-        def process_any_attr_present(all_lines) -> list[str]:
+        def process_any_attr_present(all_lines) -> List[str]:
             new_all_lines = []
             for line in all_lines:
                 new_line = line
