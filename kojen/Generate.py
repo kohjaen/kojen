@@ -32,7 +32,7 @@ def Protocol(outputdir, eventsinterface, namespacenname, classname, dclspc="", a
 '''
 
 
-def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True, __purge_msg_headers=True) -> list:
+def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True, __purge_msg_headers=False) -> list:
     if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
@@ -57,7 +57,7 @@ def StateMachine(outputdir, transition_table, eventsinterface, namespacenname, s
     return smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
 
-def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True, __purge_msg_headers=True) -> list:
+def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True, __purge_msg_headers=False) -> list:
     if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
@@ -82,7 +82,7 @@ def StateMachine_CSHARP(outputdir, transition_table, eventsinterface, namespacen
     return smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
 
-def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True, __purge_msg_headers=True) -> list:
+def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __internal="", __copy_other_files=True, __purge_msg_headers=False) -> list:
     if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
@@ -107,7 +107,7 @@ def StateMachine_PYTHON(outputdir, transition_table, eventsinterface, namespacen
     return smgenerator.Generate(transition_table, namespacenname, statemachinenameprefix, dclspc, __copy_other_files)
 
 
-def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __copy_other_files=True, __purge_msg_headers=True) -> list:
+def StateMachineFromModel(outputdir, vp_project_path, vp_statemachinename, eventsinterface, namespacenname, statemachinenameprefix, dclspc="", author="", group="", brief="", templatedir="", __copy_other_files=True, __purge_msg_headers=False) -> list:
     if not os.path.isabs(templatedir) and templatedir.strip():
         # Is it a user template?
         if Install.ContainsTemplates(templatedir):
