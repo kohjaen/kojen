@@ -455,4 +455,9 @@ class Interface(OrderedDict, Query):
                 return str(a).replace("[", "").replace("]", "").replace("'", "").replace("(", "").replace(")", "")
         return ""
 
+    def PurgeMessageHeaders(self):
+        for id, obj in self.MessageMap.items():
+            if obj.HeaderName() in obj:
+                obj.pop(obj.HeaderName())
+
 

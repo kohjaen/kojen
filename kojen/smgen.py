@@ -97,16 +97,22 @@ __TAG_DECLSPEC_DLL_EXPORT__         = "<<<DLL_EXPORT>>>"
 ### CONSOLODATE AND unit test the new recursive features with defaults
 __TAG_STRUCTNAME__                  = '<<<STRUCTNAME>>>'        # As given
 __TAG_STRUCTNAME_SMALL_CAMEL__      = '<<<structName>>>'        # camelCaps
+__TAG_STRUCTNAME_SNAKE__            = '<<<STRUCT_NAME>>>'       # snake case
 __TAG_MSGNAME__                     = '<<<MSGNAME>>>'           # As given
-__TAG_MSGID__                       = '<<<MSGID>>>'
 __TAG_MSGNAME_SMALL_CAMEL__         = '<<<msgName>>>'           # camelCaps
+__TAG_MSGNAME_SNAKE__               = '<<<MSG_NAME>>>'          # snake case
+__TAG_MSGID__                       = '<<<MSGID>>>'
 __TAG_PROTOMSGNAME__                = '<<<PROTOMSGNAME>>>'      # As given
 __TAG_PROTOMSGNAME_SMALL_CAMEL__    = '<<<protoMsgName>>>'      # camelCaps
+__TAG_PROTOMSGNAME_SNAKE__          = '<<<PROTO_MSG_NAME>>>'    # snake case
 __TAG_ATTRIBUTE_TYPE__              = "<<<ATTRIBUTETYPE>>>"
 __TAG_ATTRIBUTE_NAME__              = "<<<ATTRIBUTENAME>>>"
 __TAG_PAYLOAD_TYPE__                = "<<<PAYLOADTYPE>>>"
 __TAG_PAYLOAD_NAME__                = "<<<PAYLOADNAME>>>"
-__TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"
+__TAG_PYTHON_ATTR__                 = "<<<PyAttr>>>"            # Use Python Attributes in code replace
+__TAG_PYTHON_ATTR_ANY__             = '<<<ANY_PyAttr>>>'        # Use the presence of a Python Attribute in ANY elements in a struct/message. Not limited to struct/message, but entire interface.
+__TAG_PYTHON_ATTR_IF__              = '<<<IF_PyAttr>>>'         # Use the presence of a Python Attribute for a struct/message etc for If/Else process (but not code replace)
+__TAG_PYTHON_ATTR_IF_ANY__          = '<<<IF_ANY_PyAttr>>>'     # Use the presence of a Python Attribute in ANY elements for If/Else processing. Not limited to struct/message, but entire interface.
 __TAG_DOCUMENTATION__               = "<<<DOCUMENTATION>>>"
 
 __TAG_STRUCT_BEGIN__                = "<<<PER_STRUCT_BEGIN>>>"
@@ -116,12 +122,13 @@ __TAG_MSG_END__                     = "<<<PER_MSG_END>>>"
 __TAG_PROTOMSG_BEGIN__              = "<<<PER_PROTOMSG_BEGIN>>>"
 __TAG_PROTOMSG_END__                = "<<<PER_PROTOMSG_END>>>"
 ###
-__TAG_SIGNATURE__                   = "<<<SIGNATURE>>>"
-__TAG_SIGNATURE_DEF__               = "<<<SIGNATUREWITHDEFAULTS>>>"
-__TAG_MEMBERINST__                  = "<<<MEMBERSINSTANTIATE>>>"
-__TAG_LITE_MEMBERINST__             = "<<<MEMBERSLITEINSTANTIATE>>>"
-__TAG_MEMBERDECL__                  = "<<<MEMBERSDECLARE>>>"
-__TAG_AGGREGATE_INIT__              = "<<<AGGREGATEINITIALIZATION>>>"
+__TAG_SIGNATURE__                   = "<<<SIGNATURE>>>"                 # function signature with types and names (language dependant)
+__TAG_SIGNATURE_DEF__               = "<<<SIGNATUREWITHDEFAULTS>>>"     # function signature with types and names and defaults (language dependant)
+__TAG_PARAMETERS__                  = "<<<PARAMETERS>>>"                # function parameters with names, and optional other parameters (and calling convention) (language dependant)
+__TAG_MEMBERINST__                  = "<<<MEMBERSINSTANTIATE>>>"        # Old school instantiation ... 
+__TAG_LITE_MEMBERINST__             = "<<<MEMBERSLITEINSTANTIATE>>>"    # Old school instantiation ... 
+__TAG_MEMBERDECL__                  = "<<<MEMBERSDECLARE>>>"            # declare members with types (language dependant) e.g. struct members.
+__TAG_AGGREGATE_INIT__              = "<<<AGGREGATEINITIALIZATION>>>"   # Modern single line initialization (C++ aggregate -> language dependant)
 
 # Python2 -> 3 shennanigans...try support both
 try:
@@ -150,6 +157,7 @@ except  (ModuleNotFoundError, ImportError) as e:
     from .plant import TTToDot
 
 import re
+from typing import List
 
 # Model that describes a state machine.
 class CStateMachineModel:
@@ -321,6 +329,15 @@ class CStateMachineGenerator(CGenerator):
 
         return ""
 
+    def get_event_parameters(self,name):
+        if self.events_interface is None or self.language is None:
+            return ""
+        for s in self.events_interface.All():
+            if s.Name == name:
+                return self.language.GetFactoryFunctionCallParams(s)
+
+        return ""
+
     def instantiate_event_struct_member(self, name, whitespace_cnt, is_ptr=True, instancename="data"):
         if self.events_interface is None or self.language is None:
             return ""
@@ -358,11 +375,17 @@ class CStateMachineGenerator(CGenerator):
                 return result.rsplit('\n', 1)[0]
         return ""
 
-    def innerexpand_secondfiltering(self, snippet_to_expand, alllinesexpanded, items):
+    def innerexpand_secondfiltering(self, snippet_to_expand, alllinesexpanded, items) -> None:
         alpha = reset_alphabet()
         cnt = 0
         for name in items:
-            for line in snippet_to_expand:
+            # Step one : PyAttr based If processing
+            if name in self.events_interface: # Not all events are defined as structs, may be TT only.
+                new_snippet_to_expand = self.innerexpand_secondfiltering_pertagpair_IFPyAttr(snippet_to_expand, self.events_interface[name])
+            else:
+                new_snippet_to_expand = snippet_to_expand
+            # Step two : old processing
+            for line in new_snippet_to_expand:
                 # If there is no tag ... don't waste time
                 if not hasTag(line):
                     if line.isspace():
@@ -385,6 +408,14 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
+                if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
+                    [tag, attr, useifnotexist] = extractTagAndAandB(newline, __TAG_PYTHON_ATTR__)
+                    if hasattr(self.events_interface[name], str(attr)):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
+                    elif useifnotexist:
+                        newline = newline.replace(tag, useifnotexist)
+                    else:
+                        continue
                 if hasSpecificTag(newline,__TAG_SIGNATURE__):
                     has_signature_defaults = __TAG_SIGNATURE_DEF__ in newline
                     if hasDefault(newline):
@@ -397,6 +428,20 @@ class CStateMachineGenerator(CGenerator):
                         newline = newline.replace(__TAG_SIGNATURE_DEF__ if has_signature_defaults else __TAG_SIGNATURE__, self.get_event_signature(name, has_signature_defaults))
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
+                if hasSpecificTag(newline, __TAG_PARAMETERS__):
+                    [cleantag, accessor, user_params] = extractTagAndAandB(newline, __TAG_PARAMETERS__)
+                    parameters = self.get_event_parameters(name)
+                    if not accessor:
+                        accessor = ""
+                    accessor = accessor.strip()
+                    paramstring = ""
+                    for p in parameters:
+                        paramstring += accessor + p + ', '
+                    paramstring = paramstring.rstrip(", ")
+                    if user_params:
+                        paramstring = paramstring + ", " + user_params
+                    paramstring = paramstring.strip(',').strip(' ')
+                    newline = newline.replace(cleantag, paramstring)
                 # __TAG_MEMBERINST__ -> PTR
                 if hasSpecificTag(newline,__TAG_MEMBERINST__) and hasDefault(newline):
                     line_member = extractDefaultAndTag(newline)
@@ -429,27 +474,30 @@ class CStateMachineGenerator(CGenerator):
                         membertype = mem[0]
                         alllinesexpanded.append(newline.replace(__TAG_ATTRIBUTE_TYPE__, membertype).replace(__TAG_ATTRIBUTE_NAME__, membername))
                     continue
-                # Python attributes ... someone piggybacks the nice interface
-                if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
-                    [tag, attr, useifnotexist] = extractTagAndAandB(newline)
-                    if hasattr(self.events_interface[name], str(attr)):
-                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
-                    elif useifnotexist:
-                        newline = newline.replace(tag, useifnotexist)
-                    else:
-                        continue
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
             cnt = cnt + 1
             alpha = get_next_alphabet(alpha)
 
+    def innerexpand_secondfiltering_pertagpair_IFPyAttr(self, snippet_to_expand, struct) -> List[str]:
+        def if_test_function(user_tag, struct) -> bool:
+            return hasattr(struct, user_tag)
+        def processing_if_function(line, struct) -> str:
+            return line
+        def not_processing_if_function(line, struct) -> str:
+            return line
+        return IfProcessor(__TAG_PYTHON_ATTR_IF__).Expand(snippet_to_expand, if_test_function, not_processing_if_function, processing_if_function, struct)
+
     ### CONSOLODATE ... this is essentially a copy-paste of the above ...
-    def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items):
+    def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items) -> None:
         alpha = reset_alphabet()
         cnt = 0
         for name in items:
-            for line in snippet_to_expand:
+            # Step one : PyAttr based If processing
+            new_snippet_to_expand = self.innerexpand_secondfiltering_pertagpair_IFPyAttr(snippet_to_expand, self.events_interface[name])
+            # Step two : old processing
+            for line in new_snippet_to_expand:
                 # If there is no tag ... don't waste time
                 if not hasTag(line):
                     if line.isspace():
@@ -459,13 +507,24 @@ class CStateMachineGenerator(CGenerator):
 
                 newline = line.replace(__TAG_STRUCTNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_STRUCTNAME__, name)
+                newline = newline.replace(__TAG_STRUCTNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_MSGNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_MSGNAME__, name)
+                newline = newline.replace(__TAG_MSGNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_PROTOMSGNAME__, name)
                 newline = newline.replace(__TAG_PROTOMSGNAME_SMALL_CAMEL__, camel_case_small(name))
+                newline = newline.replace(__TAG_PROTOMSGNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
+                if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
+                    [tag, attr, useifnotexist] = extractTagAndAandB(newline, __TAG_PYTHON_ATTR__)
+                    if hasattr(self.events_interface[name], str(attr)):
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
+                    elif useifnotexist:
+                        newline = newline.replace(tag, useifnotexist)
+                    else:
+                        continue
                 if hasSpecificTag(newline, __TAG_SIGNATURE__):
                     has_signature_defaults = __TAG_SIGNATURE_DEF__ in newline
                     if hasDefault(newline):
@@ -478,6 +537,20 @@ class CStateMachineGenerator(CGenerator):
                         newline = newline.replace(__TAG_SIGNATURE_DEF__ if has_signature_defaults else __TAG_SIGNATURE__, self.get_event_signature(name, has_signature_defaults))
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x: x.group(0).replace(' , )', ')').replace(', )', ')').replace(',)', ')').replace('( , ', '(').replace('( ,', '(').replace('(,', '('), newline)
+                if hasSpecificTag(newline, __TAG_PARAMETERS__):
+                    [cleantag, accessor, user_params] = extractTagAndAandB(newline, __TAG_PARAMETERS__)
+                    parameters = self.get_event_parameters(name)
+                    if not accessor:
+                        accessor = ""
+                    accessor = accessor.strip()
+                    paramstring = ""
+                    for p in parameters:
+                        paramstring += accessor + p + ', '
+                    paramstring = paramstring.rstrip(", ")
+                    if user_params:
+                        paramstring = paramstring + ", " + user_params
+                    paramstring = paramstring.strip(',').strip(' ')
+                    newline = newline.replace(cleantag, paramstring)
                 # __TAG_MEMBERINST__ -> PTR
                 if hasSpecificTag(newline, __TAG_MEMBERINST__) and hasDefault(newline):
                     line_member = extractDefaultAndTag(newline)
@@ -524,15 +597,6 @@ class CStateMachineGenerator(CGenerator):
                         if not isProtocol:
                             alllinesexpanded.append(newline.replace(__TAG_PAYLOAD_TYPE__, membertype).replace(__TAG_PAYLOAD_NAME__, membername))
                     continue
-                # Python attributes ... someone piggybacks the nice interface
-                if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
-                    [tag, attr, useifnotexist] = extractTagAndAandB(newline)
-                    if hasattr(self.events_interface[name], str(attr)):
-                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
-                    elif useifnotexist:
-                        newline = newline.replace(tag, useifnotexist)
-                    else:
-                        continue
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
@@ -728,11 +792,39 @@ class CStateMachineGenerator(CGenerator):
         if tmp_val == "" or tmp_val.lower() == 'none':
             val = source_state
         return val
+    
+    def innerexpand_secondfiltering_IFANYPyAttr(self, all_lines) -> List[str]:
+        def if_test_function(attribute) -> bool:
+            for name in self.events_interface:
+                if hasattr(self.events_interface[name], attribute):
+                    return True
+            return False
+        def processing_if_function(line) -> str:
+            return line
+        def not_processing_if_function(line) -> str:
+            return line
+
+        def process_any_attr_present(all_lines) -> List[str]:
+            new_all_lines = []
+            for line in all_lines:
+                new_line = line
+                if hasSpecificTag(line, __TAG_PYTHON_ATTR_ANY__) and hasDefault(line):
+                    [tag, attr, useifexist] = extractTagAndAandB(line, __TAG_PYTHON_ATTR_ANY__)
+                    if if_test_function(attr) and useifexist:
+                        new_line = new_line.replace(tag, useifexist)
+                    else:
+                        new_line = new_line.replace(tag, "")
+                new_all_lines.append(new_line)
+            return new_all_lines
+
+        new_lines = process_any_attr_present(all_lines)
+        return IfProcessor(__TAG_PYTHON_ATTR_IF_ANY__).Expand(new_lines, if_test_function, not_processing_if_function, processing_if_function)
 
 
     def expand_secondfiltering(self, smmodel, cmmodel):
         for file in cmmodel.filenames_to_lines:
             all_lines_expanded = self.filterInitialState(cmmodel.filenames_to_lines[file], smmodel)
+            all_lines_expanded = self.innerexpand_secondfiltering_IFANYPyAttr(all_lines_expanded)
             all_lines_expanded = SingleExpander(__TAG_TTT_PLANT_UML__).Expand(all_lines_expanded, self.innerexpand_plant, smmodel)
             all_lines_expanded = SingleExpander(__TAG_TTT_BOOST_MSM__).Expand(all_lines_expanded, self.innerexpand_msm, smmodel)
             all_lines_expanded = SingleExpander(__TAG_TTT_BOOST_MSMLITE__).Expand(all_lines_expanded, self.innerexpand_msmlite, smmodel)

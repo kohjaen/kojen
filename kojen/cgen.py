@@ -8,6 +8,7 @@ import datetime
 import sys
 import time
 from pathlib import Path
+from typing import List
 try:
 	from .preservative import *
 except (ModuleNotFoundError, ImportError) as e:
@@ -160,6 +161,54 @@ class PairExpander:
 
 '''------------------------------------------------------------------------------------------------------'''
 
+class IfProcessor:
+    def __init__(self, start_tag = __TAG_IF__) -> None:
+        self.start_tag = start_tag
+
+    def Expand(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> List[str]:
+        new_lines = []
+        is_processing_if = False
+        can_process_else = True
+        can_append_line = True
+        for line in all_lines:
+            if is_processing_if:
+                has_elseif       = hasSpecificTag(line, __TAG_ELSEIF__)
+                has_else         = hasSpecificTag(line, __TAG_ELSE__) and not has_elseif
+                has_endif        = hasSpecificTag(line, __TAG_ENDIF__)
+                if not has_elseif and not has_else and not has_endif:
+                    line = processing_if_function(line, *args) # still processing if ...
+                if has_elseif and not has_else and not has_endif:
+                    [unused, user_tag] = extractDefaultAndTag(line, " ")
+                    can_append_line = if_test_function(user_tag, *args)
+                    can_process_else = not can_append_line and can_process_else # -> if a usertag is not found in an if.
+                    continue
+                elif not has_elseif and has_else and not has_endif:
+                    can_append_line = can_process_else
+                    continue
+                elif not has_elseif and not has_else and has_endif: # End ...
+                    is_processing_if = False
+                    can_append_line = True
+                    can_process_else = True
+                    continue
+            else:
+                can_append_line = True
+                has_if = hasSpecificTag(line, self.start_tag)
+                if has_if:
+                    is_processing_if = True
+                    # get the expression in the IF ... delimiter is ' '.
+                    [unused, user_tag] = extractDefaultAndTag(line, " ")
+                    can_append_line = if_test_function(user_tag, *args)
+                    can_process_else = not can_append_line and can_process_else# -> if a usertag is not found in an if.
+                    continue
+                else:
+                    line = not_processing_if_function(line, *args)
+            if can_append_line:
+                new_lines.append(line)
+        return new_lines
+
+
+'''------------------------------------------------------------------------------------------------------'''
+
 
 def get_next_alphabet(alpha) -> int:
     alpha = alpha + 1
@@ -212,24 +261,25 @@ def snake_case(a) -> str:
 def caps(a) -> str:
     return a.upper()
 
-tag_pattern = re.compile(r'<<<([^<>]*)>>>')
-def hasTag(a):
+#tag_pattern = re.compile(r'<<<([^<>]*)>>>')
+tag_pattern = re.compile(r'<<<(.*?)>>>')
+def hasTag(a) -> bool:
     b = tag_pattern.findall(a)
     return len(b) > 0
 
-def hasSpecificTag(a, tag):
+def hasSpecificTag(a, tag) -> bool:
     # allows for defaults : BEWARE also allows for partial matching so order is important in such a case.
     res = hasTag(a)
     if res:
         res = tag.replace("<<<", "").replace(">>>", "") in a
     return res
 
-def hasDefault(a, delimiter = "="):
+def hasDefault(a, delimiter = "=") -> bool:
     b = tag_pattern.findall(a)
     r = any(delimiter in string for string in b)
     return r
 
-def extractDefaultAndTag(a, delimiter = "="):
+def extractDefaultAndTag(a, delimiter = "=") -> List[str]:
     #default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")].replace(delimiter,"", 1)
     #tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
     #return [tag, default]
@@ -264,29 +314,28 @@ def extractDefaultAndTag(a, delimiter = "="):
         inner_content = a[start[0]+3:end[-1]-3]
         parts = inner_content.split(delimiter, 1)
         default_value = parts[1] if len(parts) > 1 else ''
-        return [outermost_tag, default_value]
+        return [outermost_tag, default_value.strip()]
     return ['', '']
 
-def extractDefaultAndTagNamed(a, named):
+def extractDefaultAndTagNamed(a, named) -> List[str]:
     all = a.split(">>>")
     for b in all:
         if named in b:
             return extractDefaultAndTag(b + ">>>")
     raise Exception(named + " not found.")
 
-def extractTagAndAandB(a, delimiter = "="):
-    #[tag, default] = extractDefaultAndTag(a, delimiter)
-    #r = default.split(delimiter)
-    #A = None if len(r) < 1 else r[0]
-    #B = None if len(r) < 2 else r[1]
-    #return [tag, A, B]
-    tag = a[a.find("<<<"):a.find(">>>") + len(">>>")]
-    r = a[a.find("<<<") + len("<<<"):a.find(">>>")].split(delimiter)
-    A = None if len(r) < 2 else r[1]
-    B = None if len(r) < 3 else r[2]
-    return [tag, A, B]
+def extractTagAndAandB(a, default_tag, delimiter = "=") -> List[str]:
+    t = default_tag.replace(">>>", "")
+    pos = a.find(t)
+    if pos != -1:
+        tag = a[pos:a.find(">>>", pos) + len(">>>")]
+        r = a[pos + len("<<<"):a.find(">>>", pos)].split(delimiter)
+        A = None if len(r) < 2 else r[1].strip()
+        B = None if len(r) < 3 else r[2].strip()
+        return [tag, A, B]
+    return [default_tag, None, None]
 
-def replaceUserTags(line, dict_key_vals):
+def replaceUserTags(line, dict_key_vals) -> str:
     is_defined = [key for key in dict_key_vals if key in line]
     if not is_defined and not hasDefault(line): # if its not defined (even None or '') then leave it.
         return line
@@ -304,10 +353,10 @@ def replaceUserTags(line, dict_key_vals):
     line = line.replace('<<<','').replace('>>>','')
     return line
 
-def removeDefault2(a, default, delimiter = "="):
+def removeDefault2(a, default, delimiter = "=") -> str:
     return a.replace(default,"").replace(delimiter, "")
 
-def removeDefault(a, delimiter = "="):
+def removeDefault(a, delimiter = "=") -> str:
     matches = tag_pattern.findall(a)
     if matches:
         # Get the last match to handle nested or multiple <<<...>>> patterns
@@ -320,21 +369,21 @@ def removeDefault(a, delimiter = "="):
     return a
 
 
-def replaceDefault(a, b, delimiter = "="):
+def replaceDefault(a, b, delimiter = "=") -> str:
     default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")]
     default = default.strip(delimiter)
     return a.replace(default, b)
 
 
-def cleanTag(a):
+def cleanTag(a) -> str:
     return a.replace("<<<","").replace(">>>","")
 
 
-def getWhitespace(a):
+def getWhitespace(a) -> str:
     return a[0:a.find("<<<")]
 
 
-def setFilenameReplace(dictionary_of_search_replace_tags_for_filename, desired_template_name):
+def setFilenameReplace(dictionary_of_search_replace_tags_for_filename, desired_template_name) -> None:
     """
     'Template' in a filename can have the following forms, which will effect the output filename.
     NOTE: In Python, when you pass a dictionary (or any mutable object) to a function, it is passed by reference
@@ -383,7 +432,7 @@ class CGenerator:
         return file
 
     ''' This will remove multiple newlines directly after each, leaving only 1'''
-    def filter_multiple_newlines(self,list_of_lines_in_file):
+    def filter_multiple_newlines(self,list_of_lines_in_file) -> List[str]:
         last = ''
         for i in range(len(list_of_lines_in_file)):
             was_filtered = False
@@ -397,7 +446,7 @@ class CGenerator:
         return list_of_lines_in_file
 
 
-    def innerexpand_for_loop(self, to_expand, output, for_loop_param):
+    def innerexpand_for_loop(self, to_expand, output, for_loop_param) -> None:
 
         def __process(csv_item_str, to_expand, output):
             alpha = reset_alphabet()
@@ -445,7 +494,7 @@ class CGenerator:
             raise Exception("Unsupported FOR args.")
 
 
-    def processExtends(self, path_to_parent_folder, inner_template_file, ignore_lines_with, ignore_lines_between):
+    def processExtends(self, path_to_parent_folder, inner_template_file, ignore_lines_with, ignore_lines_between) -> List[str]:
         result = []
 
         templateFilePath = Path(inner_template_file)
@@ -481,7 +530,7 @@ class CGenerator:
                         result.append(l)
         return result
 
-    def processLine(self, dict_to_replace_lines, lines, line):
+    def processLine(self, dict_to_replace_lines, lines, line) -> None:
         for tag, desired_text in dict_to_replace_lines.items():
             desired_text = self.preserve_leading_tagwhitespace_in_multiline_searchandreplace(line, tag, desired_text)
             line = line.replace(tag, desired_text)
@@ -550,7 +599,7 @@ class CGenerator:
                 # but that has problems with user-tags-without defaults
         return result
 
-    def loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = ""):
+    def loadtemplates_firstfiltering(self, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = "") -> CCodeModel:
         """
         Load Template and do 1st round of filtering. The filtering will replace the TAG
 
@@ -581,7 +630,7 @@ class CGenerator:
 
         return result
 
-    def preserve_leading_tagwhitespace_in_multiline_searchandreplace(self, line, tag, desired_text):
+    def preserve_leading_tagwhitespace_in_multiline_searchandreplace(self, line, tag, desired_text) -> str:
         """
         For the case where the 'desired_text' that should replace the 'tag' in the 'line', if it is a multi-line
         replace, it will keep the leading spaces across all lines...otherwise simply returns the input desired_text
@@ -617,7 +666,30 @@ class CGenerator:
 
 
 
-    def do_user_tags(self, codemodel, dict_key_vals, delimiter="="):
+    def do_user_tags(self, codemodel, dict_key_vals, delimiter="=") -> None:
+
+        def if_test_function(user_tag) -> bool:
+            return user_tag in dict_key_vals
+
+        def not_processing_if_function(line) -> str:
+            has_tag      = hasTag(line)
+            has_for      = hasSpecificTag(line, __TAG_FOR_BEGIN__)
+            if has_tag and not has_for:
+                line = replaceUserTags(line, dict_key_vals)
+            elif has_tag and has_for:
+                taganddefault = extractDefaultAndTag(line)
+                key = cleanTag(removeDefault("<<<" + taganddefault[1] + ">>>"))
+                if key in dict_key_vals:
+                    line = replaceDefault(line, dict_key_vals[key])
+                elif key in defaults_in_files_FOR:
+                    line = replaceDefault(line, defaults_in_files_FOR[key])
+                else:
+                    line = "//POO"
+            return line
+
+        def processing_if_function(line) -> str:
+            return replaceUserTags(line, dict_key_vals)
+
         # get defaults : for loop processing introduces multiple uses of tags across multiple files.
         # first is the law!
         defaults_in_files_FOR = {}
@@ -637,71 +709,20 @@ class CGenerator:
                                 defaults_in_files_FOR[key] = taganddefault[1]
 
         for fn, lines in codemodel.filenames_to_lines.items():
-            new_lines = []
-
-            is_processing_if = False
-            can_process_else = True
-            can_append_line = True
-
-            # this should be called last, so at this point any tags should be user defined.
-            for line in lines:
-                if is_processing_if:
-                    has_elseif       = hasSpecificTag(line, __TAG_ELSEIF__)
-                    has_else         = hasSpecificTag(line, __TAG_ELSE__) and not has_elseif
-                    has_endif        = hasSpecificTag(line, __TAG_ENDIF__)
-                    if not has_elseif and not has_else and not has_endif:
-                        line = replaceUserTags(line, dict_key_vals) # still processing if ...
-                    if has_elseif and not has_else and not has_endif:
-                        [unused, user_tag] = extractDefaultAndTag(line, " ")
-                        can_append_line = user_tag in dict_key_vals
-                        can_process_else = not can_append_line and can_process_else # -> if a usertag is not found in an if.
-                        continue
-                    elif not has_elseif and has_else and not has_endif:
-                        can_append_line = can_process_else
-                        continue
-                    elif not has_elseif and not has_else and has_endif: # End ...
-                        is_processing_if = False
-                        can_append_line = True
-                        can_process_else = True
-                        continue
-                else:
-                    can_append_line = True
-                    has_tag      = hasTag(line)
-                    has_for      = hasSpecificTag(line, __TAG_FOR_BEGIN__)
-                    has_if       = hasSpecificTag(line, __TAG_IF__)
-                    if has_tag and not has_for and not has_if:
-                        line = replaceUserTags(line, dict_key_vals)
-                    elif has_tag and has_for and not has_if:
-                        taganddefault = extractDefaultAndTag(line)
-                        key = cleanTag(removeDefault("<<<" + taganddefault[1] + ">>>"))
-                        if key in dict_key_vals:
-                            line = replaceDefault(line, dict_key_vals[key])
-                        elif key in defaults_in_files_FOR:
-                            line = replaceDefault(line, defaults_in_files_FOR[key])
-                        else:
-                            line = "//POO"
-                    elif has_tag and not has_for and has_if:
-                        is_processing_if = True
-                        # get the expression in the IF ... delimiter is ' '.
-                        [unused, user_tag] = extractDefaultAndTag(line, " ")
-                        can_append_line = user_tag in dict_key_vals
-                        can_process_else = not can_append_line and can_process_else# -> if a usertag is not found in an if.
-                        continue
-
-                if can_append_line:
-                    new_lines.append(line)
+            new_lines = IfProcessor().Expand(lines, if_test_function, not_processing_if_function, processing_if_function)
             # replace
             codemodel.filenames_to_lines[fn] = new_lines
 
 
-    def do_for(self, codemodel):
+
+    def do_for(self, codemodel) -> None:
         for fn, lines in codemodel.filenames_to_lines.items():
             new_lines = PairExpander(__TAG_FOR_BEGIN__, __TAG_FOR_END__).Expand(lines, self.innerexpand_for_loop)
             # replace
             codemodel.filenames_to_lines[fn] = new_lines
 
     '''Will use the base-class configured 'output directory' if no preserve directory is passed in. '''
-    def preserve_usercode_in_files(self, codemodel, preserve_dir = ""):
+    def preserve_usercode_in_files(self, codemodel, preserve_dir = "") -> None:
         copy_filename_to_lines = codemodel.filenames_to_lines.copy() # prevent mutation whilst iteration.
         for filename_nopath in copy_filename_to_lines:
             file_to_preserve = ""
@@ -714,7 +735,7 @@ class CGenerator:
 '''------------------------------------------------------------------------------------------------------'''
 
 
-def FileCopyUtil(dir_from, dir_to, list_of_filenames):
+def FileCopyUtil(dir_from, dir_to, list_of_filenames) -> None:
     """
     Will copy each file from list_of_filenames in dir_from to dir_to.
     Will create dir_to (even if its a tree) if it does not exist.
