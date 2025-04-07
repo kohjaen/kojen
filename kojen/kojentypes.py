@@ -454,9 +454,10 @@ class Interface(OrderedDict, Query):
             if self.MessageMap[a].Name == struct.Name:
                 return str(a).replace("[", "").replace("]", "").replace("'", "").replace("(", "").replace(")", "")
         return ""
-    
+
     def PurgeMessageHeaders(self):
         for id, obj in self.MessageMap.items():
-            obj.pop(obj.HeaderName())
+            if obj.HeaderName() in obj:
+                obj.pop(obj.HeaderName())
 
 
