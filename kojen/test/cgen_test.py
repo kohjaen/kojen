@@ -43,7 +43,7 @@ class TestFeatures(unittest.TestCase):
         post = i.Decompose()
         self.assertNotEqual(pre, post)
         self.assertEqual(len(pre), len(post)+2 )
-        
+
     def test_setFilenameReplace(self):
         items = {}
         setFilenameReplace(items, "thisIsIt")
@@ -158,6 +158,36 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_b[0], "<<<BLA3=one>>>", "Wrong tag")
         self.assertEqual(res_b[1], "one", "Wrong A")
         self.assertEqual(res_b[2], None, "Wrong B")
+
+    def test_extract_IF(self):
+        a = "Some text <<<IF condition1 AND condition2 OR condition3>>>"# more text <<<IF condition4 AND condition5>>>"
+        res_a = extractIFProcessing(a, "IF")
+        self.assertEqual(len(res_a), 5, "Wrong length")
+        self.assertEqual(res_a[0], "condition1", "Wrong 1")
+        self.assertEqual(res_a[1], "AND", "Wrong A")
+        self.assertEqual(res_a[2], "condition2", "Wrong 2")
+        self.assertEqual(res_a[3], "OR", "Wrong B")
+        self.assertEqual(res_a[4], "condition3", "Wrong 3")
+
+    def test_extract_IF_NOT(self):
+        a = "Some text <<<IF condition1 AND NOT condition2 OR NOT condition3>>>"# more text <<<IF condition4 AND condition5>>>"
+        res_a = extractIFProcessing(a, "IF")
+        self.assertEqual(len(res_a), 5, "Wrong length")
+        self.assertEqual(res_a[0], "condition1", "Wrong 1")
+        self.assertEqual(res_a[1], "AND", "Wrong A")
+        self.assertEqual(res_a[2], "NOT condition2", "Wrong 2")
+        self.assertEqual(res_a[3], "OR", "Wrong B")
+        self.assertEqual(res_a[4], "NOT condition3", "Wrong 3")
+
+        def test_extract_IF_NOT2(self):
+            a = "Some text <<<IF NOT condition1 AND NOT condition2 OR NOT condition3>>>"# more text <<<IF condition4 AND condition5>>>"
+            res_a = extractIFProcessing(a, "IF")
+            self.assertEqual(len(res_a), 5, "Wrong length")
+            self.assertEqual(res_a[0], "NOT condition1", "Wrong 1")
+            self.assertEqual(res_a[1], "AND", "Wrong A")
+            self.assertEqual(res_a[2], "NOT condition2", "Wrong 2")
+            self.assertEqual(res_a[3], "OR", "Wrong B")
+            self.assertEqual(res_a[4], "NOT condition3", "Wrong 3")
 
     def test_remove_default(self):
         a = "XXX::blabla<<<something=1>>>"
@@ -421,7 +451,7 @@ class TestFeatures(unittest.TestCase):
         transformed = []
         for l in all_lines:
             transformed.append(replaceUserTags(l, user_tags))
-        
+
         self.assertEqual(transformed[0], "0")
         self.assertEqual(transformed[1], "1")
         self.assertEqual(transformed[2], "12")

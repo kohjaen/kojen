@@ -165,6 +165,29 @@ class IfProcessor:
     def __init__(self, start_tag = __TAG_IF__) -> None:
         self.start_tag = start_tag
 
+    def processNOT(self, condition, if_test_function, *args) -> bool:
+        if condition.find("NOT") == -1:
+            return if_test_function(condition, *args)
+        else:
+            return not if_test_function(condition.replace("NOT", "").strip(), *args)
+
+    def processConditions(self, conditions, if_test_function, *args) -> bool:
+        logical_and = lambda x, y: x and y
+        logical_or = lambda x, y: x or y
+        fn = None
+        result = self.processNOT(conditions[0], if_test_function, *args)
+        has_condition = False
+        for i in range(1, len(conditions)):
+            if i % 2 == 0:  # Even index: condition
+                has_condition = self.processNOT(conditions[i], if_test_function, *args)
+                result = fn(result, has_condition)
+            else:  # Odd index: operator
+                if conditions[i] == "OR":
+                    fn = logical_or
+                else: # and
+                    fn = logical_and
+        return result
+
     def Expand(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> List[str]:
         new_lines = []
         is_processing_if = False
@@ -178,8 +201,8 @@ class IfProcessor:
                 if not has_elseif and not has_else and not has_endif:
                     line = processing_if_function(line, *args) # still processing if ...
                 if has_elseif and not has_else and not has_endif:
-                    [unused, user_tag] = extractDefaultAndTag(line, " ")
-                    can_append_line = if_test_function(user_tag, *args)
+                    conditions = extractIFProcessing(line, __TAG_ELSEIF__.replace("<<<", "").replace(">>>", ""))
+                    can_append_line = can_append_line = self.processConditions(conditions, if_test_function,*args) #if_test_function(user_tag, *args)
                     can_process_else = not can_append_line and can_process_else # -> if a usertag is not found in an if.
                     continue
                 elif not has_elseif and has_else and not has_endif:
@@ -195,9 +218,8 @@ class IfProcessor:
                 has_if = hasSpecificTag(line, self.start_tag)
                 if has_if:
                     is_processing_if = True
-                    # get the expression in the IF ... delimiter is ' '.
-                    [unused, user_tag] = extractDefaultAndTag(line, " ")
-                    can_append_line = if_test_function(user_tag, *args)
+                    conditions = extractIFProcessing(line, self.start_tag.replace("<<<", "").replace(">>>", ""))
+                    can_append_line = self.processConditions(conditions, if_test_function,*args) #if_test_function(user_tag, *args)
                     can_process_else = not can_append_line and can_process_else# -> if a usertag is not found in an if.
                     continue
                 else:
@@ -323,6 +345,13 @@ def extractDefaultAndTagNamed(a, named) -> List[str]:
         if named in b:
             return extractDefaultAndTag(b + ">>>")
     raise Exception(named + " not found.")
+
+and_or_pattern = re.compile(r' (AND|OR) ')
+def extractIFProcessing(a, prefix) -> List[str]:
+    pattern = rf'<<<{prefix} ((?:NOT |! )?\w+(?: (?:AND|OR) (?:NOT |! )?\w+)*)>>>'#rf'<<<{prefix} ((?:!?\w+ (?:AND|OR) )*!?\w+)>>>'#rf'<<<{prefix} ((?:\w+ (?:AND|OR) )*\w+)>>>'
+    matches = re.findall(pattern, a)
+    assert(len(matches) == 1) # Only 1 prefix tag allowed
+    return and_or_pattern.split(matches[0])
 
 def extractTagAndAandB(a, default_tag, delimiter = "=") -> List[str]:
     t = default_tag.replace(">>>", "")
