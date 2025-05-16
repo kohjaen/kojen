@@ -498,6 +498,66 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output3[0], "yoyo\n")
         self.assertEqual(output3[1], "yoyo\n")
 
+        """
+        The above options will remove the line if there is no attribute.
+        In some cases we want to keep the line, but remove the tag (arguments in functions).
+        """
+
+        input = []
+        input.append("<<<PER_STRUCT_BEGIN>>>")
+        input.append("<<<PyAttr=ninja=yoyo= abcd,>>>")
+        input.append("<<<PER_STRUCT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga", "size_t")
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        s2.ninja = "bobo"
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+        output3 = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output3), 2)
+        self.assertEqual(output3[0], "yoyo abcd,\n")
+        self.assertEqual(output3[1], "bobo abcd,\n")
+
+        input = []
+        input.append("<<<PER_STRUCT_BEGIN>>>")
+        input.append("I only want<<<PyAttr=ninja== abcd,>>> to see this")
+        input.append("<<<PER_STRUCT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga", "size_t")
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+        output3 = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output3), 2)
+        self.assertEqual(output3[0], "I only want to see this\n")
+        self.assertEqual(output3[1], "I only want to see this\n")
+
+        input = []
+        input.append("<<<PER_STRUCT_BEGIN>>>")
+        input.append("I only want<<<PyAttr=ninja= not>>> to see this")
+        input.append("<<<PER_STRUCT_END>>>")
+        s = Struct("somestruct")
+        s.AddType("binga", "bool")
+        s.AddType("bunga", "size_t")
+        s2 = Struct("somestruct2")
+        s2.AddType("bla", "bool")
+        s2.AddType("blabla", "size_t")
+        i = Interface('')
+        i.AddStruct(s)
+        i.AddStruct(s2)
+        output3 = TestFeatures.do_magic(input, i, [], LanguageCPP())
+        self.assertEqual(len(output3), 2)
+        self.assertEqual(output3[0], "I only want not to see this\n")
+        self.assertEqual(output3[1], "I only want not to see this\n")
+
     def test_Docs(self):
         input = []
         input.append("<<<PER_STRUCT_BEGIN>>>")

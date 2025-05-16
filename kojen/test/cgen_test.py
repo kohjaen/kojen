@@ -116,48 +116,82 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_b[0], "<<<else=2>>>", "Wrong tag")
         self.assertEqual(res_b[1], "2", "Wrong default")
 
-    def test_extract_TAG_and_A_and_B_NONE(self):
+    def test_extract_TAG_and_A_and_B_and_C_NONE(self):
         a = "blab @#$KLF!WEFJ <<<what>>>"
-        [some, a, b] = extractTagAndAandB(a, "<<<some>>>")
+        [some, a, b, c] = extractTagAndAandBandC(a, "<<<some>>>")
         self.assertEqual(some, "<<<some>>>", "Wrong tag")
         self.assertEqual(a, None, "Wrong A")
         self.assertEqual(b, None, "Wrong B")
+        self.assertEqual(c, None, "Wrong C")
 
-    def test_extract_TAG_and_A_and_B(self):
+    def test_extract_TAG_and_A_and_B_and_C(self):
         a = "blab @#$KLF!WEFJ <<<some=thing=here>>>"
         b = "blab @#$KLF!WEFJ <<<some=thing>>>"
-        res_a = extractTagAndAandB(a, "<<<some>>>")
-        self.assertEqual(len(res_a), 3, "Wrong length")
+        c = "blab @#$KLF!WEFJ <<<some=thing=here=now>>>"
+        d = "blab @#$KLF!WEFJ <<<some=thing==now>>>"
+        res_a = extractTagAndAandBandC(a, "<<<some>>>")
+        self.assertEqual(len(res_a), 4, "Wrong length")
         self.assertEqual(res_a[0], "<<<some=thing=here>>>", "Wrong tag")
         self.assertEqual(res_a[1], "thing", "Wrong A")
         self.assertEqual(res_a[2], "here", "Wrong B")
-        res_b = extractTagAndAandB(b, "<<<some>>>")
-        self.assertEqual(len(res_b), 3, "Wrong length")
+        self.assertEqual(res_a[3], None, "Wrong C")
+        res_b = extractTagAndAandBandC(b, "<<<some>>>")
+        self.assertEqual(len(res_b), 4, "Wrong length")
         self.assertEqual(res_b[0], "<<<some=thing>>>", "Wrong tag")
         self.assertEqual(res_b[1], "thing", "Wrong A")
         self.assertEqual(res_b[2], None, "Wrong B")
+        self.assertEqual(res_b[3], None, "Wrong C")
+        res_c = extractTagAndAandBandC(c, "<<<some>>>")
+        self.assertEqual(len(res_c), 4, "Wrong length")
+        self.assertEqual(res_c[0], "<<<some=thing=here=now>>>", "Wrong tag")
+        self.assertEqual(res_c[1], "thing", "Wrong A")
+        self.assertEqual(res_c[2], "here", "Wrong B")
+        self.assertEqual(res_c[3], "now", "Wrong C")
+        res_d = extractTagAndAandBandC(d, "<<<some>>>")
+        self.assertEqual(len(res_d), 4, "Wrong length")
+        self.assertEqual(res_d[0], "<<<some=thing==now>>>", "Wrong tag")
+        self.assertEqual(res_d[1], "thing", "Wrong A")
+        self.assertEqual(res_d[2], None, "Wrong B")
+        self.assertEqual(res_d[3], "now", "Wrong C")
 
     def test_extract_TAG_and_A_and_B_multiple(self):
         a = "blab @#$KLF!WEFJ <<<some=thing>>> 123498123481234 <<<some=thing>>>"
-        res_a = extractTagAndAandB(a, "<<<some>>>")
-        self.assertEqual(len(res_a), 3, "Wrong length")
+        res_a = extractTagAndAandBandC(a, "<<<some>>>")
+        self.assertEqual(len(res_a), 4, "Wrong length")
         self.assertEqual(res_a[0], "<<<some=thing>>>", "Wrong tag")
         self.assertEqual(res_a[1], "thing", "Wrong A")
         self.assertEqual(res_a[2], None, "Wrong B")
+        self.assertEqual(res_a[3], None, "Wrong C")
 
     def test_extract_nested_TAG_and_A_and_B(self):
         a = "blab @<<<BLA>>>(<<<BLA2 = <<<BLA3=one=two>>> c, d>>>"
         b = "blab @<<<BLA>>>(<<<BLA2 = <<<BLA3=one>>> c, d>>>"
-        res_a = extractTagAndAandB(a, "<<<BLA3>>>")
-        self.assertEqual(len(res_a), 3, "Wrong length")
+        c = "blab @<<<BLA>>>(<<<BLA2 = <<<BLA3=one=two=three>>> c, d>>>"
+        d = "blab @<<<BLA>>>(<<<BLA2 = <<<BLA3=one==three>>> c, d>>>"
+        res_a = extractTagAndAandBandC(a, "<<<BLA3>>>")
+        self.assertEqual(len(res_a), 4, "Wrong length")
         self.assertEqual(res_a[0], "<<<BLA3=one=two>>>", "Wrong tag")
         self.assertEqual(res_a[1], "one", "Wrong A")
         self.assertEqual(res_a[2], "two", "Wrong B")
-        res_b = extractTagAndAandB(b, "<<<BLA3>>>")
-        self.assertEqual(len(res_b), 3, "Wrong length")
+        self.assertEqual(res_a[3], None, "Wrong C")
+        res_b = extractTagAndAandBandC(b, "<<<BLA3>>>")
+        self.assertEqual(len(res_b), 4, "Wrong length")
         self.assertEqual(res_b[0], "<<<BLA3=one>>>", "Wrong tag")
         self.assertEqual(res_b[1], "one", "Wrong A")
         self.assertEqual(res_b[2], None, "Wrong B")
+        self.assertEqual(res_b[3], None, "Wrong C")
+        res_c = extractTagAndAandBandC(c, "<<<BLA3>>>")
+        self.assertEqual(len(res_c), 4, "Wrong length")
+        self.assertEqual(res_c[0], "<<<BLA3=one=two=three>>>", "Wrong tag")
+        self.assertEqual(res_c[1], "one", "Wrong A")
+        self.assertEqual(res_c[2], "two", "Wrong B")
+        self.assertEqual(res_c[3], "three", "Wrong C")
+        res_d = extractTagAndAandBandC(d, "<<<BLA3>>>")
+        self.assertEqual(len(res_d), 4, "Wrong length")
+        self.assertEqual(res_d[0], "<<<BLA3=one==three>>>", "Wrong tag")
+        self.assertEqual(res_d[1], "one", "Wrong A")
+        self.assertEqual(res_d[2], None, "Wrong B")
+        self.assertEqual(res_d[3], "three", "Wrong C")
 
     def test_extract_IF(self):
         a = "Some text <<<IF condition1 AND condition2 OR condition3>>>"# more text <<<IF condition4 AND condition5>>>"

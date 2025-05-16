@@ -353,16 +353,20 @@ def extractIFProcessing(a, prefix) -> List[str]:
     assert(len(matches) == 1) # Only 1 prefix tag allowed
     return and_or_pattern.split(matches[0])
 
-def extractTagAndAandB(a, default_tag, delimiter = "=") -> List[str]:
+def convert_empty_to_none(s):
+    return None if s.strip() == "" else s
+
+def extractTagAndAandBandC(a, default_tag, delimiter = "=") -> List[str]:
     t = default_tag.replace(">>>", "")
     pos = a.find(t)
     if pos != -1:
         tag = a[pos:a.find(">>>", pos) + len(">>>")]
         r = a[pos + len("<<<"):a.find(">>>", pos)].split(delimiter)
-        A = None if len(r) < 2 else r[1].strip()
-        B = None if len(r) < 3 else r[2].strip()
-        return [tag, A, B]
-    return [default_tag, None, None]
+        A = None if len(r) < 2 else convert_empty_to_none(r[1])
+        B = None if len(r) < 3 else convert_empty_to_none(r[2])
+        C = None if len(r) < 4 else convert_empty_to_none(r[3])
+        return [tag, A, B, C]
+    return [default_tag, None, None, None]
 
 def replaceUserTags(line, dict_key_vals) -> str:
     is_defined = [key for key in dict_key_vals if key in line]
