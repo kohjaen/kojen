@@ -30,7 +30,9 @@ __author__ = 'eugene'
 __TAG_AUTHOR__                      = '<<<AUTHOR>>>'
 __TAG_GROUP__                       = '<<<GROUP>>>'
 __TAG_BRIEF__                       = '<<<BRIEF>>>'
-__TAG_NAMESPACE__                   = '<<<NAMESPACE>>>'
+__TAG_NAMESPACE__                   = '<<<NAMESPACE>>>'              # As given
+__TAG_NAMESPACE_SMALL_CAMEL__       = '<<<nameSpace>>>'              # camelCaps
+__TAG_NAMESPACE_SNAKE__             = '<<<NAME_SPACE>>>'             # snake case
 __TAG_SM_NAME__                     = '<<<STATEMACHINENAME>>>'       # As given
 __TAG_SM_NAME_SMALL_CAMEL__         = '<<<stateMachineName>>>'       # camelCaps
 __TAG_SM_NAME_UPPER__               = '<<<STATEMACHINENAMEUPPER>>>'  # ALL UPPER
@@ -303,6 +305,8 @@ class CStateMachineGenerator(CGenerator):
         if not dict_to_replace_lines[__TAG_PyIFGen_NAME__]:
             dict_to_replace_lines[__TAG_PyIFGen_NAME__] = self.vpp_filename
         dict_to_replace_lines[__TAG_NAMESPACE__] = smmodel.namespacename
+        dict_to_replace_lines[__TAG_NAMESPACE_SMALL_CAMEL__] = camel_case_small(smmodel.namespacename)
+        dict_to_replace_lines[__TAG_NAMESPACE_SNAKE__] = snake_case(smmodel.namespacename)
         dict_to_replace_lines[__TAG_AUTHOR__] = self.author
         dict_to_replace_lines[__TAG_GROUP__] = self.group
         dict_to_replace_lines[__TAG_BRIEF__] = self.brief
