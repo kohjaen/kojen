@@ -28,13 +28,15 @@ __author__ = 'eugene'
 
 '''
 
-__TAG_AUTHOR__              = '<<<AUTHOR>>>'
-__TAG_NAMESPACE__           = '<<<NAMESPACE>>>'
-__TAG_CLASS_NAME__          = '<<<CLASSNAME>>>'
-__TAG_PyIFGen_NAME__        = '<<<PYIFGENNAME>>>'
-__TAG_GROUP__               = '<<<GROUP>>>'
-__TAG_BRIEF__               = '<<<BRIEF>>>'
-__TAG_DECLSPEC_DLL_EXPORT__ = '<<<DLL_EXPORT>>>'
+__TAG_AUTHOR__                = '<<<AUTHOR>>>'
+__TAG_NAMESPACE__             = '<<<NAMESPACE>>>' # As given
+__TAG_NAMESPACE_SMALL_CAMEL__ = '<<<nameSpace>>>'              # camelCaps
+__TAG_NAMESPACE_SNAKE__       = '<<<NAME_SPACE>>>'             # snake case
+__TAG_CLASS_NAME__            = '<<<CLASSNAME>>>'
+__TAG_PyIFGen_NAME__          = '<<<PYIFGENNAME>>>'
+__TAG_GROUP__                 = '<<<GROUP>>>'
+__TAG_BRIEF__                 = '<<<BRIEF>>>'
+__TAG_DECLSPEC_DLL_EXPORT__   = '<<<DLL_EXPORT>>>'
 
 try:
     from .preservative import *
@@ -42,9 +44,9 @@ except (ModuleNotFoundError, ImportError) as e:
     from preservative import *
 
 try:
-    from .cgen import CGenerator, CCodeModel, FileCopyUtil, snake_case, setFilenameReplace
+    from .cgen import CGenerator, CCodeModel, FileCopyUtil, camel_case_small, snake_case, setFilenameReplace
 except (ModuleNotFoundError, ImportError) as e:
-    from cgen import CGenerator, CCodeModel, FileCopyUtil, snake_case, setFilenameReplace
+    from cgen import CGenerator, CCodeModel, FileCopyUtil, camel_case_small, snake_case, setFilenameReplace
 
 from cogapp import *
 import shutil
@@ -77,6 +79,8 @@ class CCogGenerator(CGenerator):
         dict_to_replace_lines[__TAG_CLASS_NAME__] = ccmodel.classname
         dict_to_replace_lines[__TAG_PyIFGen_NAME__] = ccmodel.pythoninterfacegeneratorfilename.replace('.py','')  # hack : for tcpgen simple templates,
         dict_to_replace_lines[__TAG_NAMESPACE__] = ccmodel.namespacename
+        dict_to_replace_lines[__TAG_NAMESPACE_SMALL_CAMEL__] = camel_case_small(ccmodel.namespacename)
+        dict_to_replace_lines[__TAG_NAMESPACE_SNAKE__] = snake_case(ccmodel.namespacename)
         dict_to_replace_lines[__TAG_AUTHOR__] = self.author
         dict_to_replace_lines[__TAG_DECLSPEC_DLL_EXPORT__] = ccmodel.declspecdllexport
         dict_to_replace_lines[__TAG_GROUP__] = ccmodel.group

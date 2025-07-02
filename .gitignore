@@ -2,5 +2,10 @@
 venv*/
 .venv*/
 
+## release
+build*/
+dist*/
+kojen.egg-info*/
+
 ## others
 __pycache__

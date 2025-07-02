@@ -30,7 +30,9 @@ __author__ = 'eugene'
 __TAG_AUTHOR__                      = '<<<AUTHOR>>>'
 __TAG_GROUP__                       = '<<<GROUP>>>'
 __TAG_BRIEF__                       = '<<<BRIEF>>>'
-__TAG_NAMESPACE__                   = '<<<NAMESPACE>>>'
+__TAG_NAMESPACE__                   = '<<<NAMESPACE>>>'              # As given
+__TAG_NAMESPACE_SMALL_CAMEL__       = '<<<nameSpace>>>'              # camelCaps
+__TAG_NAMESPACE_SNAKE__             = '<<<NAME_SPACE>>>'             # snake case
 __TAG_SM_NAME__                     = '<<<STATEMACHINENAME>>>'       # As given
 __TAG_SM_NAME_SMALL_CAMEL__         = '<<<stateMachineName>>>'       # camelCaps
 __TAG_SM_NAME_UPPER__               = '<<<STATEMACHINENAMEUPPER>>>'  # ALL UPPER
@@ -125,8 +127,8 @@ __TAG_PROTOMSG_END__                = "<<<PER_PROTOMSG_END>>>"
 __TAG_SIGNATURE__                   = "<<<SIGNATURE>>>"                 # function signature with types and names (language dependant)
 __TAG_SIGNATURE_DEF__               = "<<<SIGNATUREWITHDEFAULTS>>>"     # function signature with types and names and defaults (language dependant)
 __TAG_PARAMETERS__                  = "<<<PARAMETERS>>>"                # function parameters with names, and optional other parameters (and calling convention) (language dependant)
-__TAG_MEMBERINST__                  = "<<<MEMBERSINSTANTIATE>>>"        # Old school instantiation ... 
-__TAG_LITE_MEMBERINST__             = "<<<MEMBERSLITEINSTANTIATE>>>"    # Old school instantiation ... 
+__TAG_MEMBERINST__                  = "<<<MEMBERSINSTANTIATE>>>"        # Old school instantiation ...
+__TAG_LITE_MEMBERINST__             = "<<<MEMBERSLITEINSTANTIATE>>>"    # Old school instantiation ...
 __TAG_MEMBERDECL__                  = "<<<MEMBERSDECLARE>>>"            # declare members with types (language dependant) e.g. struct members.
 __TAG_AGGREGATE_INIT__              = "<<<AGGREGATEINITIALIZATION>>>"   # Modern single line initialization (C++ aggregate -> language dependant)
 
@@ -235,7 +237,7 @@ class CTransitionTableModel(CStateMachineModel):
         self.set_transitions_per_state()
 
     ''' Returns a dictionary of dictionaries of lists of dictionaries.
-    
+
         {'StateName': {'EventName',[{'GuardName':'', 'ActionName':'val'},{}...]}}
         First dictionary key is the 'state'.
         Second dictionary is the 'event' name.
@@ -303,6 +305,8 @@ class CStateMachineGenerator(CGenerator):
         if not dict_to_replace_lines[__TAG_PyIFGen_NAME__]:
             dict_to_replace_lines[__TAG_PyIFGen_NAME__] = self.vpp_filename
         dict_to_replace_lines[__TAG_NAMESPACE__] = smmodel.namespacename
+        dict_to_replace_lines[__TAG_NAMESPACE_SMALL_CAMEL__] = camel_case_small(smmodel.namespacename)
+        dict_to_replace_lines[__TAG_NAMESPACE_SNAKE__] = snake_case(smmodel.namespacename)
         dict_to_replace_lines[__TAG_AUTHOR__] = self.author
         dict_to_replace_lines[__TAG_GROUP__] = self.group
         dict_to_replace_lines[__TAG_BRIEF__] = self.brief
@@ -409,11 +413,17 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
                 if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
-                    [tag, attr, useifnotexist] = extractTagAndAandB(newline, __TAG_PYTHON_ATTR__)
-                    if hasattr(self.events_interface[name], str(attr)):
+                    [tag, attr, useifnotexist, appended_arguments] = extractTagAndAandBandC(newline, __TAG_PYTHON_ATTR__)
+                    if hasattr(self.events_interface[name], str(attr)) and not appended_arguments:
                         newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
-                    elif useifnotexist:
+                    elif hasattr(self.events_interface[name], str(attr)) and appended_arguments:
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)) + appended_arguments)
+                    elif useifnotexist and appended_arguments:
+                        newline = newline.replace(tag, useifnotexist + appended_arguments)
+                    elif useifnotexist and not appended_arguments:
                         newline = newline.replace(tag, useifnotexist)
+                    elif not useifnotexist and appended_arguments:
+                        newline = newline.replace(tag, "")
                     else:
                         continue
                 if hasSpecificTag(newline,__TAG_SIGNATURE__):
@@ -429,7 +439,7 @@ class CStateMachineGenerator(CGenerator):
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x:x.group(0).replace(' , )',')').replace(', )',')').replace(',)',')').replace('( , ','(').replace('( ,','(').replace('(,','('), newline)
                 if hasSpecificTag(newline, __TAG_PARAMETERS__):
-                    [cleantag, accessor, user_params] = extractTagAndAandB(newline, __TAG_PARAMETERS__)
+                    [cleantag, accessor, user_params, _] = extractTagAndAandBandC(newline, __TAG_PARAMETERS__)
                     parameters = self.get_event_parameters(name)
                     if not accessor:
                         accessor = ""
@@ -518,11 +528,17 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
                 if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
-                    [tag, attr, useifnotexist] = extractTagAndAandB(newline, __TAG_PYTHON_ATTR__)
-                    if hasattr(self.events_interface[name], str(attr)):
+                    [tag, attr, useifnotexist, appended_arguments] = extractTagAndAandBandC(newline, __TAG_PYTHON_ATTR__)
+                    if hasattr(self.events_interface[name], str(attr)) and not appended_arguments:
                         newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)))
-                    elif useifnotexist:
+                    elif hasattr(self.events_interface[name], str(attr)) and appended_arguments:
+                        newline = newline.replace(tag, str(getattr(self.events_interface[name], attr)) + appended_arguments)
+                    elif useifnotexist and appended_arguments:
+                        newline = newline.replace(tag, useifnotexist + appended_arguments)
+                    elif useifnotexist and not appended_arguments:
                         newline = newline.replace(tag, useifnotexist)
+                    elif not useifnotexist and appended_arguments:
+                        newline = newline.replace(tag, "")
                     else:
                         continue
                 if hasSpecificTag(newline, __TAG_SIGNATURE__):
@@ -538,7 +554,7 @@ class CStateMachineGenerator(CGenerator):
                     # check for brackets...remove any spurious ',' and ' '
                     newline = re.sub("\([^)]*\)", lambda x: x.group(0).replace(' , )', ')').replace(', )', ')').replace(',)', ')').replace('( , ', '(').replace('( ,', '(').replace('(,', '('), newline)
                 if hasSpecificTag(newline, __TAG_PARAMETERS__):
-                    [cleantag, accessor, user_params] = extractTagAndAandB(newline, __TAG_PARAMETERS__)
+                    [cleantag, accessor, user_params, _] = extractTagAndAandBandC(newline, __TAG_PARAMETERS__)
                     parameters = self.get_event_parameters(name)
                     if not accessor:
                         accessor = ""
@@ -792,7 +808,7 @@ class CStateMachineGenerator(CGenerator):
         if tmp_val == "" or tmp_val.lower() == 'none':
             val = source_state
         return val
-    
+
     def innerexpand_secondfiltering_IFANYPyAttr(self, all_lines) -> List[str]:
         def if_test_function(attribute) -> bool:
             for name in self.events_interface:
@@ -809,7 +825,7 @@ class CStateMachineGenerator(CGenerator):
             for line in all_lines:
                 new_line = line
                 if hasSpecificTag(line, __TAG_PYTHON_ATTR_ANY__) and hasDefault(line):
-                    [tag, attr, useifexist] = extractTagAndAandB(line, __TAG_PYTHON_ATTR_ANY__)
+                    [tag, attr, useifexist, _] = extractTagAndAandBandC(line, __TAG_PYTHON_ATTR_ANY__)
                     if if_test_function(attr) and useifexist:
                         new_line = new_line.replace(tag, useifexist)
                     else:
