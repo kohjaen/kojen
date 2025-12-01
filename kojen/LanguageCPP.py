@@ -212,7 +212,7 @@ class LanguageCPP(Language):
                 result += "." + mem[1] + "=" + mem[1] + ", "
             elif isProtocol:
                 s = Template("sizeof(${this}) - sizeof(${header})")
-                result += "{" "." + mem[1] + "=" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "}, "
+                result += "{." + mem[0] + "." + mem[1] + "=" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "}, "
             else:
                 raise Exception("InstantiateStructWithAggregateInitializer unhandled!")
         return "{" + result.rstrip(", ") + "}"
