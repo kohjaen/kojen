@@ -209,7 +209,7 @@ class LanguageCPP(Language):
             isStruct = interface.IsStruct(mem[0])
             isProtocol = interface.IsProtocolStruct(mem[0])
             if not isProtocol or isStruct:
-                result += mem[1] + ", "
+                result += "." + mem[1] + "=" + mem[1] + ", "
             elif isProtocol:
                 s = Template("sizeof(${this}) - sizeof(${header})")
                 result += "{" + struct[mem[1]].GetDefaultsAsString(s.substitute(this=struct.Name, header=mem[0])) + "}, "
