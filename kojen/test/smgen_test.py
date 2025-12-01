@@ -430,8 +430,8 @@ class TestFeatures(unittest.TestCase):
         output = TestFeatures.do_magic(input, i, [], LanguageCPP())
 
         self.assertEqual(len(output), 2)
-        self.assertEqual(output[0], "{binga, bunga}\n")
-        self.assertEqual(output[1], "{bla, blabla}\n")
+        self.assertEqual(output[0], "{.binga=binga, .bunga=bunga}\n")
+        self.assertEqual(output[1], "{.bla=bla, .blabla=blabla}\n")
 
     def test_pyattr(self):
         # param, no default
