@@ -687,8 +687,12 @@ class CStateMachineGenerator(CGenerator):
 
     def innerexpand_plant(self, output, whitespace, smmodel):
         lines = TTToDot(smmodel.transition_table)
+
         for l in lines:
-            output.append(whitespace + l + "\n")
+            if l: # If the line is not empty, then append the full whitespace
+                output.append(whitespace + l + "\n")
+            else: # If the line is empty, then dont append the full whitespace, but leave any comment characters that may be in the whitespace (without any trainling spaces)
+                output.append((whitespace + l).rstrip() + "\n")
 
     def innerexpand_sml(self, output, whitespace, smmodel, sml_entry_exit):
         tt_out = whitespace + "// " + even_space("Start", smmodel.maxlenSTART_STATE + 8) + even_space("+Event", smmodel.maxlenEVENT + 10) + even_space("[ Guard ]", smmodel.maxlenGUARD + 6) + even_space("/ Action", smmodel.maxlenACTION + 4) + even_space(" = Next", 0) + '\n'
