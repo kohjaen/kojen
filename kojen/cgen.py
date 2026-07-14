@@ -430,6 +430,17 @@ def setFilenameReplace(dictionary_of_search_replace_tags_for_filename, desired_t
 
 '''------------------------------------------------------------------------------------------------------'''
 
+def getNumericDefault(lines_to_expand) -> int:
+    """ Utility function to extract the desired start numeric value for the <<<NUM>>> tag, that
+        will be incremented. If not found, will return 0.
+    """
+    for l in lines_to_expand:
+        if hasSpecificTag(l, __TAG_123__):
+            res = extractDefaultAndTag(l)
+            if res[1] and res[1].strip().isnumeric():
+                return int(res[1].strip())
+    return 0
+
 
 class CGenerator:
 
@@ -483,13 +494,13 @@ class CGenerator:
 
         def __process(csv_item_str, to_expand, output):
             alpha = reset_alphabet()
-            cnt = 0
             first_processed = False
             last_processed = False
             first = None
             last = None
             items = csv_item_str.strip().lstrip(",").rstrip(",").split(',')
             to_add = []
+            cnt = getNumericDefault(to_expand)
             for i in items:
                 for l in to_expand:
                     has_first = hasSpecificTag(l, __TAG_FIRST__)

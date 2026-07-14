@@ -494,6 +494,14 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(transformed[5], "<<<G>>>")
         self.assertEqual(transformed[6], "Done")
 
+    def test_getNumericDefault(self):
+        a = ["boo", "<<<NUM>>>", "bee","baaa"]
+        b = ["bee","baaa", "<<<NUM=2>>>", "erfgwerg", "23452435", "asvdasv"]
+        res_a = getNumericDefault(a)
+        res_b = getNumericDefault(b)
+        self.assertEqual(res_a, 0, "Wrong default")
+        self.assertEqual(res_b, 2, "Wrong default")
+
 
     ''' TODO : Testing
         - template extending and excluding.

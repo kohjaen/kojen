@@ -381,7 +381,7 @@ class CStateMachineGenerator(CGenerator):
 
     def innerexpand_secondfiltering(self, snippet_to_expand, alllinesexpanded, items) -> None:
         alpha = reset_alphabet()
-        cnt = 0
+        cnt = getNumericDefault(snippet_to_expand)
         for name in items:
             # Step one : PyAttr based If processing
             if name in self.events_interface: # Not all events are defined as structs, may be TT only.
@@ -502,7 +502,7 @@ class CStateMachineGenerator(CGenerator):
     ### CONSOLODATE ... this is essentially a copy-paste of the above ...
     def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items) -> None:
         alpha = reset_alphabet()
-        cnt = 0
+        cnt = getNumericDefault(snippet_to_expand)
         for name in items:
             # Step one : PyAttr based If processing
             new_snippet_to_expand = self.innerexpand_secondfiltering_pertagpair_IFPyAttr(snippet_to_expand, self.events_interface[name])
