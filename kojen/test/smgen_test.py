@@ -41,7 +41,7 @@ class TestFeatures(unittest.TestCase):
         smgenerator.Generate(tt, namespace_name, fsm_name, "", False)
         return TestFeatures.read_lines_of_output_file()
 
-    def test_state_numeric(self):
+    def test_per_state_numeric(self):
         input = []
         input.append("<<<PER_STATE_BEGIN>>>")
         input.append("<<<NUM=5>>>")
@@ -62,6 +62,25 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[2], "7\n")
         self.assertEqual(output[3], "8\n")
         self.assertEqual(output[4], "9\n")
+
+    def test_per_state_transition_numeric(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<NUM=5>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        tt = [['S1', 'Do', 'S2', 'A1', 'G1'],
+              ['S2', 'Do', 'S3', 'A2', 'G2'],
+              ['S3', 'Do1', 'S4', 'A3', 'G3'],
+              ['S3', 'Do2', 'S5', 'A4', 'G4']]
+
+        i = Interface('')
+
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 3)
+        self.assertEqual(output[0], "5\n")
+        self.assertEqual(output[1], "6\n")
+        self.assertEqual(output[2], "7\n")
 
     def test_event_custom_params_nosignature(self):
         input = []

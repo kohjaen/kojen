@@ -431,7 +431,7 @@ def setFilenameReplace(dictionary_of_search_replace_tags_for_filename, desired_t
 '''------------------------------------------------------------------------------------------------------'''
 
 def getNumericDefault(lines_to_expand) -> int:
-    """ Utility function to extract the desired start numeric value for the <<<NUM>>> tag, that
+    """ Utility function to extract the desired start numeric value for the FIRST <<<NUM>>> tag, that
         will be incremented. If not found, will return 0.
     """
     for l in lines_to_expand:
@@ -519,7 +519,7 @@ class CGenerator:
                             line_member = extractDefaultAndTagNamed(l, cleanTag(__TAG_123__))
                             l = l.replace(line_member[0], str(cnt))
                         to_add.append(l)
-                cnt = cnt + 1
+                cnt += 1
                 alpha = get_next_alphabet(alpha)
             if first:
                 to_add.insert(0, first)

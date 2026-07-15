@@ -489,7 +489,7 @@ class CStateMachineGenerator(CGenerator):
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
-            cnt = cnt + 1
+            cnt += 1
             alpha = get_next_alphabet(alpha)
 
     def innerexpand_secondfiltering_pertagpair_IFPyAttr(self, snippet_to_expand, struct) -> List[str]:
@@ -620,7 +620,7 @@ class CStateMachineGenerator(CGenerator):
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
-            cnt = cnt + 1
+            cnt += 1
             alpha = get_next_alphabet(alpha)
     ###
 
@@ -645,7 +645,7 @@ class CStateMachineGenerator(CGenerator):
                     line_member = extractDefaultAndTagNamed(line, cleanTag(__TAG_123__))
                     line = line.replace(line_member[0], str(cnt))
                 alllinesexpanded.append(line)
-            cnt = cnt + 1
+            cnt += 1
             alpha = get_next_alphabet(alpha)
 
     def innerexpand_msm(self, output, whitespace, smmodel):
@@ -757,9 +757,15 @@ class CStateMachineGenerator(CGenerator):
                 # guard/action/next state repeats
                 object.innerexpand_transitionsperguard(to_expand, output, ev, state, transitionList)
 
+        cnt = getNumericDefault(snippet_to_expand)
         for state, transition_dict in transitionperstate.items():
             all_lines_snippet = self.filterStateName(snippet_to_expand, state)
             all_lines_snippet = PairExpander(__TAG_PET_BEGIN__, __TAG_PET_END__).Expand(all_lines_snippet, __expansion, self, state, transition_dict)
+            for i in range(len(all_lines_snippet)):
+                if hasSpecificTag(all_lines_snippet[i],__TAG_123__):
+                    line_member = extractDefaultAndTagNamed(all_lines_snippet[i], cleanTag(__TAG_123__))
+                    all_lines_snippet[i] = all_lines_snippet[i].replace(line_member[0], str(cnt))
+            cnt += 1
             all_lines_expanded.extend(all_lines_snippet)
 
 
