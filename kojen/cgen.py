@@ -436,7 +436,7 @@ def getNumericDefault(lines_to_expand) -> int:
     """
     for l in lines_to_expand:
         if hasSpecificTag(l, __TAG_123__):
-            res = extractDefaultAndTag(l)
+            res = extractDefaultAndTagNamed(l, cleanTag(__TAG_123__))
             if res[1] and res[1].strip().isnumeric():
                 return int(res[1].strip())
     return 0
@@ -512,10 +512,13 @@ class CGenerator:
                         last = l.replace(__TAG_LAST__, items[-1].strip())
                         last_processed = True
                     elif not has_first and not has_last:
-                        to_add.append(l.replace(__TAG_EACH__, i.strip())
-                                  .replace(__TAG_EACH_CAMELCAPS__, camel_case_small(i.strip()))
-                                  .replace(__TAG_123__, str(cnt))
-                                  .replace(__TAG_ABC__, alphabet_to_string(alpha)))
+                        l = l.replace(__TAG_EACH__, i.strip()) \
+                            .replace(__TAG_EACH_CAMELCAPS__, camel_case_small(i.strip())) \
+                            .replace(__TAG_ABC__, alphabet_to_string(alpha))
+                        if hasSpecificTag(l,__TAG_123__):
+                            line_member = extractDefaultAndTagNamed(l, cleanTag(__TAG_123__))
+                            l = l.replace(line_member[0], str(cnt))
+                        to_add.append(l)
                 cnt = cnt + 1
                 alpha = get_next_alphabet(alpha)
             if first:

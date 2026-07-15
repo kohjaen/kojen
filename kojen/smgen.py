@@ -410,8 +410,10 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_GUARDNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_GUARDNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
-                newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
+                if hasSpecificTag(newline,__TAG_123__):
+                    line_member = extractDefaultAndTagNamed(newline, cleanTag(__TAG_123__))
+                    newline = newline.replace(line_member[0], str(cnt))
                 if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
                     [tag, attr, useifnotexist, appended_arguments] = extractTagAndAandBandC(newline, __TAG_PYTHON_ATTR__)
                     if hasattr(self.events_interface[name], str(attr)) and not appended_arguments:
@@ -525,8 +527,10 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_PROTOMSGNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_PROTOMSGNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
-                newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
+                if hasSpecificTag(newline,__TAG_123__):
+                    line_member = extractDefaultAndTagNamed(newline, cleanTag(__TAG_123__))
+                    newline = newline.replace(line_member[0], str(cnt))
                 if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
                     [tag, attr, useifnotexist, appended_arguments] = extractTagAndAandBandC(newline, __TAG_PYTHON_ATTR__)
                     if hasattr(self.events_interface[name], str(attr)) and not appended_arguments:
@@ -622,22 +626,25 @@ class CStateMachineGenerator(CGenerator):
 
     def innerexpand_actionsignatures(self, snippet_to_expand, alllinesexpanded, states):
         alpha = reset_alphabet()
-        cnt = 0
+        cnt = getNumericDefault(snippet_to_expand)
         for key, (actionname, eventname) in states.items():
             if eventname == "" or eventname.lower() == 'none':
                 eventname = "NONE"
             elif eventname.lower() == 'any':
                 eventname = "ANY"
             for line in snippet_to_expand:
-                alllinesexpanded.append(line
+                line = (line
                             .replace(__TAG_ACTIONNAME_SMALL_CAMEL__, camel_case_small(actionname))
                             .replace(__TAG_ACTIONNAME__, actionname)
                             .replace(__TAG_ACTIONNAME_SNAKE__, snake_case(actionname))
                             .replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventname))
                             .replace(__TAG_EVENTNAME__, eventname)
                             .replace(__TAG_EVENTNAME_SNAKE__, snake_case(eventname))
-                            .replace(__TAG_ABC__, alphabet_to_string(alpha))
-                            .replace(__TAG_123__, str(cnt)))
+                            .replace(__TAG_ABC__, alphabet_to_string(alpha)))
+                if hasSpecificTag(line,__TAG_123__):
+                    line_member = extractDefaultAndTagNamed(line, cleanTag(__TAG_123__))
+                    line = line.replace(line_member[0], str(cnt))
+                alllinesexpanded.append(line)
             cnt = cnt + 1
             alpha = get_next_alphabet(alpha)
 

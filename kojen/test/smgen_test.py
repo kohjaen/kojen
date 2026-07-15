@@ -41,6 +41,28 @@ class TestFeatures(unittest.TestCase):
         smgenerator.Generate(tt, namespace_name, fsm_name, "", False)
         return TestFeatures.read_lines_of_output_file()
 
+    def test_state_numeric(self):
+        input = []
+        input.append("<<<PER_STATE_BEGIN>>>")
+        input.append("<<<NUM=5>>>")
+        input.append("<<<PER_STATE_END>>>")
+        tt = [['S1', 'Do', 'S1', 'A1', 'G1'],
+              ['S2', 'Do', 'S2', 'A2', 'G2'],
+              ['S3', 'Do', 'S3', 'A3', 'G3'],
+              ['S4', 'Do', 'S4', 'A4', 'G4'],
+              ['S5', 'Do', 'S5', 'A5', 'G5']]
+
+        i = Interface('')
+
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 5)
+        self.assertEqual(output[0], "5\n")
+        self.assertEqual(output[1], "6\n")
+        self.assertEqual(output[2], "7\n")
+        self.assertEqual(output[3], "8\n")
+        self.assertEqual(output[4], "9\n")
+
     def test_event_custom_params_nosignature(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
