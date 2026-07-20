@@ -189,6 +189,13 @@ class IfProcessor:
         return result
 
     def Expand(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> List[str]:
+        if self.start_tag == __TAG_IF__:
+            return self.Expand_SingleConditionIf(all_lines, if_test_function, not_processing_if_function, processing_if_function, *args)
+        else:
+            return self.Expand_PyAttr(all_lines, if_test_function, not_processing_if_function, processing_if_function, *args)
+
+    def Expand_PyAttr(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> List[str]:
+        # No nesting ... will process all that match ... so if/else if will all get processed if conditions passed. Used for PyAttr.
         new_lines = []
         is_processing_if = False
         can_process_else = True
@@ -225,6 +232,80 @@ class IfProcessor:
                 else:
                     line = not_processing_if_function(line, *args)
             if can_append_line:
+                new_lines.append(line)
+        return new_lines
+
+    def Expand_SingleConditionIf(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> List[str]:
+        # Allows nesting of if/else if/else ... and, like conditional operator in a programming language, will only proces one.
+        new_lines = []
+        is_processing_conditional_operator = []
+        can_process_else = []
+        has_elseif = []
+        has_else = []
+        has_endif = []
+        if_condition = []
+        elseif_condition = []
+        can_append_line = [True]
+
+        def can_append_line_all():
+            return bool(can_append_line) and all(can_append_line)
+
+        for line in all_lines:
+            if is_processing_conditional_operator and is_processing_conditional_operator[-1]:
+                has_elseif[-1]   = hasSpecificTag(line, __TAG_ELSEIF__)
+                has_else[-1]     = hasSpecificTag(line, __TAG_ELSE__) and not has_elseif[-1]
+                has_endif[-1]    = hasSpecificTag(line, __TAG_ENDIF__)
+                has_nested_if    = hasSpecificTag(line, self.start_tag) and not has_endif[-1] and not has_elseif[-1]
+
+                if has_nested_if:
+                    is_processing_conditional_operator.append(True)
+                    has_elseif.append(False)
+                    has_else.append(False)
+                    has_endif.append(False)
+                    conditions = extractIFProcessing(line, self.start_tag.replace("<<<", "").replace(">>>", ""))
+                    if_condition.append(self.processConditions(conditions, if_test_function,*args))
+                    elseif_condition.append([False]) # can be multiple
+                    can_append_line.append(if_condition[-1])
+                    can_process_else.append(not can_append_line_all())
+                    continue
+                else:
+                    if not has_elseif[-1] and not has_else[-1] and not has_endif[-1]:
+                        line = processing_if_function(line, *args) # still processing if ...
+                    elif has_elseif[-1] and not has_else[-1] and not has_endif[-1]:
+                        conditions = extractIFProcessing(line, __TAG_ELSEIF__.replace("<<<", "").replace(">>>", ""))
+                        passed = self.processConditions(conditions, if_test_function,*args)
+                        can_append_line[-1] = passed and not any(elseif_condition[-1]) and not if_condition[-1]
+                        elseif_condition[-1].append(passed)
+                        continue
+                    elif not has_elseif[-1] and has_else[-1] and not has_endif[-1]:
+                        can_append_line[-1] = not any(elseif_condition[-1]) and not if_condition[-1]
+                        continue
+                    elif not has_elseif[-1] and not has_else[-1] and has_endif[-1]: # End ...
+                        is_processing_conditional_operator.pop()
+                        can_process_else.pop()
+                        can_append_line.pop()
+                        has_elseif.pop()
+                        has_else.pop()
+                        has_endif.pop()
+                        elseif_condition.pop()
+                        if_condition.pop()
+                        continue
+            else:
+                has_if = hasSpecificTag(line, self.start_tag)
+                if has_if:
+                    is_processing_conditional_operator.append(True)
+                    has_elseif.append(False)
+                    has_else.append(False)
+                    has_endif.append(False)
+                    conditions = extractIFProcessing(line, self.start_tag.replace("<<<", "").replace(">>>", ""))
+                    if_condition.append(self.processConditions(conditions, if_test_function,*args))
+                    elseif_condition.append([False]) # can be multiple
+                    can_append_line.append(if_condition[-1])
+                    can_process_else.append(not can_append_line_all())
+                    continue
+                else:
+                    line = not_processing_if_function(line, *args)
+            if can_append_line_all():
                 new_lines.append(line)
         return new_lines
 
@@ -430,6 +511,17 @@ def setFilenameReplace(dictionary_of_search_replace_tags_for_filename, desired_t
 
 '''------------------------------------------------------------------------------------------------------'''
 
+def getNumericDefault(lines_to_expand) -> int:
+    """ Utility function to extract the desired start numeric value for the FIRST <<<NUM>>> tag, that
+        will be incremented. If not found, will return 0.
+    """
+    for l in lines_to_expand:
+        if hasSpecificTag(l, __TAG_123__):
+            res = extractDefaultAndTagNamed(l, cleanTag(__TAG_123__))
+            if res[1] and res[1].strip().isnumeric():
+                return int(res[1].strip())
+    return 0
+
 
 class CGenerator:
 
@@ -483,13 +575,13 @@ class CGenerator:
 
         def __process(csv_item_str, to_expand, output):
             alpha = reset_alphabet()
-            cnt = 0
             first_processed = False
             last_processed = False
             first = None
             last = None
             items = csv_item_str.strip().lstrip(",").rstrip(",").split(',')
             to_add = []
+            cnt = getNumericDefault(to_expand)
             for i in items:
                 for l in to_expand:
                     has_first = hasSpecificTag(l, __TAG_FIRST__)
@@ -501,11 +593,14 @@ class CGenerator:
                         last = l.replace(__TAG_LAST__, items[-1].strip())
                         last_processed = True
                     elif not has_first and not has_last:
-                        to_add.append(l.replace(__TAG_EACH__, i.strip())
-                                  .replace(__TAG_EACH_CAMELCAPS__, camel_case_small(i.strip()))
-                                  .replace(__TAG_123__, str(cnt))
-                                  .replace(__TAG_ABC__, alphabet_to_string(alpha)))
-                cnt = cnt + 1
+                        l = l.replace(__TAG_EACH__, i.strip()) \
+                            .replace(__TAG_EACH_CAMELCAPS__, camel_case_small(i.strip())) \
+                            .replace(__TAG_ABC__, alphabet_to_string(alpha))
+                        if hasSpecificTag(l,__TAG_123__):
+                            line_member = extractDefaultAndTagNamed(l, cleanTag(__TAG_123__))
+                            l = l.replace(line_member[0], str(cnt))
+                        to_add.append(l)
+                cnt += 1
                 alpha = get_next_alphabet(alpha)
             if first:
                 to_add.insert(0, first)

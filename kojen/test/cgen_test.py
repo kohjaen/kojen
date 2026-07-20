@@ -213,15 +213,15 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_a[3], "OR", "Wrong B")
         self.assertEqual(res_a[4], "NOT condition3", "Wrong 3")
 
-        def test_extract_IF_NOT2(self):
-            a = "Some text <<<IF NOT condition1 AND NOT condition2 OR NOT condition3>>>"# more text <<<IF condition4 AND condition5>>>"
-            res_a = extractIFProcessing(a, "IF")
-            self.assertEqual(len(res_a), 5, "Wrong length")
-            self.assertEqual(res_a[0], "NOT condition1", "Wrong 1")
-            self.assertEqual(res_a[1], "AND", "Wrong A")
-            self.assertEqual(res_a[2], "NOT condition2", "Wrong 2")
-            self.assertEqual(res_a[3], "OR", "Wrong B")
-            self.assertEqual(res_a[4], "NOT condition3", "Wrong 3")
+    def test_extract_IF_NOT2(self):
+        a = "Some text <<<IF NOT condition1 AND NOT condition2 OR NOT condition3>>>"# more text <<<IF condition4 AND condition5>>>"
+        res_a = extractIFProcessing(a, "IF")
+        self.assertEqual(len(res_a), 5, "Wrong length")
+        self.assertEqual(res_a[0], "NOT condition1", "Wrong 1")
+        self.assertEqual(res_a[1], "AND", "Wrong A")
+        self.assertEqual(res_a[2], "NOT condition2", "Wrong 2")
+        self.assertEqual(res_a[3], "OR", "Wrong B")
+        self.assertEqual(res_a[4], "NOT condition3", "Wrong 3")
 
     def test_remove_default(self):
         a = "XXX::blabla<<<something=1>>>"
@@ -410,13 +410,13 @@ class TestFeatures(unittest.TestCase):
             self.assertEqual(output[1], "fee", "Unexpected output (2)")
             self.assertEqual(output[2], "__fee__", "Unexpected output (3)")
             self.assertEqual(output[3], "A_fee = a", "Unexpected output (4)")
-            self.assertEqual(output[4], "A_fee = 0", "Unexpected output (5)")
+            self.assertEqual(output[4], "A_fee = 1", "Unexpected output (5)")
             self.assertEqual(output[5], "__fie__", "Unexpected output (6)")
             self.assertEqual(output[6], "A_fie = b", "Unexpected output (7)")
-            self.assertEqual(output[7], "A_fie = 1", "Unexpected output (8)")
+            self.assertEqual(output[7], "A_fie = 2", "Unexpected output (8)")
             self.assertEqual(output[8], "__foe__", "Unexpected output (9)")
             self.assertEqual(output[9], "A_foe = c", "Unexpected output (10)")
-            self.assertEqual(output[10], "A_foe = 2", "Unexpected output (11)")
+            self.assertEqual(output[10], "A_foe = 3", "Unexpected output (11)")
             self.assertEqual(output[11], "foe", "Unexpected output (12)")
             self.assertEqual(output[12], "Last", "Unexpected output (13)")
 
@@ -426,7 +426,7 @@ class TestFeatures(unittest.TestCase):
         all_lines.append("<<<FIRST>>>")
         all_lines.append("__<<<EACH>>>__")
         all_lines.append("A_<<<EACH>>> = <<<ALPH>>>")
-        all_lines.append("A_<<<EACH>>> = <<<NUM>>>")
+        all_lines.append("A_<<<EACH>>> = <<<NUM=1>>>")
         all_lines.append("<<<LAST>>>")
         all_lines.append("<<<FOR_END>>>")
         all_lines.append("Last")
@@ -493,6 +493,14 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(transformed[4], "<<<H>>> = <<<H>>>")
         self.assertEqual(transformed[5], "<<<G>>>")
         self.assertEqual(transformed[6], "Done")
+
+    def test_getNumericDefault(self):
+        a = ["boo", "<<<NUM>>>", "bee","baaa"]
+        b = ["bee","baaa", "<<<NUM=2>>>", "erfgwerg", "23452435", "asvdasv"]
+        res_a = getNumericDefault(a)
+        res_b = getNumericDefault(b)
+        self.assertEqual(res_a, 0, "Wrong default")
+        self.assertEqual(res_b, 2, "Wrong default")
 
 
     ''' TODO : Testing

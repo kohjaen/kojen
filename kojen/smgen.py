@@ -381,7 +381,7 @@ class CStateMachineGenerator(CGenerator):
 
     def innerexpand_secondfiltering(self, snippet_to_expand, alllinesexpanded, items) -> None:
         alpha = reset_alphabet()
-        cnt = 0
+        cnt = getNumericDefault(snippet_to_expand)
         for name in items:
             # Step one : PyAttr based If processing
             if name in self.events_interface: # Not all events are defined as structs, may be TT only.
@@ -410,8 +410,10 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_GUARDNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_GUARDNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
-                newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
+                if hasSpecificTag(newline,__TAG_123__):
+                    line_member = extractDefaultAndTagNamed(newline, cleanTag(__TAG_123__))
+                    newline = newline.replace(line_member[0], str(cnt))
                 if hasSpecificTag(newline, __TAG_PYTHON_ATTR__) and hasDefault(newline):
                     [tag, attr, useifnotexist, appended_arguments] = extractTagAndAandBandC(newline, __TAG_PYTHON_ATTR__)
                     if hasattr(self.events_interface[name], str(attr)) and not appended_arguments:
@@ -487,7 +489,7 @@ class CStateMachineGenerator(CGenerator):
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
-            cnt = cnt + 1
+            cnt += 1
             alpha = get_next_alphabet(alpha)
 
     def innerexpand_secondfiltering_pertagpair_IFPyAttr(self, snippet_to_expand, struct) -> List[str]:
@@ -502,7 +504,7 @@ class CStateMachineGenerator(CGenerator):
     ### CONSOLODATE ... this is essentially a copy-paste of the above ...
     def innerexpand_secondfiltering_PROTO(self, snippet_to_expand, alllinesexpanded, items) -> None:
         alpha = reset_alphabet()
-        cnt = 0
+        cnt = getNumericDefault(snippet_to_expand)
         for name in items:
             # Step one : PyAttr based If processing
             new_snippet_to_expand = self.innerexpand_secondfiltering_pertagpair_IFPyAttr(snippet_to_expand, self.events_interface[name])
@@ -525,8 +527,10 @@ class CStateMachineGenerator(CGenerator):
                 newline = newline.replace(__TAG_PROTOMSGNAME_SMALL_CAMEL__, camel_case_small(name))
                 newline = newline.replace(__TAG_PROTOMSGNAME_SNAKE__, snake_case(name))
                 newline = newline.replace(__TAG_ABC__, alphabet_to_string(alpha))
-                newline = newline.replace(__TAG_123__, str(cnt))
                 tabcnt = newline.count('    ')
+                if hasSpecificTag(newline,__TAG_123__):
+                    line_member = extractDefaultAndTagNamed(newline, cleanTag(__TAG_123__))
+                    newline = newline.replace(line_member[0], str(cnt))
                 if hasSpecificTag(newline,__TAG_PYTHON_ATTR__) and hasDefault(newline):
                     [tag, attr, useifnotexist, appended_arguments] = extractTagAndAandBandC(newline, __TAG_PYTHON_ATTR__)
                     if hasattr(self.events_interface[name], str(attr)) and not appended_arguments:
@@ -616,29 +620,32 @@ class CStateMachineGenerator(CGenerator):
                 if newline.isspace():
                     continue
                 alllinesexpanded.append(newline)
-            cnt = cnt + 1
+            cnt += 1
             alpha = get_next_alphabet(alpha)
     ###
 
     def innerexpand_actionsignatures(self, snippet_to_expand, alllinesexpanded, states):
         alpha = reset_alphabet()
-        cnt = 0
+        cnt = getNumericDefault(snippet_to_expand)
         for key, (actionname, eventname) in states.items():
             if eventname == "" or eventname.lower() == 'none':
                 eventname = "NONE"
             elif eventname.lower() == 'any':
                 eventname = "ANY"
             for line in snippet_to_expand:
-                alllinesexpanded.append(line
+                line = (line
                             .replace(__TAG_ACTIONNAME_SMALL_CAMEL__, camel_case_small(actionname))
                             .replace(__TAG_ACTIONNAME__, actionname)
                             .replace(__TAG_ACTIONNAME_SNAKE__, snake_case(actionname))
                             .replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventname))
                             .replace(__TAG_EVENTNAME__, eventname)
                             .replace(__TAG_EVENTNAME_SNAKE__, snake_case(eventname))
-                            .replace(__TAG_ABC__, alphabet_to_string(alpha))
-                            .replace(__TAG_123__, str(cnt)))
-            cnt = cnt + 1
+                            .replace(__TAG_ABC__, alphabet_to_string(alpha)))
+                if hasSpecificTag(line,__TAG_123__):
+                    line_member = extractDefaultAndTagNamed(line, cleanTag(__TAG_123__))
+                    line = line.replace(line_member[0], str(cnt))
+                alllinesexpanded.append(line)
+            cnt += 1
             alpha = get_next_alphabet(alpha)
 
     def innerexpand_msm(self, output, whitespace, smmodel):
@@ -750,9 +757,15 @@ class CStateMachineGenerator(CGenerator):
                 # guard/action/next state repeats
                 object.innerexpand_transitionsperguard(to_expand, output, ev, state, transitionList)
 
+        cnt = getNumericDefault(snippet_to_expand)
         for state, transition_dict in transitionperstate.items():
             all_lines_snippet = self.filterStateName(snippet_to_expand, state)
             all_lines_snippet = PairExpander(__TAG_PET_BEGIN__, __TAG_PET_END__).Expand(all_lines_snippet, __expansion, self, state, transition_dict)
+            for i in range(len(all_lines_snippet)):
+                if hasSpecificTag(all_lines_snippet[i],__TAG_123__):
+                    line_member = extractDefaultAndTagNamed(all_lines_snippet[i], cleanTag(__TAG_123__))
+                    all_lines_snippet[i] = all_lines_snippet[i].replace(line_member[0], str(cnt))
+            cnt += 1
             all_lines_expanded.extend(all_lines_snippet)
 
 

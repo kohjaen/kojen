@@ -41,6 +41,47 @@ class TestFeatures(unittest.TestCase):
         smgenerator.Generate(tt, namespace_name, fsm_name, "", False)
         return TestFeatures.read_lines_of_output_file()
 
+    def test_per_state_numeric(self):
+        input = []
+        input.append("<<<PER_STATE_BEGIN>>>")
+        input.append("<<<NUM=5>>>")
+        input.append("<<<PER_STATE_END>>>")
+        tt = [['S1', 'Do', 'S1', 'A1', 'G1'],
+              ['S2', 'Do', 'S2', 'A2', 'G2'],
+              ['S3', 'Do', 'S3', 'A3', 'G3'],
+              ['S4', 'Do', 'S4', 'A4', 'G4'],
+              ['S5', 'Do', 'S5', 'A5', 'G5']]
+
+        i = Interface('')
+
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 5)
+        self.assertEqual(output[0], "5\n")
+        self.assertEqual(output[1], "6\n")
+        self.assertEqual(output[2], "7\n")
+        self.assertEqual(output[3], "8\n")
+        self.assertEqual(output[4], "9\n")
+
+    def test_per_state_transition_numeric(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<NUM=5>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        tt = [['S1', 'Do', 'S2', 'A1', 'G1'],
+              ['S2', 'Do', 'S3', 'A2', 'G2'],
+              ['S3', 'Do1', 'S4', 'A3', 'G3'],
+              ['S3', 'Do2', 'S5', 'A4', 'G4']]
+
+        i = Interface('')
+
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 3)
+        self.assertEqual(output[0], "5\n")
+        self.assertEqual(output[1], "6\n")
+        self.assertEqual(output[2], "7\n")
+
     def test_event_custom_params_nosignature(self):
         input = []
         input.append("<<<PER_EVENT_BEGIN>>>")
@@ -685,7 +726,8 @@ class TestFeatures(unittest.TestCase):
         input.append("// 1")
         input.append("<<<IF feefiefoefum>>>")
         input.append("  <<<ThisIsValue>>>")
-        input.append("<<<ELSEIF abracadabra>>>")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<IF abracadabra>>>")
         input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("~~ <<<EVENT_NAME>>> ~~")
         input.append("<<<PER_EVENT_END>>>")
@@ -722,7 +764,7 @@ class TestFeatures(unittest.TestCase):
         input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("~~ <<<EVENT_NAME>>> ~~")
         input.append("<<<PER_EVENT_END>>>")
-        input.append("<<<ELSEIF bbbbbbbbbbb>>>")
+        input.append("<<<IF bbbbbbbbbbb>>>")
         input.append(" >>>>>>   <<<<<<  ")
         input.append("<<<ELSE>>>")
         input.append(" 0xBADFOOD")
@@ -751,7 +793,8 @@ class TestFeatures(unittest.TestCase):
         input.append("// 1")
         input.append("<<<IF feefiefoefum OR beebieboebum>>>")
         input.append("  <<<ThisIsValue>>>")
-        input.append("<<<ELSEIF abracadabra OR qwerty>>>")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<IF abracadabra OR qwerty>>>")
         input.append("<<<PER_EVENT_BEGIN>>>")
         input.append("~~ <<<EVENT_NAME>>> ~~")
         input.append("<<<PER_EVENT_END>>>")
@@ -765,12 +808,11 @@ class TestFeatures(unittest.TestCase):
         def runAndTest(input, interface):
             # param, no default
             output = TestFeatures.do_magic(input, interface, [], LanguageCPP())
-            self.assertEqual(len(output), 5)
+            self.assertEqual(len(output), 4)
             self.assertEqual(output[0], "// 1\n")
             self.assertEqual(output[1], "~~ some_struct ~~\n")
             self.assertEqual(output[2], "~~ some_other_struct ~~\n")
-            self.assertEqual(output[3], " >>>>>>   <<<<<<  \n")
-            self.assertEqual(output[4], "// 4\n")
+            self.assertEqual(output[3], "// 4\n")
 
         i = Interface('')
         i.AddUserTag("abracadabra", None)
@@ -862,6 +904,284 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[0], "// 1\n")
         self.assertEqual(output[1], " 0xBADFOOD\n")
         self.assertEqual(output[2], "// 4\n")
+
+    def test_2_recursive_user_if_elif_else_endif_tags(self):
+        input = []
+        input.append("// 1")
+        input.append("<<<IF AA OR BB>>>")
+        input.append("    <<<IF ONE>>>")
+        input.append("    AB1")
+        input.append("    <<<ELSEIF TWO>>>")
+        input.append("    AB2")
+        input.append("    <<<ELSEIF THREE>>>")
+        input.append("    AB3")
+        input.append("    <<<ELSE>>>")
+        input.append("    0xBADFOOD")
+        input.append("    <<<ENDIF>>>")
+        input.append("<<<ELSEIF CC OR DD>>>")
+        input.append("    <<<IF ONE>>>")
+        input.append("    CD1")
+        input.append("    <<<ELSEIF TWO>>>")
+        input.append("    CD2")
+        input.append("    <<<ELSEIF THREE>>>")
+        input.append("    CD3")
+        input.append("    <<<ELSE>>>")
+        input.append("    0xBADFOOD")
+        input.append("    <<<ENDIF>>>")
+        input.append("<<<ELSEIF EE OR FF>>>")
+        input.append("    <<<IF ONE>>>")
+        input.append("    EF1")
+        input.append("    <<<ELSEIF TWO>>>")
+        input.append("    EF2")
+        input.append("    <<<ELSEIF THREE>>>")
+        input.append("    EF3")
+        input.append("    <<<ELSE>>>")
+        input.append("    0xBADFOOD")
+        input.append("    <<<ENDIF>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD")
+        input.append("<<<ENDIF>>>")
+        input.append("// 4")
+
+        def runAndTest(input, interface, expected):
+            # param, no default
+            output = TestFeatures.do_magic(input, interface, [], LanguageCPP())
+            self.assertEqual(len(output), 3)
+            self.assertEqual(output[0], "// 1\n")
+            self.assertEqual(output[1], expected + "\n")
+            self.assertEqual(output[2], "// 4\n")
+
+        i = Interface('')
+        i.AddUserTag("AA", None)
+        i.AddUserTag("ONE", None)
+        runAndTest(input, i, "    AB1")
+
+        i = Interface('')
+        i.AddUserTag("BB", None)
+        i.AddUserTag("TWO", None)
+        runAndTest(input, i, "    AB2")
+
+        i = Interface('')
+        i.AddUserTag("BB", None)
+        i.AddUserTag("THREE", None)
+        runAndTest(input, i, "    AB3")
+
+        i = Interface('')
+        i.AddUserTag("BB", None)
+        runAndTest(input, i, "    0xBADFOOD")
+        ####
+        i = Interface('')
+        i.AddUserTag("CC", None)
+        i.AddUserTag("ONE", None)
+        runAndTest(input, i, "    CD1")
+
+        i = Interface('')
+        i.AddUserTag("DD", None)
+        i.AddUserTag("TWO", None)
+        runAndTest(input, i, "    CD2")
+
+        i = Interface('')
+        i.AddUserTag("CC", None)
+        i.AddUserTag("THREE", None)
+        runAndTest(input, i, "    CD3")
+
+        i = Interface('')
+        i.AddUserTag("DD", None)
+        runAndTest(input, i, "    0xBADFOOD")
+        ####
+        i = Interface('')
+        i.AddUserTag("EE", None)
+        i.AddUserTag("ONE", None)
+        runAndTest(input, i, "    EF1")
+
+        i = Interface('')
+        i.AddUserTag("FF", None)
+        i.AddUserTag("TWO", None)
+        runAndTest(input, i, "    EF2")
+
+        i = Interface('')
+        i.AddUserTag("EE", None)
+        i.AddUserTag("THREE", None)
+        runAndTest(input, i, "    EF3")
+
+        i = Interface('')
+        i.AddUserTag("FF", None)
+        runAndTest(input, i, "    0xBADFOOD")
+        ####
+        i = Interface('')
+        runAndTest(input, i, "0xBADFOOD")
+        #"""
+    def test_3_recursive_user_if_elif_else_endif_tags(self):
+        input = []
+        input.append("// 1")
+        input.append("<<<IF AA>>>")
+        input.append("    <<<IF ONE OR _1_>>>")
+        input.append("        <<<IF BB>>>")
+        input.append("        AB1")
+        input.append("        <<<ELSEIF CC>>>")
+        input.append("        AC1")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD111")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSEIF TWO OR _2_>>>")
+        input.append("        <<<IF BB>>>")
+        input.append("        AB2")
+        input.append("        <<<ELSEIF CC>>>")
+        input.append("        AC2")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD222")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSEIF THREE OR _3_>>>")
+        input.append("        <<<IF BB>>>")
+        input.append("        AB3")
+        input.append("        <<<ELSEIF CC>>>")
+        input.append("        AC3")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD333")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSE>>>")
+        input.append("        0xBADFOOD444")
+        input.append("    <<<ENDIF>>>")
+        input.append("<<<ELSEIF CC>>>")
+        input.append("    <<<IF ONE OR _1_>>>")
+        input.append("        <<<IF DD>>>")
+        input.append("        CD1")
+        input.append("        <<<ELSEIF EE>>>")
+        input.append("        CE1")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD555")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSEIF TWO OR _2_>>>")
+        input.append("        <<<IF DD>>>")
+        input.append("        CD2")
+        input.append("        <<<ELSEIF EE>>>")
+        input.append("        CE2")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD666")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSEIF THREE OR _3_>>>")
+        input.append("        <<<IF DD>>>")
+        input.append("        CD3")
+        input.append("        <<<ELSEIF EE>>>")
+        input.append("        CE3")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD777")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSE>>>")
+        input.append("        0xBADFOOD888")
+        input.append("    <<<ENDIF>>>")
+        input.append("<<<ELSEIF EE>>>")
+        input.append("    <<<IF ONE OR _1_>>>")
+        input.append("        <<<IF FF>>>")
+        input.append("        EF1")
+        input.append("        <<<ELSEIF GG>>>")
+        input.append("        EG1")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD999")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSEIF TWO OR _2_>>>")
+        input.append("        <<<IF FF>>>")
+        input.append("        EF2")
+        input.append("        <<<ELSEIF GG>>>")
+        input.append("        EG2")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD1010")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSEIF THREE OR _3_>>>")
+        input.append("        <<<IF FF>>>")
+        input.append("        EF3")
+        input.append("        <<<ELSEIF GG>>>")
+        input.append("        EG3")
+        input.append("        <<<ELSE>>>")
+        input.append("        0xBADFOOD1111")
+        input.append("        <<<ENDIF>>>")
+        input.append("    <<<ELSE>>>")
+        input.append("        0xBADFOOD1212")
+        input.append("    <<<ENDIF>>>")
+        input.append("<<<ELSE>>>")
+        input.append("0xBADFOOD1313")
+        input.append("<<<ENDIF>>>")
+        input.append("// 4")
+
+        def runAndTest(input, interface, expected):
+            # param, no default
+            output = TestFeatures.do_magic(input, interface, [], LanguageCPP())
+            self.assertEqual(len(output), 3)
+            self.assertEqual(output[0], "// 1\n")
+            self.assertEqual(output[1], expected + "\n")
+            self.assertEqual(output[2], "// 4\n")
+
+        i = Interface('')
+        i.AddUserTag("AA", None)
+        i.AddUserTag("ONE", None)
+        i.AddUserTag("BB", None)
+        runAndTest(input, i, "        AB1")
+
+        i = Interface('')
+        i.AddUserTag("AA", None)
+        i.AddUserTag("TWO", None)
+        i.AddUserTag("CC", None)
+        runAndTest(input, i, "        AC2")
+
+        i = Interface('')
+        i.AddUserTag("AA", None)
+        i.AddUserTag("THREE", None)
+        i.AddUserTag("BB", None)
+        runAndTest(input, i, "        AB3")
+
+        i = Interface('')
+        i.AddUserTag("AA", None)
+        runAndTest(input, i, "        0xBADFOOD444")
+        ####
+        i = Interface('')
+        i.AddUserTag("CC", None)
+        i.AddUserTag("ONE", None)
+        i.AddUserTag("EE", None)
+        runAndTest(input, i, "        CE1")
+
+        i = Interface('')
+        i.AddUserTag("CC", None)
+        i.AddUserTag("TWO", None)
+        i.AddUserTag("DD", None)
+        runAndTest(input, i, "        CD2")
+
+        i = Interface('')
+        i.AddUserTag("CC", None)
+        i.AddUserTag("THREE", None)
+        i.AddUserTag("EE", None)
+        runAndTest(input, i, "        CE3")
+
+        i = Interface('')
+        i.AddUserTag("CC", None)
+        i.AddUserTag("THREE", None)
+        runAndTest(input, i, "        0xBADFOOD777")
+        ####
+        i = Interface('')
+        i.AddUserTag("EE", None)
+        i.AddUserTag("ONE", None)
+        i.AddUserTag("GG", None)
+        runAndTest(input, i, "        EG1")
+
+        i = Interface('')
+        i.AddUserTag("EE", None)
+        i.AddUserTag("TWO", None)
+        i.AddUserTag("FF", None)
+        runAndTest(input, i, "        EF2")
+
+        i = Interface('')
+        i.AddUserTag("EE", None)
+        i.AddUserTag("THREE", None)
+        i.AddUserTag("FF", None)
+        runAndTest(input, i, "        EF3")
+
+        i = Interface('')
+        i.AddUserTag("EE", None)
+        i.AddUserTag("ONE", None)
+        runAndTest(input, i, "        0xBADFOOD999")
+        ####
+        i = Interface('')
+        runAndTest(input, i, "0xBADFOOD1313")
+        #"""
 
     def test_if_else_endif_nested_usertags(self):
 
