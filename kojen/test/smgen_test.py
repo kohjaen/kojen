@@ -5,8 +5,8 @@ from kojen import smgen
 from kojen.LanguagePython import LanguagePython
 from kojen.LanguageCPP import LanguageCPP
 from kojen.LanguageCsharp import LanguageCsharp
-from kojen.smgen import CStateMachineGenerator
-from kojen.kojentypes import Interface, Struct, Message, MessageHeader
+from kojen.smgen import CStateMachineGenerator, CTransitionTableModel
+from kojen.kojentypes import Interface, Struct, Message
 
 class TestFeatures(unittest.TestCase):
 
@@ -41,6 +41,200 @@ class TestFeatures(unittest.TestCase):
         smgenerator.Generate(tt, namespace_name, fsm_name, "", False)
         return TestFeatures.read_lines_of_output_file()
 
+    def test_sorting(self):
+        sort = smgen.CTransitionTableSort()
+        tt = [
+          ['Step1' , '', 'Step2' , '', ''],
+          ['Step2' , '', 'Step3A', '', 'G1'],
+          ['Step2' , '', 'Step3B', '', 'G2'],
+          ['Step3A', '', 'Step4A', '', ''],
+          ['Step4A', '', 'End'   , '', ''],
+          ['Step3B', '', 'End'   , '', ''],
+          ['Step1' , '', '' , '', ''],
+          ['Step2' , '', '' , '', ''],
+          ['Step3A' , '', '' , '', ''],
+          ['Step4A' , '', '' , '', ''],
+         ]
+        sorted_tt = sort.sort_transitions(tt)
+        self.assertEqual(len(sorted_tt), len(tt))
+        self.assertEqual(sorted_tt[0],['Step1', '', '', '', ''])
+        self.assertEqual(sorted_tt[1],['Step1', '', 'Step2', '', ''])
+        self.assertEqual(sorted_tt[2],['Step2', '', '', '', ''])
+        self.assertEqual(sorted_tt[3],['Step2', '', 'Step3A', '', 'G1'])
+        self.assertEqual(sorted_tt[4],['Step2', '', 'Step3B', '', 'G2'])
+        self.assertEqual(sorted_tt[5],['Step3A', '', '', '', ''])
+        self.assertEqual(sorted_tt[6],['Step3A', '', 'Step4A', '', ''])
+        self.assertEqual(sorted_tt[7],['Step3B', '', 'End', '', ''])
+        self.assertEqual(sorted_tt[8],['Step4A', '', '', '', ''])
+        self.assertEqual(sorted_tt[9],['Step4A', '', 'End', '', ''])
+
+        tt = [
+            ['Step1', 'Start', 'Step2', 'OnCalculate1', 'None'],
+            ['Step1', 'None', 'None', 'OnCalculate1A', 'None'],
+            ['Step2', 'None', 'Step3', 'OnCalculate2', 'None'],
+            ['Step2', 'None', 'None', 'OnCalculate2A', 'None'],
+            ['Step3', 'Finish', 'End', 'None', 'None'],
+        ]
+        sorted_tt = sort.sort_transitions(tt)
+        self.assertEqual(len(sorted_tt), len(tt))
+        self.assertEqual(sorted_tt, [
+            ['Step1', 'None', 'None', 'OnCalculate1A', 'None'],
+            ['Step1', 'Start', 'Step2', 'OnCalculate1', 'None'],
+            ['Step2', 'None', 'None', 'OnCalculate2A', 'None'],
+            ['Step2', 'None', 'Step3', 'OnCalculate2', 'None'],
+            ['Step3', 'Finish', 'End', 'None', 'None']
+        ])
+
+
+    def test_anon_depth(self):
+        tt = [
+              ['Step1', 'None', 'Step2', 'OnCalculate1', 'None'],
+              ['Step2', 'None', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', 'None', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', 'None', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', 'None', 'End', 'None', 'None'],
+              ['Step3B', 'None', 'End', 'None', 'None'],
+             ]
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertTrue(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 4)
+        self.assertTrue(ttm.first_state_has_anonymous_transition())
+
+        tt = [
+              ['Step1', 'Next', 'Step2', 'OnCalculate1', 'None'],
+              ['Step2', ' ', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', ' ', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', ' ', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', ' ', 'End', 'None', 'None'],
+              ['Step3B', 'None', 'End', 'None', 'None'],
+             ]
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertTrue(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 3)
+        self.assertFalse(ttm.first_state_has_anonymous_transition())
+
+        tt = [
+              ['Step1', 'Next', 'Step2', 'OnCalculate1', 'None'],
+              ['Step2', 'None', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', 'None', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', 'None', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', 'GoEnd', 'End', 'None', 'None'],
+              ['Step3B', 'GoEnd', 'End', 'None', 'None'],
+             ]
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertTrue(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 2)
+        self.assertFalse(ttm.first_state_has_anonymous_transition())
+
+        tt = [
+              ['Step1', 'Next', 'Step2', 'OnCalculate1', 'None'],
+              ['Step2', 'Go3A', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', 'None', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', 'None', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', 'GoEnd', 'End', 'None', 'None'],
+              ['Step3B', 'GoEnd', 'End', 'None', 'None'],
+             ]
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertTrue(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 1)
+        self.assertFalse(ttm.first_state_has_anonymous_transition())
+
+        tt = [['Step1', 'Trigger', 'Step2', 'OnCalculate1', 'None'],
+              ['Step2', 'Trigger', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', 'Trigger', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', 'Trigger', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', 'Trigger', 'End', 'None', 'None'],
+              ['Step3B', 'Trigger', 'End', 'None', 'None'],]
+
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertFalse(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 0)
+        self.assertFalse(ttm.first_state_has_anonymous_transition())
+
+        tt = [
+              ['Step1', 'Next', 'Step2', 'OnCalculate1', 'None'], #2
+              ['Step2', 'None', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', 'None', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', 'None', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', 'GoEnd', 'EndStep1', 'None', 'None'],
+              ['Step3B', 'GoEnd', 'EndStep1', 'None', 'None'],
+              ['EndStep1', 'None', 'EndStep2', 'OnCalculate1', 'None'], # 4
+              ['EndStep2', 'None', 'EndStep3A', 'OnCalculate2', 'Condition1'],
+              ['EndStep2', 'None', 'EndStep3B', 'OnCalculate3', 'Condition2'],
+              ['EndStep3A', 'None', 'EndStep4A', 'OnCalculate4', 'None'],
+              ['EndStep4A', 'None', 'EndEnd', 'None', 'None'],
+              ['EndStep3B', 'None', 'EndEnd', 'None', 'None'],
+             ]
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertTrue(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 4)
+        self.assertFalse(ttm.first_state_has_anonymous_transition())
+
+        tt = [
+              ['Step1', 'None', 'Step2', 'OnCalculate1', 'None'], # 4
+              ['Step2', 'None', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', 'None', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', 'None', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', 'None', 'EndStep1', 'None', 'None'],
+              ['Step3B', 'None', 'EndStep1', 'None', 'None'],
+              ['EndStep1', 'Next', 'EndStep2', 'OnCalculate1', 'None'], #2
+              ['EndStep2', 'None', 'EndStep3A', 'OnCalculate2', 'Condition1'],
+              ['EndStep2', 'None', 'EndStep3B', 'OnCalculate3', 'Condition2'],
+              ['EndStep3A', 'None', 'EndStep4A', 'OnCalculate4', 'None'],
+              ['EndStep4A', 'GoEnd', 'EndEnd', 'None', 'None'],
+              ['EndStep3B', 'GoEnd', 'EndEnd', 'None', 'None'],
+             ]
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertTrue(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 4)
+        self.assertTrue(ttm.first_state_has_anonymous_transition())
+        tt = [
+              ['Step1', 'None', 'None', 'OnCalculate1', 'None'], # 4
+        ]
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertTrue(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 1)
+        self.assertTrue(ttm.first_state_has_anonymous_transition())
+
+        tt = [
+              ['Step1', 'None', 'None', 'None', 'None'], # 4
+        ]
+        ttm = CTransitionTableModel(tt, "namespace", "fsm", "dclspc")
+        self.assertFalse(ttm.has_anonymous_transitions())
+        self.assertEqual(ttm.get_anonymous_transition_max_depth(), 0)
+        self.assertFalse(ttm.first_state_has_anonymous_transition())
+
+    def test_anon_tags(self):
+        input = []
+        input.append("<<<IF ANON_STATETRANSITION_MAX_DEPTH>>>")
+        input.append("<<<ANON_STATETRANSITION_MAX_DEPTH>>>")
+        input.append("<<<ENDIF>>>")
+
+        tt = [
+              ['Step1', 'None', 'Step2', 'OnCalculate1', 'None'],
+              ['Step2', 'None', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', 'None', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', 'None', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', 'None', 'End', 'None', 'None'],
+              ['Step3B', 'None', 'End', 'None', 'None'],
+             ]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+        self.assertEqual(len(output), 1)
+        self.assertEqual(output[0], "4\n")
+
+        tt = [
+              ['Step1', 'one', 'Step2', 'OnCalculate1', 'None'],
+              ['Step2', 'one', 'Step3A', 'OnCalculate2', 'Condition1'],
+              ['Step2', 'one', 'Step3B', 'OnCalculate3', 'Condition2'],
+              ['Step3A', 'one', 'Step4A', 'OnCalculate4', 'None'],
+              ['Step4A', 'one', 'End', 'None', 'None'],
+              ['Step3B', 'one', 'End', 'None', 'None'],
+             ]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+        self.assertEqual(len(output), 0)
+
     def test_per_state_numeric(self):
         input = []
         input.append("<<<PER_STATE_BEGIN>>>")
@@ -66,7 +260,11 @@ class TestFeatures(unittest.TestCase):
     def test_per_state_transition_numeric(self):
         input = []
         input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
         input.append("<<<NUM=5>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
         input.append("<<<PER_STATETRANSITION_END>>>")
         tt = [['S1', 'Do', 'S2', 'A1', 'G1'],
               ['S2', 'Do', 'S3', 'A2', 'G2'],
@@ -77,10 +275,29 @@ class TestFeatures(unittest.TestCase):
 
         output = TestFeatures.do_magic(input, i, tt)
 
-        self.assertEqual(len(output), 3)
+        self.assertEqual(len(output), 4)
         self.assertEqual(output[0], "5\n")
         self.assertEqual(output[1], "6\n")
         self.assertEqual(output[2], "7\n")
+        self.assertEqual(output[3], "8\n")
+
+    def test_per_state_transitions(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<STATENAME>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        tt = [
+        ['StateA', 'EventGo', 'StateB', 'OnDoA', 'None'],
+        ['StateB', 'EventGo', 'StateA', 'OnDoB', 'None'],
+        ]
+
+        i = Interface('')
+
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 2)
+        self.assertEqual(output[0], "StateA\n")
+        self.assertEqual(output[1], "StateB\n")
 
     def test_event_custom_params_nosignature(self):
         input = []
@@ -409,6 +626,401 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(output[3], "A1\n")
         self.assertEqual(output[4], "S1\n")
 
+    def test_transitionsperguard_with_anon_and_tags(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("(normal) <<<GUARDNAME=No Guard>>>")
+        #input.append("<<<EVENTNAME=No Event>>>") Hmmm ... need to think more on this.
+        input.append("(normal) <<<NUM=1>>>")
+        input.append("(normal) <<<EVENTNAME>>>")
+        input.append("(normal) <<<STATENAMEIFNEXTSTATE=No Next State>>>")
+        input.append("(normal) <<<ACTIONNAME=No Action>>>")
+        input.append("(normal) <<<NEXTSTATENAME=No Next State>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("(anon) <<<NUM=1>>>")
+        input.append("(anon) <<<GUARDNAME=No Guard>>>")
+        input.append("(anon) <<<STATENAMEIFNEXTSTATE=No Next State>>>")
+        input.append("(anon) <<<ACTIONNAME=No Action>>>")
+        input.append("(anon) <<<NEXTSTATENAME=No Next State>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_END>>>")
+
+        tt = [['S1', 'Do', 'S1', 'A1', 'G1'],
+              ['S1', 'None', 'S1', 'AA1', 'AG1'],
+              ['S1', 'None', 'S1', 'AA2', 'AG2'],]
+        s = Struct("somestruct")
+        s.AddType("binga", "bungaBunga")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 16)
+        self.assertEqual(output[0], "(normal) G1\n")
+        self.assertEqual(output[1], "(normal) 1\n")
+        self.assertEqual(output[2], "(normal) Do\n")
+        self.assertEqual(output[3], "(normal) S1\n")
+        self.assertEqual(output[4], "(normal) A1\n")
+        self.assertEqual(output[5], "(normal) S1\n")
+        self.assertEqual(output[6], "(anon) 1\n")
+        self.assertEqual(output[7], "(anon) AG1\n")
+        self.assertEqual(output[8], "(anon) S1\n")
+        self.assertEqual(output[9], "(anon) AA1\n")
+        self.assertEqual(output[10], "(anon) S1\n")
+        self.assertEqual(output[11], "(anon) 2\n")
+        self.assertEqual(output[12], "(anon) AG2\n")
+        self.assertEqual(output[13], "(anon) S1\n")
+        self.assertEqual(output[14], "(anon) AA2\n")
+        self.assertEqual(output[15], "(anon) S1\n")
+
+    def test_transitionsperguard_with_anon_and_tags_multiple(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("(normal) if <<<GUARDNAME=No Guard>>>")
+        #input.append("<<<EVENTNAME=No Event>>>") Hmmm ... need to think more on this.
+        input.append("(normal) <<<NUM=1>>>")
+        input.append("(normal) on event <<<EVENTNAME>>>")
+        input.append("(normal) current state if next <<<STATENAMEIFNEXTSTATE=No Next State>>>")
+        input.append("(normal) do action <<<ACTIONNAME=No Action>>>")
+        input.append("(normal) next state <<<NEXTSTATENAME=No Next State>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("(anon) if <<<GUARDNAME=No Guard>>>")
+        input.append("(anon) <<<NUM=1>>>")
+        input.append("(anon) current state if next <<<STATENAMEIFNEXTSTATE=No Next State>>>")
+        input.append("(anon) do action <<<ACTIONNAME=No Action>>>")
+        input.append("(anon) next state <<<NEXTSTATENAME=No Next State>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_END>>>")
+        tt = [['S1', 'Do', 'S1', 'A1', 'G1'],
+              ['S1', 'Next', 'S2', 'A2', 'G2'],
+              ['S1', 'None', 'S1', 'AA1', 'AG1'],
+              ['S1', 'None', 'S1', 'AA2', 'AG2'],
+              ['S2', 'None', 'S2', 'AA21', 'AG21'],
+              ['S2', 'None', 'S2', 'AA22', 'AG22'],]
+        s = Struct("somestruct")
+        s.AddType("binga", "bungaBunga")
+        i = Interface('')
+        i.AddStruct(s)
+
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 32)
+        self.assertEqual(output[0], "(normal) if G1\n")
+        self.assertEqual(output[1], "(normal) 1\n")
+        self.assertEqual(output[2], "(normal) on event Do\n")
+        self.assertEqual(output[3], "(normal) current state if next S1\n")
+        self.assertEqual(output[4], "(normal) do action A1\n")
+        self.assertEqual(output[5], "(normal) next state S1\n")
+
+        self.assertEqual(output[6], "(normal) if G2\n")
+        self.assertEqual(output[7], "(normal) 2\n")
+        self.assertEqual(output[8], "(normal) on event Next\n")
+        self.assertEqual(output[9], "(normal) current state if next S1\n")
+        self.assertEqual(output[10], "(normal) do action A2\n")
+        self.assertEqual(output[11], "(normal) next state S2\n")
+
+        self.assertEqual(output[12], "(anon) if AG1\n")
+        self.assertEqual(output[13], "(anon) 1\n")
+        self.assertEqual(output[14], "(anon) current state if next S1\n")
+        self.assertEqual(output[15], "(anon) do action AA1\n")
+        self.assertEqual(output[16], "(anon) next state S1\n")
+
+        self.assertEqual(output[17], "(anon) if AG2\n")
+        self.assertEqual(output[18], "(anon) 2\n")
+        self.assertEqual(output[19], "(anon) current state if next S1\n")
+        self.assertEqual(output[20], "(anon) do action AA2\n")
+        self.assertEqual(output[21], "(anon) next state S1\n")
+
+        self.assertEqual(output[22], "(anon) if AG21\n")
+        self.assertEqual(output[23], "(anon) 3\n")
+        self.assertEqual(output[24], "(anon) current state if next S2\n")
+        self.assertEqual(output[25], "(anon) do action AA21\n")
+        self.assertEqual(output[26], "(anon) next state S2\n")
+
+        self.assertEqual(output[27], "(anon) if AG22\n")
+        self.assertEqual(output[28], "(anon) 4\n")
+        self.assertEqual(output[29], "(anon) current state if next S2\n")
+        self.assertEqual(output[30], "(anon) do action AA22\n")
+        self.assertEqual(output[31], "(anon) next state S2\n")
+
+    def test_transitionsperguard_with_anon_and_if_anon_from_current_state(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF ANON_STATETRANSITION_FROM_CURRENT_STATE>>>")
+        input.append("GO")
+        input.append("<<<ELSE>>>")
+        input.append("NOGO")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF ANON_STATETRANSITION_FROM_CURRENT_STATE>>>")
+        input.append("GO2")
+        input.append("<<<ELSE>>>")
+        input.append("NOGO2")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_END>>>")
+        tt = [['S1', 'None', 'S2', 'A1', 'G1'],
+              ['S2', 'Next', 'S3', 'A2', 'G2'],
+              ['S3', 'None', 'S4', 'A3', 'G3'],
+              ['S4', 'Next', 'S5', 'A4', 'G4'],]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+        self.assertEqual(len(output), 4)
+        self.assertEqual(output[0], "NOGO\n")
+        self.assertEqual(output[1], "NOGO\n")
+        self.assertEqual(output[2], "GO2\n")
+        self.assertEqual(output[3], "GO2\n")
+
+    def test_transitionsperguard_with_anon_and_if_regular_from_current_state(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF STATETRANSITION_FROM_CURRENT_STATE>>>")
+        input.append("GO")
+        input.append("<<<ELSE>>>")
+        input.append("NOGO")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF STATETRANSITION_FROM_CURRENT_STATE>>>")
+        input.append("GO2")
+        input.append("<<<ELSE>>>")
+        input.append("NOGO2")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_END>>>")
+        tt = [['S1', 'None', 'S2', 'A1', 'G1'],
+              ['S2', 'Next', 'S3', 'A2', 'G2'],
+              ['S3', 'None', 'S4', 'A3', 'G3'],
+              ['S4', 'Next', 'S5', 'A4', 'G4'],]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+        self.assertEqual(len(output), 4)
+        self.assertEqual(output[0], "GO\n")
+        self.assertEqual(output[1], "GO\n")
+        self.assertEqual(output[2], "NOGO2\n")
+        self.assertEqual(output[3], "NOGO2\n")
+
+    def test_transitionsperguard_with_anon_and_if_anon_from_next_state(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF ANON_STATETRANSITION_FROM_NEXT_STATE>>>")
+        input.append("GO")
+        input.append("<<<ELSE>>>")
+        input.append("NOGO")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF ANON_STATETRANSITION_FROM_NEXT_STATE>>>")
+        input.append("GO2")
+        input.append("<<<ELSE>>>")
+        input.append("NOGO2")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_END>>>")
+        tt = [['S1', 'None', 'S2', 'A1', 'G1'],
+              ['S2', 'Next', 'S3', 'A2', 'G2'],
+              ['S3', 'None', 'S4', 'A3', 'G3'],
+              ['S4', 'Next', 'S5', 'A4', 'G4'],]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+        self.assertEqual(len(output), 4)
+        self.assertEqual(output[0], "GO\n")
+        self.assertEqual(output[1], "NOGO\n")
+        self.assertEqual(output[2], "NOGO2\n")
+        self.assertEqual(output[3], "NOGO2\n")
+
+
+    def test_transitionsperguard_with_anon_and_if_regular_from_next_state(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF STATETRANSITION_FROM_NEXT_STATE>>>")
+        input.append("GO")
+        input.append("<<<ELSE>>>")
+        input.append("NOGO")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF STATETRANSITION_FROM_NEXT_STATE>>>")
+        input.append("GO2")
+        input.append("<<<ELSE>>>")
+        input.append("NOGO2")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_END>>>")
+        tt = [['S1', 'None', 'S2', 'A1', 'G1'],
+              ['S2', 'Next', 'S3', 'A2', 'G2'],
+              ['S3', 'None', 'S4', 'A3', 'G3'],
+              ['S4', 'Next', 'S5', 'A4', 'G4'],]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+        self.assertEqual(len(output), 4)
+        self.assertEqual(output[0], "NOGO\n")
+        self.assertEqual(output[1], "NOGO\n")
+        self.assertEqual(output[2], "GO2\n")
+        self.assertEqual(output[3], "GO2\n")
+
+    def test_inner_and_out_self_transition_checks(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF INNER_SELF_TRANSITION>>>")
+        input.append("In (<<<STATENAME>>> : <<<ACTIONNAME>>>)")
+        input.append("<<<ELSEIF OUTER_SELF_TRANSITION>>>")
+        input.append("Out (<<<STATENAME>>> : <<<ACTIONNAME>>>)")
+        input.append("<<<ELSE>>>")
+        input.append("Regular (<<<STATENAME>>> : <<<ACTIONNAME>>>)")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("<<<IF INNER_SELF_TRANSITION>>>")
+        input.append("In (<<<STATENAME>>>) anon")
+        input.append("<<<ELSEIF OUTER_SELF_TRANSITION>>>")
+        input.append("Out (<<<STATENAME>>>) anon")
+        input.append("<<<ELSE>>>")
+        input.append("Regular (<<<STATENAME>>>) anon")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_END>>>")
+        tt = [['S1', 'None', 'S1'  , 'A1', ''],
+              ['S1', ''    , ''    , 'A2', ''],
+              ['S1', 'None', 'S2'  , 'A3', ''],
+              ['S2', 'Next', 'S3'  , 'A4', ''],
+              ['S2', 'Do'  , 'S2'  , 'A5', ''],
+              ['S2', 'Do2' , 'None', 'A6', ''],
+              ['S3', 'None', 'S4'  , 'A7', ''],
+              ['S4', 'Next', 'S5'  , 'A8', ''],]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+        # Regular transitions are processed first as per the order of input
+        self.assertEqual(len(output), 8)
+        self.assertEqual(output[0], 'Regular (S2 : A4)\n')
+        self.assertEqual(output[1], 'Out (S2 : A5)\n')
+        self.assertEqual(output[2], 'In (S2 : A6)\n')
+        self.assertEqual(output[3], 'Regular (S4 : A8)\n')
+        # Anonymous transitions are processed second
+        self.assertEqual(output[4], 'Out (S1) anon\n')
+        self.assertEqual(output[5], 'In (S1) anon\n')
+        self.assertEqual(output[6], 'Regular (S1) anon\n')
+        self.assertEqual(output[7], 'Regular (S3) anon\n')
+
+    def test_multiple_user_tags_on_one_line(self):
+        input = []
+        input.append("<<<IF EnableCallbackDispatcher OR EnablePriorityQueue>>>")
+        input.append("<<<ddd=5>>>")
+        input.append("    <<<IF Reentrancy>>>")
+        input.append("<<<ddd=1>>> + <<<Reentrancy>>>")
+        input.append("    <<<ELSE>>>")
+        input.append("<<<ddd=5>>>")
+        input.append("    <<<ENDIF>>>")
+        input.append("<<<ENDIF>>>")
+        input.append("<<<ANON_STATETRANSITION_MAX_DEPTH=1>>>")
+        i = Interface('')
+        i.AddUserTag('Reentrancy', '3')
+        i.AddUserTag('EnableCallbackDispatcher',1)
+        #i.AddUserTag('ActionReturn', 'uint32_t')
+        tt = [['S1', 'Next', 'S2', 'A1', 'G1'],
+                      ['S2', 'Next', 'S3', 'A2', 'G2'],
+                      ['S3', 'Next', 'S4', 'A3', 'G3'],
+                      ['S4', 'Next', 'S5', 'A4', 'G4'],]
+        output = TestFeatures.do_magic(input, i, tt)
+        self.assertEqual(len(output), 3)
+        self.assertEqual(output[0], "5\n")
+        self.assertEqual(output[1], "1 + 3\n")
+        self.assertEqual(output[2], "1\n")
+
+    def test_anon_trans_no_state_transitions(self):
+        input = []
+        input.append("<<<PER_ANON_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("if (context_-><<<GUARDNAME>>>(event))")
+        input.append("{")
+        input.append("    context_-><<<ACTIONNAME>>>(event);")
+        input.append("    current_state_.template emplace<<<<NEXTSTATENAME>>>>();")
+        input.append("    return;")
+        input.append("}")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_ANON_STATETRANSITION_END>>>")
+
+        tt = [['StateA', 'None', 'None', 'None', 'None']]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 0)
+
+    def test_event_trans_no_state_transitions(self):
+        input = []
+        input.append("<<<PER_STATETRANSITION_BEGIN>>>")
+        input.append("<<<PER_EVENTTRANSITION_BEGIN>>>")
+        input.append("<<<PER_GUARDTRANSITION_BEGIN>>>")
+        input.append("if (context_-><<<GUARDNAME>>>(event))")
+        input.append("{")
+        input.append("    context_-><<<ACTIONNAME>>>(event);")
+        input.append("    current_state_.template emplace<<<<NEXTSTATENAME>>>>();")
+        input.append("    return;")
+        input.append("}")
+        input.append("<<<PER_GUARDTRANSITION_END>>>")
+        input.append("<<<PER_EVENTTRANSITION_END>>>")
+        input.append("<<<PER_STATETRANSITION_END>>>")
+
+        tt = [['StateA', 'None', 'None', 'None', 'None']]
+        i = Interface('')
+        output = TestFeatures.do_magic(input, i, tt)
+
+        self.assertEqual(len(output), 0)
+
     def test_transitionsperguard_tags_with_custom_defaults(self):
         input = []
         input.append("<<<PER_STATETRANSITION_BEGIN>>>")
@@ -422,19 +1034,26 @@ class TestFeatures(unittest.TestCase):
         input.append("<<<PER_GUARDTRANSITION_END>>>")
         input.append("<<<PER_EVENTTRANSITION_END>>>")
         input.append("<<<PER_STATETRANSITION_END>>>")
-        tt = [['S1', 'Do', 'None', 'None', 'None']]
+
         s = Struct("somestruct")
         s.AddType("binga", "bungaBunga")
         i = Interface('')
         i.AddStruct(s)
 
+        # No transitions per state (nothing is done)
+        tt = [['S1', 'Do', 'None', 'None', 'None']]
+        output = TestFeatures.do_magic(input, i, tt)
+        self.assertEqual(len(output), 0)
+
+        # inner transition (1 transition per state)
+        tt = [['S1', 'Do', 'None', 'OnDo', 'None']]
         output = TestFeatures.do_magic(input, i, tt)
 
         self.assertEqual(len(output), 5)
         self.assertEqual(output[0], "No Guard\n")
         self.assertEqual(output[1], "No Event\n")
         self.assertEqual(output[2], "No Next State\n")
-        self.assertEqual(output[3], "No Action\n")
+        self.assertEqual(output[3], "OnDo\n")
         self.assertEqual(output[4], "No Next State\n")
 
     def test_events(self):

@@ -51,6 +51,16 @@ __TAG_PET_BEGIN__                   = "<<<PER_EVENTTRANSITION_BEGIN>>>"
 __TAG_PET_END__                     = "<<<PER_EVENTTRANSITION_END>>>"
 __TAG_PGT_BEGIN__                   = "<<<PER_GUARDTRANSITION_BEGIN>>>"
 __TAG_PGT_END__                     = "<<<PER_GUARDTRANSITION_END>>>"
+__TAG_PAT_BEGIN__                   = "<<<PER_ANON_STATETRANSITION_BEGIN>>>"
+__TAG_PAT_END__                     = "<<<PER_ANON_STATETRANSITION_END>>>"
+__TAG_AT_DEPTH__                    = "<<<ANON_STATETRANSITION_MAX_DEPTH>>>"
+__TAG_AT_STARTSTATE__               = "<<<ANON_STATETRANSITION_FROM_START_STATE>>>"
+__TAG_AT_NEXTSTATE__                = "<<<ANON_STATETRANSITION_FROM_NEXT_STATE>>>"
+__TAG_AT_CURRENTSTATE__             = "<<<ANON_STATETRANSITION_FROM_CURRENT_STATE>>>"
+__TAG_ST_NEXTSTATE__                = "<<<STATETRANSITION_FROM_NEXT_STATE>>>"
+__TAG_ST_CURRENTSTATE__             = "<<<STATETRANSITION_FROM_CURRENT_STATE>>>"
+__TAG_ST_INNER_SELF_TRANSITION__    = "<<<INNER_SELF_TRANSITION>>>"
+__TAG_ST_OUTER_SELF_TRANSITION__    = "<<<OUTER_SELF_TRANSITION>>>"
 
 __TAG_PE_BEGIN__                    = "<<<PER_EVENT_BEGIN>>>"
 __TAG_PE_END__                      = "<<<PER_EVENT_END>>>"
@@ -158,7 +168,9 @@ try:
 except  (ModuleNotFoundError, ImportError) as e:
     from .plant import TTToDot
 
+from collections import defaultdict, deque
 import re
+from tracemalloc import start
 from typing import List
 
 # Model that describes a state machine.
@@ -174,6 +186,80 @@ class CStateMachineModel:
         self.guards           = []
         self.actionsignatures = OrderedDict()
         self.transitionsperstate = OrderedDict()
+        self.anonymoustransitionsperstate = OrderedDict()
+
+# This will ensure that anonymous transitions are sorted such that that anonymous self-transitions
+# are processed before anonymous outer transitions, and that all anonymous transitions are processed before regular transitions.
+class CTransitionTableSort:
+    def is_anon_event(self, event: str) -> bool:
+        return event == "" or (isinstance(event, str) and event.lower() == "none")
+
+    def is_none_state(self, s: str) -> bool:
+        return s == "" or (isinstance(s, str) and s.lower() == "none")
+
+    def sort_transitions(self, rows) -> list:
+        if not rows:
+            return []
+
+        root = rows[0][0]
+
+        # Group by start_state preserving input order
+        rows_by_start = defaultdict(list)
+        first_seen_start_order = []
+        seen_start = set()
+        for r in rows:
+            start = r[0]
+            rows_by_start[start].append(r)
+            if start not in seen_start:
+                seen_start.add(start)
+                first_seen_start_order.append(start)
+
+        # BFS over all transitions (choose all; change to anon-only if you want)
+        nexts = defaultdict(list)
+        next_seen = defaultdict(set)
+        for r in rows:
+            start, event, nxt, action, guard = r
+            if self.is_none_state(nxt):
+                continue
+            if nxt not in next_seen[start]:
+                next_seen[start].add(nxt)
+                nexts[start].append(nxt)
+
+        visited = set([root])
+        q = deque([root])
+        visit_order = []
+        while q:
+            s = q.popleft()
+            visit_order.append(s)
+            for nxt in nexts.get(s, []):
+                if nxt not in visited:
+                    visited.add(nxt)
+                    q.append(nxt)
+
+        for s in first_seen_start_order:
+            if s not in visited:
+                visit_order.append(s)
+
+        out = []
+        for start in visit_order:
+            group = rows_by_start[start]
+
+            anon_rows = [r for r in group if self.is_anon_event(r[1])]
+            reg_rows  = [r for r in group if not self.is_anon_event(r[1])]
+
+            # Step 3 buckets for anonymous transitions
+            anon_bucket0 = []  # next_state == start OR next_state is none/empty
+            anon_bucket1 = []  # next_state is a different real state
+            for r in anon_rows:
+                nxt = r[2]
+                if nxt == start or self.is_none_state(nxt):
+                    anon_bucket0.append(r)
+                else:
+                    anon_bucket1.append(r)
+
+            out.extend(anon_bucket0 + anon_bucket1 + reg_rows)
+
+        return out
 
 # Transition Table Model uses State Machine Model to generate all code required for a working state machine.
 class CTransitionTableModel(CStateMachineModel):
@@ -185,7 +271,8 @@ class CTransitionTableModel(CStateMachineModel):
 
     def __init__(self, tt, nn, smn, dclspc = ""):
         CStateMachineModel.__init__(self)
-        self.transition_table   = tt
+        self.sorting = CTransitionTableSort()
+        self.transition_table   = self.sorting.sort_transitions(tt)
         self.statemachinename   = smn
         self.namespacename      = nn
         self.declspecdllexport  = dclspc
@@ -244,18 +331,29 @@ class CTransitionTableModel(CStateMachineModel):
         These contain a list of dictionaries, as multiple of the same events can
         cause different transitions based on guards.
     '''
+    def is_state_only_row(self, tableline: List[str]) -> bool:
+        return (tableline[self.ACTION].strip() == "" or tableline[self.ACTION].lower() == "none") and \
+               (tableline[self.GUARD].strip() == "" or tableline[self.GUARD].lower() == "none") and \
+               (tableline[self.NEXT_STATE].strip() == "" or tableline[self.NEXT_STATE].lower() == "none") and \
+               (tableline[self.EVENT].strip() == "" or tableline[self.EVENT].lower() == "none")
+
     def set_transitions_per_state(self):
+        anoncnt = 0
         for tableline in self.transition_table:
+
+            if self.is_state_only_row(tableline):
+                continue
+
             transition = OrderedDict()
-            if tableline[self.ACTION] != "" and tableline[self.ACTION].lower() != "none":
+            if tableline[self.ACTION].strip() != "" and tableline[self.ACTION].lower() != "none":
                 transition[__TAG_ACTIONNAME__] = tableline[self.ACTION]
                 transition[__TAG_ACTIONNAME_SMALL_CAMEL__] = camel_case_small(tableline[self.ACTION])
                 transition[__TAG_ACTIONNAME_SNAKE__] = snake_case(tableline[self.ACTION])
-            if tableline[self.GUARD] != "" and tableline[self.GUARD].lower() != "none":
+            if tableline[self.GUARD].strip() != "" and tableline[self.GUARD].lower() != "none":
                 transition[__TAG_GUARDNAME__] = tableline[self.GUARD]
                 transition[__TAG_GUARDNAME_SNAKE__] = snake_case(tableline[self.GUARD])
                 transition[__TAG_GUARDNAME_SMALL_CAMEL__] = camel_case_small(tableline[self.GUARD])
-            if tableline[self.NEXT_STATE] != "" and tableline[self.NEXT_STATE].lower() != "none":
+            if tableline[self.NEXT_STATE].strip() != "" and tableline[self.NEXT_STATE].lower() != "none":
                 transition[__TAG_STATENAME_IF_NEXTSTATE__] = tableline[self.START_STATE]
                 transition[__TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__] = camel_case_small(tableline[self.START_STATE])
                 transition[__TAG_STATENAME_IF_NEXTSTATE_SNAKE__] = snake_case(tableline[self.START_STATE])
@@ -263,26 +361,79 @@ class CTransitionTableModel(CStateMachineModel):
                 transition[__TAG_NEXTSTATENAME_SMALL_CAMEL__] = camel_case_small(tableline[self.NEXT_STATE])
                 transition[__TAG_NEXTSTATENAME_SNAKE__] = snake_case(tableline[self.NEXT_STATE])
 
-            if tableline[self.START_STATE] != "" and tableline[self.START_STATE].lower() != "none":
+            if tableline[self.START_STATE].strip() != "" and tableline[self.START_STATE].lower() != "none":
                 if not tableline[self.START_STATE] in self.transitionsperstate:
                     self.transitionsperstate[tableline[self.START_STATE]] = OrderedDict()
+                #if not tableline[self.START_STATE] in self.anonymoustransitionsperstate:
+                #    self.anonymoustransitionsperstate[tableline[self.START_STATE]] = OrderedDict()
 
-            if tableline[self.EVENT] != "" and tableline[self.EVENT].lower() != "none":
+            if tableline[self.EVENT].strip() != "" and tableline[self.EVENT].lower() != "none":
                 if not tableline[self.EVENT] in self.transitionsperstate[tableline[self.START_STATE]]:
                     self.transitionsperstate[tableline[self.START_STATE]][tableline[self.EVENT]] = []
                 self.transitionsperstate[tableline[self.START_STATE]][tableline[self.EVENT]].append(transition)
+            if tableline[self.EVENT].strip() == "" or tableline[self.EVENT].lower() == "none":
+                if not tableline[self.START_STATE] in self.anonymoustransitionsperstate:
+                    self.anonymoustransitionsperstate[tableline[self.START_STATE]] = OrderedDict()
+                self.anonymoustransitionsperstate[tableline[self.START_STATE]][str(anoncnt)] = []
+                self.anonymoustransitionsperstate[tableline[self.START_STATE]][str(anoncnt)].append(transition)
+                anoncnt += 1
 
     def getfirststate(self):
         if not self.transition_table:
             return "NO TT PRESENT!"
         return self.transition_table[0][0]
 
+    def has_anonymous_transitions(self):
+        return self.get_anonymous_transition_max_depth() > 0
+
+    def first_state_has_anonymous_transition(self):
+        return self.state_has_anonymous_transition(self.getfirststate())
+
+    def state_has_anonymous_transition(self, state):
+        return state in self.anonymoustransitionsperstate
+
+    def state_has_regular_transition(self, state):
+        if state in self.transitionsperstate:
+            return len(self.transitionsperstate[state]) > 0
+        return False
+
+    def get_anonymous_transition_max_depth(self) -> int:
+        # Build adjacency: state -> list of (event, next_state)
+        from collections import defaultdict
+        adj = defaultdict(list)
+        states = set()
+        for row in self.transition_table:
+            if self.is_state_only_row(row):
+                continue
+            s_start, event, s_next, *_ = row
+            adj[s_start].append((event, s_next))
+            states.add(s_start)
+            states.add(s_next)
+        # Terminals = states with no outgoing transitions
+        terminals = {s for s in states if len(adj.get(s, [])) == 0}
+        best_overall = 0
+        def dfs(state, current_streak, visited):
+            nonlocal best_overall
+            best_overall = max(best_overall, current_streak)
+            if state in terminals:
+                return
+            for event, nxt in adj.get(state, []):
+                if nxt in visited:
+                    continue  # avoid infinite loops
+                dfs(
+                    nxt,
+                    current_streak + 1 if event == "None" or event.strip() =="" else 0,
+                    visited | {nxt}
+                )
+        dfs(self.getfirststate(), 0, {self.getfirststate()})
+        return best_overall
+
+
 
 class CStateMachineGenerator(CGenerator):
 
     def __init__(self, inputfiledir, outputfiledir, events_interface=None, language=None, author='Anonymous', group='', brief=''):
-        CGenerator.__init__(self,inputfiledir,outputfiledir,language, author, group, brief)
-        self.events_interface = events_interface
+        CGenerator.__init__(self,inputfiledir,outputfiledir, events_interface,language, author, group, brief)
         self.vpp_filename = ""
 
     def loadtemplates_firstfiltering(self, smmodel):
@@ -749,31 +900,137 @@ class CStateMachineGenerator(CGenerator):
             result.append(l.replace(__TAG_EVENTNAME__, eventName).replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName)).replace(__TAG_EVENTNAME_SNAKE__, snake_case(eventName)))
         return result
 
+    # this was used when the __TAG_PAT_BEGIN/END__ tags were embedded in __TAG_PST_BEGIN/END__ before they were split.
+    def innerexpand_transitionsperstate_and_anonperstate(self, snippet_to_expand, all_lines_expanded, transitionperstate, anonymoustransitionsperstate):
+
+        def __expansion_transitionsperstate(to_expand, output, object, state, transition_dict, cnt):
+            for ev, transitionList in transition_dict.items():
+                # guard/action/next state repeats
+                object.innerexpand_transitionsperguard(to_expand, output, ev, state, transitionList, cnt[0])
+                cnt[0] += 1
+
+        def __expansion_anonymoustransitionsperstate(to_expand, output, object, state, transition_dict, cnt):
+            for _, transitionList in transition_dict.items():
+                # guard/action/next state repeats
+                object.innerexpand_transitionsperguard(to_expand, output, None, state, transitionList, cnt[0])
+                cnt[0] += 1
+
+        pet_snippet = extract_block(snippet_to_expand, __TAG_PET_BEGIN__, __TAG_PET_END__)
+        pat_snippet = extract_block(snippet_to_expand, __TAG_PAT_BEGIN__, __TAG_PAT_END__)
+
+        # Regular transitions per state
+        pet_cnt = [getNumericDefault(pet_snippet)] # lists are passed by reference -> modified by functions that use them.
+        for state, transition_dict in transitionperstate.items():
+            pet_lines = []
+            if not is_deeply_empty(transition_dict):
+                lines = self.filterStateName(pet_snippet, state)
+                lines = PairExpander(__TAG_PET_BEGIN__, __TAG_PET_END__).Expand(pet_snippet, __expansion_transitionsperstate, self, state, transition_dict, pet_cnt)
+                pet_lines.extend(lines)
+            # Anonymous transitions per state
+            pat_cnt = [getNumericDefault(pat_snippet)] # lists are passed by reference -> modified by functions that use them.
+            pat_lines = []
+            for state2, anon_transition_dict in anonymoustransitionsperstate.items():
+                if state2 == state:
+                    if not is_deeply_empty(anon_transition_dict):
+                        lines = self.filterStateName(pat_snippet, state)
+                        lines = PairExpander(__TAG_PAT_BEGIN__, __TAG_PAT_END__).Expand(pat_snippet, __expansion_anonymoustransitionsperstate, self, state, anon_transition_dict, pat_cnt)
+                        pat_lines.extend(lines)
+            # preserve the order
+            new_lines = replace_block(snippet_to_expand, pet_lines, __TAG_PET_BEGIN__, __TAG_PET_END__)
+            new_lines = replace_block(new_lines, pat_lines, __TAG_PAT_BEGIN__, __TAG_PAT_END__)
+            # Maybe there are no pat or pet snippets, but just a state name ...
+            new_lines = self.filterStateName(new_lines, state)
+            all_lines_expanded.extend(new_lines)
 
     def innerexpand_transitionsperstate(self, snippet_to_expand, all_lines_expanded, transitionperstate):
 
-        def __expansion(to_expand, output, object, state, transition_dict):
-            for ev, transitionList in transition_dict.items():
+            def __expansion_transitionsperstate(to_expand, output, object, state, transition_dict, cnt):
+                for ev, transitionList in transition_dict.items():
+                    # guard/action/next state repeats
+                    object.innerexpand_transitionsperguard(to_expand, output, ev, state, transitionList, cnt[0])
+                    cnt[0] += 1
+
+            pet_cnt = [getNumericDefault(snippet_to_expand)] # lists are passed by reference -> modified by functions that use them.
+            for state, transition_dict in transitionperstate.items():
+                if self.ttmodel.state_has_regular_transition(state):
+                    new_lines = []
+                    if not is_deeply_empty(transition_dict):
+                        lines = self.filterStateName(snippet_to_expand, state)
+                        lines = PairExpander(__TAG_PET_BEGIN__, __TAG_PET_END__).Expand(snippet_to_expand, __expansion_transitionsperstate, self, state, transition_dict, pet_cnt)
+                        new_lines.extend(lines)
+
+                    new_lines = self.filterStateName(new_lines, state)
+                    all_lines_expanded.extend(new_lines)
+
+    def innerexpand_anontransitionsperstate(self, snippet_to_expand, all_lines_expanded, anonymoustransitionsperstate):
+
+        def __expansion_anonymoustransitionsperstate(to_expand, output, object, state, transition_dict, cnt):
+            for _, transitionList in transition_dict.items():
                 # guard/action/next state repeats
-                object.innerexpand_transitionsperguard(to_expand, output, ev, state, transitionList)
+                object.innerexpand_transitionsperguard(to_expand, output, None, state, transitionList, cnt[0])
+                cnt[0] += 1
 
-        cnt = getNumericDefault(snippet_to_expand)
-        for state, transition_dict in transitionperstate.items():
-            all_lines_snippet = self.filterStateName(snippet_to_expand, state)
-            all_lines_snippet = PairExpander(__TAG_PET_BEGIN__, __TAG_PET_END__).Expand(all_lines_snippet, __expansion, self, state, transition_dict)
-            for i in range(len(all_lines_snippet)):
-                if hasSpecificTag(all_lines_snippet[i],__TAG_123__):
-                    line_member = extractDefaultAndTagNamed(all_lines_snippet[i], cleanTag(__TAG_123__))
-                    all_lines_snippet[i] = all_lines_snippet[i].replace(line_member[0], str(cnt))
-            cnt += 1
-            all_lines_expanded.extend(all_lines_snippet)
+        pet_cnt = [getNumericDefault(snippet_to_expand)] # lists are passed by reference -> modified by functions that use them.
+        for state, anon_transition_dict in anonymoustransitionsperstate.items():
+            if self.ttmodel.state_has_anonymous_transition(state):
+                new_lines = []
+                if not is_deeply_empty(anon_transition_dict):
+                    lines = self.filterStateName(snippet_to_expand, state)
+                    lines = PairExpander(__TAG_PET_BEGIN__, __TAG_PET_END__).Expand(snippet_to_expand, __expansion_anonymoustransitionsperstate, self, state, anon_transition_dict, pet_cnt)
+                    new_lines.extend(lines)
+
+                new_lines = self.filterStateName(new_lines, state)
+                all_lines_expanded.extend(new_lines)
 
 
-    def innerexpand_transitionsperguard(self, snippet_to_expand, all_lines_expanded, eventName, stateName, transitionList):
+    def STATE_TEST_if_test_function(self, user_tag, stateName, next_state) -> bool:
+        if user_tag == cleanTag(__TAG_AT_NEXTSTATE__): # Only allow these tags here.
+            if not next_state:
+                return False
+            return self.ttmodel.state_has_anonymous_transition(next_state)
+        if user_tag == cleanTag(__TAG_AT_CURRENTSTATE__): # Only allow these tags here.
+            return self.ttmodel.state_has_anonymous_transition(stateName)
+        if user_tag == cleanTag(__TAG_ST_NEXTSTATE__): # Only allow these tags here.
+            if not next_state:
+                return False
+            return self.ttmodel.state_has_regular_transition(next_state)
+        if user_tag == cleanTag(__TAG_ST_CURRENTSTATE__): # Only allow these tags here.
+            return self.ttmodel.state_has_regular_transition(stateName)
+        if user_tag == cleanTag(__TAG_ST_INNER_SELF_TRANSITION__): # Only allow these tags here.
+            if not next_state:
+                return True
+            return False
+        if user_tag == cleanTag(__TAG_ST_OUTER_SELF_TRANSITION__): # Only allow these tags here.
+            if next_state.lower() == stateName.lower():
+                return True
+            return False
+        return False
+    def STATE_TEST_processing_if_function(self, line, stateName, next_state) -> str:
+        return line
+    def STATE_TEST_not_processing_if_function(self, line, stateName, next_state) -> str:
+        return line
+
+
+    def innerexpand_transitionsperguard(self, snippet_to_expand, all_lines_expanded, eventName, stateName, transitionList, cnt):
 
         def __expansion(to_expand, output, transitionList):
+
+            dict_key_vals = self.events_interface.UserTags()
+
+            def if_test_function(user_tag, stateName, next_state) -> bool:
+                if self.STATE_TEST_if_test_function(user_tag, stateName, next_state):
+                    return True
+                return user_tag in dict_key_vals
+            def processing_if_function(line, stateName, next_state) -> str:
+                return line
+            def not_processing_if_function(line, stateName, next_state) -> str:
+                return line
+
             for transitionDict in transitionList:
-                for l in to_expand:
+                next_state = transitionDict[__TAG_NEXTSTATENAME__] if __TAG_NEXTSTATENAME__ in transitionDict else ""
+                new_to_Expand = IfProcessor().Expand(to_expand, if_test_function, self.STATE_TEST_not_processing_if_function, self.STATE_TEST_processing_if_function, stateName, next_state)
+
+                for l in new_to_Expand:
                     for k, v in transitionDict.items():
                         # for those that are present but who have alternate text when not present.
                         if hasSpecificTag(l, k):
@@ -782,6 +1039,9 @@ class CStateMachineGenerator(CGenerator):
                     # l = l.replace(__TAG_EVENTNAME__, eventName)
                     # l = l.replace(__TAG_EVENTNAME_SMALL_CAMEL__, camel_case_small(eventName))
                     # l = l.replace(__TAG_EVENTNAME_SNAKE__, snake_case(eventName))
+                    if hasSpecificTag(l,__TAG_123__):
+                        line_member = extractDefaultAndTagNamed(l, cleanTag(__TAG_123__))
+                        l = l.replace(line_member[0], str(cnt))
                     # If there is no guard, or no next state, or no action, just remove it (or replace it with the alternative text). Leave no hanging code.
                     if hasSpecificTag(l, __TAG_EVENTNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_EVENTNAME__) or hasSpecificTag(l, __TAG_EVENTNAME_SNAKE__) or\
                        hasSpecificTag(l, __TAG_GUARDNAME_SMALL_CAMEL__) or hasSpecificTag(l, __TAG_GUARDNAME__) or hasSpecificTag(l, __TAG_GUARDNAME_SNAKE__) or\
@@ -797,7 +1057,10 @@ class CStateMachineGenerator(CGenerator):
                          l.find(__TAG_STATENAME_IF_NEXTSTATE__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE_SMALL_CAMEL__) == -1 and l.find(__TAG_STATENAME_IF_NEXTSTATE_SNAKE__) == -1:
                         output.append(l)
 
-        all_lines_snippet = self.filterEventName(snippet_to_expand, eventName)
+        if eventName:
+            all_lines_snippet = self.filterEventName(snippet_to_expand, eventName)
+        else:
+            all_lines_snippet = snippet_to_expand
         all_lines_snippet = PairExpander(__TAG_PGT_BEGIN__, __TAG_PGT_END__).Expand(all_lines_snippet, __expansion, transitionList)
         all_lines_expanded.extend(all_lines_snippet)
 
@@ -867,7 +1130,9 @@ class CStateMachineGenerator(CGenerator):
             all_lines_expanded = PairExpander(__TAG_PE_BEGIN__, __TAG_PE_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering, smmodel.events)
             all_lines_expanded = PairExpander(__TAG_PA_BEGIN__, __TAG_PA_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering, smmodel.actions)
             all_lines_expanded = PairExpander(__TAG_PASIG_BEGIN__, __TAG_PASIG_END__).Expand(all_lines_expanded, self.innerexpand_actionsignatures, smmodel.actionsignatures)
+            #all_lines_expanded = PairExpander(__TAG_PST_BEGIN__, __TAG_PST_END__).Expand(all_lines_expanded, self.innerexpand_transitionsperstate_and_anonperstate, smmodel.transitionsperstate, smmodel.anonymoustransitionsperstate)
             all_lines_expanded = PairExpander(__TAG_PST_BEGIN__, __TAG_PST_END__).Expand(all_lines_expanded, self.innerexpand_transitionsperstate, smmodel.transitionsperstate)
+            all_lines_expanded = PairExpander(__TAG_PAT_BEGIN__, __TAG_PAT_END__).Expand(all_lines_expanded, self.innerexpand_anontransitionsperstate, smmodel.anonymoustransitionsperstate)
             all_lines_expanded = PairExpander(__TAG_PG_BEGIN__, __TAG_PG_END__).Expand(all_lines_expanded, self.innerexpand_secondfiltering, smmodel.guards)
 
             ### CONSOLODATE
@@ -890,31 +1155,36 @@ class CStateMachineGenerator(CGenerator):
         print(" Executing in : " + os.path.realpath(__file__))
         print("*************************************")
 
-        sm = CTransitionTableModel(transitiontable, namespacenname, statemachinename, dclspc)
+        self.ttmodel = CTransitionTableModel(transitiontable, namespacenname, statemachinename, dclspc)
+
+        if self.ttmodel.has_anonymous_transitions():
+            self.events_interface.AddUserTag(cleanTag(__TAG_AT_DEPTH__), self.ttmodel.get_anonymous_transition_max_depth())
+            if self.ttmodel.first_state_has_anonymous_transition():
+                self.events_interface.AddUserTag(cleanTag(__TAG_AT_STARTSTATE__), "True")
 
         for e in self.events_interface.Structs(): # only necessary for stateless (nonTT) events.
-            if not e.Name in sm.events:
-                sm.events.append(e.Name)
+            if not e.Name in self.ttmodel.events:
+                self.ttmodel.events.append(e.Name)
 
-        cm = self.loadtemplates_firstfiltering(sm)
-        self.expand_secondfiltering(sm, cm)
+        self.codemodel = self.loadtemplates_firstfiltering(self.ttmodel)
+        self.expand_secondfiltering(self.ttmodel, self.codemodel)
 
         # user tags.
         if self.events_interface != None:
-            self.do_user_tags(cm, self.events_interface.UserTags())
+            self.do_user_tags(self.codemodel, self.events_interface.UserTags())
 
         # For processing
-        self.do_for(cm)
+        self.do_for(self.codemodel)
 
         # Preserve user code.
-        self.preserve_usercode_in_files(cm)
+        self.preserve_usercode_in_files(self.codemodel)
         '''
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
         preservation = Preservative(self.output_gen_file_dir)
         preservation.Emplace(cm.filenames_to_lines)
         '''
         # Write output to file.
-        res = self.createoutput(cm.filenames_to_lines)
+        res = self.createoutput(self.codemodel.filenames_to_lines)
 
         # Copy non-autogenerated required files to output.
         if isinstance(self.language, LanguageCPP) and copyotherfiles:
@@ -984,10 +1254,10 @@ class CStateMachineGenerator(CGenerator):
     ''' Used for Protocol Generation
     '''
     def GenerateProtocol(self, pythoninterfacegeneratorfilename, namespacenname, classname, dclspc="", preserve_dir="") -> list:
-        sm = CTransitionTableModel([], namespacenname, classname, dclspc)
-        sm.pythoninterfacegeneratorfilename = pythoninterfacegeneratorfilename
-        cm = self.loadtemplates_firstfiltering(sm)
-        self.expand_secondfiltering(sm, cm)
+        self.ttmodel = CTransitionTableModel([], namespacenname, classname, dclspc)
+        self.ttmodel.pythoninterfacegeneratorfilename = pythoninterfacegeneratorfilename
+        self.codemodel = self.loadtemplates_firstfiltering(self.ttmodel)
+        self.expand_secondfiltering(self.ttmodel, self.codemodel)
 
         # Round-trip Code Preservation. Will load the code to preserve upon creation (if the output dir is not-empty/the same as the one in the compile path).
         # TCP gen might have a different output directory (typically COG will put files into an intermediate dir, and them copy them elsewhere
@@ -997,7 +1267,7 @@ class CStateMachineGenerator(CGenerator):
         else:
             preservation = Preservative(preserve_dir)
 
-        preservation.Emplace(cm.filenames_to_lines)
+        preservation.Emplace(self.codemodel.filenames_to_lines)
 
-        return self.createoutput(cm.filenames_to_lines)
+        return self.createoutput(self.codemodel.filenames_to_lines)
 

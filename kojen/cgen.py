@@ -9,10 +9,20 @@ import sys
 import time
 from pathlib import Path
 from typing import List
+
+try:
+    from .kojentypes import Interface
+except (ModuleNotFoundError, ImportError) as e:
+    from kojen.kojentypes import Interface
 try:
 	from .preservative import *
 except (ModuleNotFoundError, ImportError) as e:
 	from preservative import *
+
+try:
+	from .boolean import parse_tag_expression, eval_parsed_expr
+except (ModuleNotFoundError, ImportError) as e:
+	from boolean import parse_tag_expression, eval_parsed_expr
 
 import os
 import re
@@ -159,34 +169,79 @@ class PairExpander:
         return all_lines_expanded
 
 
+def extract_block(lines, start_tag, end_tag):
+    """
+    Extracts sublists between the first occurrence of each begin/end tag,
+    matching by substring (not exact equality).
+
+    Returns:
+      list of lines between the first occurrence of start_tag and end_tag
+    """
+    start_idx = None
+    for i, s in enumerate(lines):
+        if start_tag in s:
+            start_idx = i
+            break
+    if start_idx is None:
+        return []
+
+    end_idx = None
+    for j in range(start_idx, len(lines)):
+        if end_tag in lines[j]:
+            end_idx = j
+            break
+    if end_idx is None:
+        end_idx = len(lines) - 1
+
+    return lines[start_idx:end_idx + 1]
+
+
+def replace_block(lines, new_block, start_tag, end_tag):
+    """
+    Replaces the first block in `lines` that starts with a line containing `start_tag`
+    and ends with a line containing `end_tag`.
+    The replacement includes the begin/end tag lines from the original.
+    """
+    # find start
+    start_idx = None
+    for i, s in enumerate(lines):
+        if start_tag in s:
+            start_idx = i
+            break
+    if start_idx is None:
+        return lines  # nothing to replace
+
+    # find end (after start)
+    end_idx = None
+    for j in range(start_idx, len(lines)):
+        if end_tag in lines[j]:
+            end_idx = j
+            break
+    if end_idx is None:
+        end_idx = start_idx  # or return lines; depends on your preference
+
+    # splice replace
+    return lines[:start_idx] + new_block + lines[end_idx + 1:]
+
+
+def is_deeply_empty(data):
+    """Returns True if the container or all its nested elements are empty."""
+    if isinstance(data, dict):
+        # An empty dict is empty; otherwise check if all its values are deeply empty
+        return not data or all(is_deeply_empty(v) for v in data.values())
+    if isinstance(data, (list, tuple, set)):
+        # An empty list is empty; otherwise check if all its items are deeply empty
+        return not data or all(is_deeply_empty(item) for item in data)
+
+    # If it's a primitive value (like an int, string, etc.), it is NOT empty
+    return False
+
+
 '''------------------------------------------------------------------------------------------------------'''
 
 class IfProcessor:
     def __init__(self, start_tag = __TAG_IF__) -> None:
         self.start_tag = start_tag
-
-    def processNOT(self, condition, if_test_function, *args) -> bool:
-        if condition.find("NOT") == -1:
-            return if_test_function(condition, *args)
-        else:
-            return not if_test_function(condition.replace("NOT", "").strip(), *args)
-
-    def processConditions(self, conditions, if_test_function, *args) -> bool:
-        logical_and = lambda x, y: x and y
-        logical_or = lambda x, y: x or y
-        fn = None
-        result = self.processNOT(conditions[0], if_test_function, *args)
-        has_condition = False
-        for i in range(1, len(conditions)):
-            if i % 2 == 0:  # Even index: condition
-                has_condition = self.processNOT(conditions[i], if_test_function, *args)
-                result = fn(result, has_condition)
-            else:  # Odd index: operator
-                if conditions[i] == "OR":
-                    fn = logical_or
-                else: # and
-                    fn = logical_and
-        return result
 
     def Expand(self, all_lines, if_test_function, not_processing_if_function, processing_if_function, *args) -> List[str]:
         if self.start_tag == __TAG_IF__:
@@ -208,8 +263,12 @@ class IfProcessor:
                 if not has_elseif and not has_else and not has_endif:
                     line = processing_if_function(line, *args) # still processing if ...
                 if has_elseif and not has_else and not has_endif:
-                    conditions = extractIFProcessing(line, __TAG_ELSEIF__.replace("<<<", "").replace(">>>", ""))
-                    can_append_line = can_append_line = self.processConditions(conditions, if_test_function,*args) #if_test_function(user_tag, *args)
+                    conditions = parse_tag_expression(line, prefix=cleanTag(__TAG_ELSEIF__))
+                    try:
+                        can_append_line = eval_parsed_expr(conditions, if_test_function,*args)
+                    except ValueError as e:
+                        print(f"Error evaluating condition in line: {line}. Error: {e}")
+                        can_append_line = False
                     can_process_else = not can_append_line and can_process_else # -> if a usertag is not found in an if.
                     continue
                 elif not has_elseif and has_else and not has_endif:
@@ -222,11 +281,15 @@ class IfProcessor:
                     continue
             else:
                 can_append_line = True
-                has_if = hasSpecificTag(line, self.start_tag)
+                has_if = hasSpecificIfTag(line, self.start_tag)
                 if has_if:
                     is_processing_if = True
-                    conditions = extractIFProcessing(line, self.start_tag.replace("<<<", "").replace(">>>", ""))
-                    can_append_line = self.processConditions(conditions, if_test_function,*args) #if_test_function(user_tag, *args)
+                    conditions = parse_tag_expression(line, prefix=cleanTag(self.start_tag))
+                    try:
+                        can_append_line = eval_parsed_expr(conditions, if_test_function,*args)
+                    except ValueError as e:
+                        print(f"Error evaluating condition in line: {line}. Error: {e}")
+                        can_append_line = False
                     can_process_else = not can_append_line and can_process_else# -> if a usertag is not found in an if.
                     continue
                 else:
@@ -255,15 +318,19 @@ class IfProcessor:
                 has_elseif[-1]   = hasSpecificTag(line, __TAG_ELSEIF__)
                 has_else[-1]     = hasSpecificTag(line, __TAG_ELSE__) and not has_elseif[-1]
                 has_endif[-1]    = hasSpecificTag(line, __TAG_ENDIF__)
-                has_nested_if    = hasSpecificTag(line, self.start_tag) and not has_endif[-1] and not has_elseif[-1]
+                has_nested_if    = hasSpecificIfTag(line, self.start_tag) and not has_endif[-1] and not has_elseif[-1]
 
                 if has_nested_if:
                     is_processing_conditional_operator.append(True)
                     has_elseif.append(False)
                     has_else.append(False)
                     has_endif.append(False)
-                    conditions = extractIFProcessing(line, self.start_tag.replace("<<<", "").replace(">>>", ""))
-                    if_condition.append(self.processConditions(conditions, if_test_function,*args))
+                    conditions = parse_tag_expression(line, prefix=cleanTag(self.start_tag))
+                    try:
+                        if_condition.append(eval_parsed_expr(conditions, if_test_function,*args))
+                    except ValueError as e:
+                        print(f"Error evaluating condition in line: {line}. Error: {e}")
+                        if_condition.append(False)
                     elseif_condition.append([False]) # can be multiple
                     can_append_line.append(if_condition[-1])
                     can_process_else.append(not can_append_line_all())
@@ -272,8 +339,12 @@ class IfProcessor:
                     if not has_elseif[-1] and not has_else[-1] and not has_endif[-1]:
                         line = processing_if_function(line, *args) # still processing if ...
                     elif has_elseif[-1] and not has_else[-1] and not has_endif[-1]:
-                        conditions = extractIFProcessing(line, __TAG_ELSEIF__.replace("<<<", "").replace(">>>", ""))
-                        passed = self.processConditions(conditions, if_test_function,*args)
+                        conditions = parse_tag_expression(line, prefix=cleanTag(__TAG_ELSEIF__))
+                        try:
+                            passed = eval_parsed_expr(conditions, if_test_function,*args)
+                        except ValueError as e:
+                            print(f"Error evaluating condition in line: {line}. Error: {e}")
+                            passed = False
                         can_append_line[-1] = passed and not any(elseif_condition[-1]) and not if_condition[-1]
                         elseif_condition[-1].append(passed)
                         continue
@@ -291,14 +362,18 @@ class IfProcessor:
                         if_condition.pop()
                         continue
             else:
-                has_if = hasSpecificTag(line, self.start_tag)
+                has_if = hasSpecificIfTag(line, self.start_tag)
                 if has_if:
                     is_processing_conditional_operator.append(True)
                     has_elseif.append(False)
                     has_else.append(False)
                     has_endif.append(False)
-                    conditions = extractIFProcessing(line, self.start_tag.replace("<<<", "").replace(">>>", ""))
-                    if_condition.append(self.processConditions(conditions, if_test_function,*args))
+                    conditions = parse_tag_expression(line, prefix=cleanTag(self.start_tag))
+                    try:
+                        if_condition.append(eval_parsed_expr(conditions, if_test_function,*args))
+                    except ValueError as e:
+                        print(f"Error evaluating condition in line: {line}. Error: {e}")
+                        if_condition.append(False)
                     elseif_condition.append([False]) # can be multiple
                     can_append_line.append(if_condition[-1])
                     can_process_else.append(not can_append_line_all())
@@ -364,17 +439,27 @@ def snake_case(a) -> str:
 def caps(a) -> str:
     return a.upper()
 
-#tag_pattern = re.compile(r'<<<([^<>]*)>>>')
 tag_pattern = re.compile(r'<<<(.*?)>>>')
+
+def getAllTags(s: str) -> List[str]:
+    return re.findall(r'(<<<.*?>>>)', s, flags=re.DOTALL)
+
 def hasTag(a) -> bool:
-    b = tag_pattern.findall(a)
+    b = getAllTags(a)
     return len(b) > 0
 
 def hasSpecificTag(a, tag) -> bool:
     # allows for defaults : BEWARE also allows for partial matching so order is important in such a case.
     res = hasTag(a)
     if res:
-        res = tag.replace("<<<", "").replace(">>>", "") in a
+        res = cleanTag(tag) in a
+    return res
+
+def hasSpecificIfTag(a, tag) -> bool:
+    # allows for defaults : BEWARE also allows for partial matching so order is important in such a case.
+    res = hasTag(a)
+    if res:
+        res = tag.replace(">>>","") in a
     return res
 
 def hasDefault(a, delimiter = "=") -> bool:
@@ -383,18 +468,6 @@ def hasDefault(a, delimiter = "=") -> bool:
     return r
 
 def extractDefaultAndTag(a, delimiter = "=") -> List[str]:
-    #default = a[a.find(delimiter, a.find("<<<")):a.rfind(">>>")].replace(delimiter,"", 1)
-    #tag = a[a.find("<<<"):a.rfind(">>>")+len(">>>")]
-    #return [tag, default]
-    #matches = tag_pattern.findall(a)
-    #if matches:
-    #    # Get the last match to handle nested or multiple <<<...>>> patterns
-    #    last_match = matches[-1]
-    #    tag = f'<<<{last_match}>>>'
-    #    parts = last_match.split(delimiter, 1)
-    #    default_value = parts[1] if len(parts) > 1 else ''
-    #    return [tag, default_value]
-    #return ['', '']
     istart = -1
     iend = -1
     start = []
@@ -427,13 +500,6 @@ def extractDefaultAndTagNamed(a, named) -> List[str]:
             return extractDefaultAndTag(b + ">>>")
     raise Exception(named + " not found.")
 
-and_or_pattern = re.compile(r' (AND|OR) ')
-def extractIFProcessing(a, prefix) -> List[str]:
-    pattern = rf'<<<{prefix} ((?:NOT |! )?\w+(?: (?:AND|OR) (?:NOT |! )?\w+)*)>>>'#rf'<<<{prefix} ((?:!?\w+ (?:AND|OR) )*!?\w+)>>>'#rf'<<<{prefix} ((?:\w+ (?:AND|OR) )*\w+)>>>'
-    matches = re.findall(pattern, a)
-    assert(len(matches) == 1) # Only 1 prefix tag allowed
-    return and_or_pattern.split(matches[0])
-
 def convert_empty_to_none(s):
     return None if s.strip() == "" else s
 
@@ -454,17 +520,21 @@ def replaceUserTags(line, dict_key_vals) -> str:
     if not is_defined and not hasDefault(line): # if its not defined (even None or '') then leave it.
         return line
 
-    taganddefault    = extractDefaultAndTag(line)
-    line             = removeDefault(line)#removeDefault2(line, taganddefault[1])
-    taganddefault[0] = removeDefault(taganddefault[0])
+    all_tags = getAllTags(line)
 
-    for tag, value in dict_key_vals.items():
-        if value == None: # None is allowed ... it should be '' and not 'None'.
-            value = ""
-        line = line.replace(f'<<<{tag}>>>', str(value))
-    if taganddefault[1].strip():
-        line = line.replace(taganddefault[0], taganddefault[1])
-    line = line.replace('<<<','').replace('>>>','')
+    for a_tag in all_tags:
+        taganddefault    = extractDefaultAndTag(a_tag)
+        line             = removeDefault(line)
+        taganddefault[0] = removeDefault(taganddefault[0])
+
+        for u_tag, value in dict_key_vals.items():
+            if value == None: # None is allowed ... it should be '' and not 'None'.
+                value = ""
+            line = line.replace(f'<<<{u_tag}>>>', str(value))
+        if taganddefault[1].strip():
+            line = line.replace(taganddefault[0], taganddefault[1])
+
+    line = cleanTag(line)
     return line
 
 def removeDefault2(a, default, delimiter = "=") -> str:
@@ -472,14 +542,12 @@ def removeDefault2(a, default, delimiter = "=") -> str:
 
 def removeDefault(a, delimiter = "=") -> str:
     matches = tag_pattern.findall(a)
-    if matches:
-        # Get the last match to handle nested or multiple <<<...>>> patterns
-        last_match = matches[-1]
-        parts = last_match.split(delimiter, 1)
+    for m in matches:
+        parts = m.split(delimiter, 1)
         tag_without_default = parts[0]
         new_tag = f'<<<{tag_without_default}>>>'
         # Replace the old tag with the new tag in the input string
-        return a.replace(f'<<<{last_match}>>>', new_tag)
+        return a.replace(f'<<<{m}>>>', new_tag)
     return a
 
 
@@ -525,13 +593,14 @@ def getNumericDefault(lines_to_expand) -> int:
 
 class CGenerator:
 
-    def __init__(self, inputfiledir, outputfiledir, language=None, author='Anonymous', group='', brief='',namespace_to_folders = False):
+    def __init__(self, inputfiledir, outputfiledir, events_interface:Interface = None, language=None, author='Anonymous', group='', brief='',namespace_to_folders = False):
         self.input_template_file_dir = inputfiledir
         self.output_gen_file_dir = outputfiledir
         self.language = language
         self.author = author
         self.group = group
         self.brief = brief
+        self.events_interface = events_interface
         self.NAMESPACE_TO_GO_TO_OWN_FOLDER = namespace_to_folders
         # Does the input exist
         if not os.path.exists(inputfiledir):
