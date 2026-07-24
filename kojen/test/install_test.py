@@ -76,3 +76,40 @@ class TestInstall(unittest.TestCase):
         UninstallTemplates()
         self.assertFalse(os.path.exists(getUserTemplateRoot()))
 
+    def test_InstallTemplates_MergesWithoutDeletingExisting(self):
+        """A second, unrelated InstallTemplates() call must not delete templates installed
+           by a previous call (merge semantics, not a destructive replace)."""
+        InstallTemplates(self.trash_root)
+
+        other_root = os.path.normpath(os.path.join(os.getcwd(), "trash_other"))
+        os.makedirs(other_root)
+        try:
+            other_file = os.path.join(other_root, "other_file.py")
+            with open(other_file, "w") as file:
+                file.write("#!/usr/bin/env python\n")
+            InstallTemplates(other_root)
+
+            # Original install's files are still present ...
+            for p in self.relative_file_paths:
+                self.assertTrue(ContainsTemplates(p))
+            # ... and the new install's file was added alongside them.
+            self.assertTrue(ContainsTemplates("other_file.py"))
+        finally:
+            shutil.rmtree(other_root)
+
+    def test_InstallTemplates_FollowsSymlinkedDirectories(self):
+        """A symlinked subdirectory must be followed and its contents copied as real
+           files, matching distutils.dir_util.copy_tree()'s default (preserve_symlinks=0)."""
+        real_dir = os.path.join(self.trash_root, "real_dir")
+        os.makedirs(real_dir)
+        with open(os.path.join(real_dir, "inside.py"), "w") as file:
+            file.write("#!/usr/bin/env python\n")
+
+        link_dir = os.path.join(self.trash_root, "link_dir")
+        try:
+            os.symlink(real_dir, link_dir, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("Symlinks are not supported/permitted in this environment.")
+
+        InstallTemplates(self.trash_root)
+        self.assertTrue(os.path.isfile(os.path.join(getUserTemplateRoot(), "link_dir", "inside.py")))

@@ -951,6 +951,19 @@ def FileCopyUtil(dir_from, dir_to, list_of_filenames) -> None:
     except OSError:
         warning("Creation of the directory %s failed" % dir_to)
 
+def DirectoryCopyUtil(dir_from, dir_to) -> None:
+    """
+    Will recursively copy the 'dir_from' directory tree into 'dir_to', merging into
+    (rather than replacing) an already-existing destination. Follows symlinked
+    subdirectories and copies their contents as real directories.
+
+    @param dir_from: The directory tree to copy from.
+    @param dir_to: The directory tree to merge-copy into.
+    """
+    for root, _dirs, files in os.walk(dir_from, followlinks=True):
+        dst_root = os.path.join(dir_to, os.path.relpath(root, dir_from))
+        FileCopyUtil(root, dst_root, files)
+
 def FilePreservationSyncUtil(file_from, file_to) -> None:
     """
     Will synchronize code in preservation tags from 'file_from' to 'file_to',
