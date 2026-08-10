@@ -104,7 +104,7 @@ class CUMLGenerator(CGenerator):
                 templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "C#"))
             elif "LanguageCPP" in str(type(language)):
                 templatefiledir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.join("classdiagram_templates", "CPP"))
-        CGenerator.__init__(self, templatefiledir, outputfiledir, language, author, group, brief, namespace_to_folders)
+        CGenerator.__init__(self, templatefiledir, outputfiledir, None, language, author, group, brief, namespace_to_folders)
         self.classdiagramname = vp_classdiagramname
 
     # Load Template and do 1st round of filtering.

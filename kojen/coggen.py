@@ -62,7 +62,7 @@ class CCogCodeModel:
 
 class CCogGenerator(CGenerator):
     def __init__(self, inputfiledir, outputfiledir,  classname, language=None, author='Anonymous', group='', brief=''):
-        CGenerator.__init__(self, inputfiledir, outputfiledir, language, author, group, brief)
+        CGenerator.__init__(self, inputfiledir, outputfiledir, None, language, author, group, brief)
         self.dict_to_replace_filenames = {}
         setFilenameReplace(self.dict_to_replace_filenames, classname)
 
