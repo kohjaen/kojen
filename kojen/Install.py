@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
-from .cgen import FileCopyUtil
-from distutils.dir_util import copy_tree
+from .cgen import FileCopyUtil, DirectoryCopyUtil
 import shutil
 
 def getUserTemplateRoot() -> str:
@@ -40,7 +39,7 @@ def InstallTemplates(template_path) -> None:
         if os.path.isfile(template_path):
             FileCopyUtil(os.path.dirname(os.path.abspath(template_path)), getUserTemplateRoot(), [os.path.basename(os.path.abspath(template_path))])
         if os.path.isdir(template_path):
-            copy_tree(os.path.abspath(template_path), getUserTemplateRoot())
+            DirectoryCopyUtil(os.path.abspath(template_path), getUserTemplateRoot())
 
 def UninstallTemplates() -> None:
     """Will uninstall all user templates."""
@@ -68,5 +67,3 @@ def ContainsTemplates(rel_template_path) -> bool:
                 if normpath_file.find(os.path.normpath(rel_template_path)) != -1:
                     return True
     return False
-
-
