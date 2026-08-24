@@ -172,6 +172,42 @@ class TestPreservative(unittest.TestCase):
                     self.assertTrue(f[i + 1].find("BUTTHISSHOULDREMAIN") != -1)
                     self.assertTrue(f[i + 2].find("{{{USER_NOT_IN_OTHER") != -1)
 
+    def test_SubstringFilenameIsNotMistakenForAnotherFile(self):
+        """A generated filename that is a substring of another (e.g. "Sample.cpp" inside
+        "Test.Sample.cpp") must never have its preserved code cross-applied to that other file: a
+        substring test on the filename (outputfile.find(fn) > -1) would wrongly match both, bleeding
+        one file's hand-written code into the other whenever they happen to share a tag name.
+
+        Collection order is set up explicitly (short file first, long file second) rather than via a
+        directory walk, so the cross-match -- when present -- deterministically overwrites the short
+        file's correct result with the long file's, instead of depending on filesystem listing order.
+        """
+        short_name = "Sample.cpp"
+        long_name = "Test.Sample.cpp"
+        short_path = os.path.join(self.TempFolder, short_name)
+        long_path = os.path.join(self.TempFolder, long_name)
+        with open(short_path, 'w+') as temp_file:
+            temp_file.write("{{{USER_INCLUDES\n")
+            temp_file.write("FROM_SHORT_FILE\n")
+            temp_file.write("{{{USER_INCLUDES\n")
+        with open(long_path, 'w+') as temp_file:
+            temp_file.write("{{{USER_INCLUDES\n")
+            temp_file.write("FROM_LONG_FILE\n")
+            temp_file.write("{{{USER_INCLUDES\n")
+
+        jam = Preservative(short_path)  # single-file constructor: collects short_path only
+        jam.CollectFile(long_path)  # then long_path, explicitly second -- guarantees insertion order
+        newFiles = OrderedDict()
+        newFiles[short_name] = ['{{{USER_INCLUDES', '{{{USER_INCLUDES']
+        newFiles[long_name] = ['{{{USER_INCLUDES', '{{{USER_INCLUDES']
+
+        jam.Emplace(newFiles)
+
+        self.assertTrue(any("FROM_SHORT_FILE" in line for line in newFiles[short_name]))
+        self.assertFalse(any("FROM_LONG_FILE" in line for line in newFiles[short_name]))
+        self.assertTrue(any("FROM_LONG_FILE" in line for line in newFiles[long_name]))
+        self.assertFalse(any("FROM_SHORT_FILE" in line for line in newFiles[long_name]))
+
     def test_TagMentionedInProseIsNotTreatedAsAMarker(self):
         """A comment that merely *mentions* a tag by name (not as a real, line-leading marker) must
         not be collected as a marker: doing so desyncs the collector's open/close toggle and makes it

@@ -179,7 +179,8 @@ class Preservative:
         """
         for fn, lines in filenames_to_lines.items():
             for outputfile, tags in self.preserved_tags_per_file.items():
-                if outputfile.find(fn) > -1:
+                # Exact match only: fn is a bare filename or a full path.
+                if outputfile == fn or os.path.basename(outputfile) == fn:
                     new_lines = []
                     tag_found = False
                     tagline = ""
