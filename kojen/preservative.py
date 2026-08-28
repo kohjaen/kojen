@@ -72,6 +72,25 @@ def CleanUpLine(line):
         .replace('=', '')
 
 
+def IsMarkerLine(line, prefix):
+    """
+    Returns True only if `prefix` is the first non-decoration token on `line` -- i.e. the marker
+    starts the line (after optional leading whitespace and a single comment-leader token such as
+    '///', '//', '#' or '*'), not merely present somewhere within a longer sentence.
+
+    Without this check, a line of ordinary prose that happens to *mention* a tag by name (e.g. a doc
+    comment such as "// see {{{USER_TESTS}}} below") is misread as a real marker: since collection is
+    a single open/close toggle (not tracked per-tag), one such false positive desyncs every
+    subsequent tag's open/close pairing for the rest of the file.
+    """
+    stripped = line.strip()
+    for leader in ('///', '//', '#', '*'):
+        if stripped.startswith(leader):
+            stripped = stripped[len(leader):].lstrip()
+            break
+    return stripped.startswith(prefix)
+
+
 class Preservative:
 
     def __init__(self, outputfile_OR_dir):
@@ -104,7 +123,7 @@ class Preservative:
             __current_preservation_line = ""
             try:  # python 3 gave some sort of decode errors...
                 for line in f:
-                    tag_found = (line.find(self._TAG_PREFIX_) > -1)
+                    tag_found = IsMarkerLine(line, self._TAG_PREFIX_)
                     if is_preserving and tag_found:
                         # stop
                         self.preserved_tags_per_file[filename_and_path][__current_preservation_line] = []
@@ -160,7 +179,8 @@ class Preservative:
         """
         for fn, lines in filenames_to_lines.items():
             for outputfile, tags in self.preserved_tags_per_file.items():
-                if outputfile.find(fn) > -1:
+                # Exact match only: fn is a bare filename or a full path.
+                if outputfile == fn or os.path.basename(outputfile) == fn:
                     new_lines = []
                     tag_found = False
                     tagline = ""
@@ -196,4 +216,3 @@ class Preservative:
     # Use this to set a custom code preservation tag prefix
     def SetPrefix(self, new_prefix):
         self._TAG_PREFIX_ = new_prefix
-

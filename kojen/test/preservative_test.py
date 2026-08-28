@@ -172,5 +172,90 @@ class TestPreservative(unittest.TestCase):
                     self.assertTrue(f[i + 1].find("BUTTHISSHOULDREMAIN") != -1)
                     self.assertTrue(f[i + 2].find("{{{USER_NOT_IN_OTHER") != -1)
 
+    def test_SubstringFilenameIsNotMistakenForAnotherFile(self):
+        """A generated filename that is a substring of another (e.g. "Sample.cpp" inside
+        "Test.Sample.cpp") must never have its preserved code cross-applied to that other file: a
+        substring test on the filename (outputfile.find(fn) > -1) would wrongly match both, bleeding
+        one file's hand-written code into the other whenever they happen to share a tag name.
+
+        Collection order is set up explicitly (short file first, long file second) rather than via a
+        directory walk, so the cross-match -- when present -- deterministically overwrites the short
+        file's correct result with the long file's, instead of depending on filesystem listing order.
+        """
+        short_name = "Sample.cpp"
+        long_name = "Test.Sample.cpp"
+        short_path = os.path.join(self.TempFolder, short_name)
+        long_path = os.path.join(self.TempFolder, long_name)
+        with open(short_path, 'w+') as temp_file:
+            temp_file.write("{{{USER_INCLUDES\n")
+            temp_file.write("FROM_SHORT_FILE\n")
+            temp_file.write("{{{USER_INCLUDES\n")
+        with open(long_path, 'w+') as temp_file:
+            temp_file.write("{{{USER_INCLUDES\n")
+            temp_file.write("FROM_LONG_FILE\n")
+            temp_file.write("{{{USER_INCLUDES\n")
+
+        jam = Preservative(short_path)  # single-file constructor: collects short_path only
+        jam.CollectFile(long_path)  # then long_path, explicitly second -- guarantees insertion order
+        newFiles = OrderedDict()
+        newFiles[short_name] = ['{{{USER_INCLUDES', '{{{USER_INCLUDES']
+        newFiles[long_name] = ['{{{USER_INCLUDES', '{{{USER_INCLUDES']
+
+        jam.Emplace(newFiles)
+
+        self.assertTrue(any("FROM_SHORT_FILE" in line for line in newFiles[short_name]))
+        self.assertFalse(any("FROM_LONG_FILE" in line for line in newFiles[short_name]))
+        self.assertTrue(any("FROM_LONG_FILE" in line for line in newFiles[long_name]))
+        self.assertFalse(any("FROM_SHORT_FILE" in line for line in newFiles[long_name]))
+
+    def test_TagMentionedInProseIsNotTreatedAsAMarker(self):
+        """A comment that merely *mentions* a tag by name (not as a real, line-leading marker) must
+        not be collected as a marker: doing so desyncs the collector's open/close toggle and makes it
+        swallow everything up to the next real marker as that bogus tag's "body", which then grows
+        without bound on every later regeneration (re-inserted on top of the same static prose line).
+        """
+        filename = os.path.join(self.TempFolder, "Prose.h")
+        with open(filename, 'w+') as temp_file:
+            temp_file.write("// Scenario tests belong in {{{USER_TESTS}}}, written once.\n")
+            temp_file.write("#include <cstdint>\n")
+            temp_file.write("{{{USER_TESTS\n")
+            temp_file.write("real_hand_written_code();\n")
+            temp_file.write("{{{USER_TESTS\n")
+
+        jam = Preservative(filename)
+
+        self.assertIn("{{{USER_TESTS", jam.preserved_tags_per_file[filename])
+        preserved_body = jam.preserved_tags_per_file[filename]["{{{USER_TESTS"]
+        self.assertEqual(len(preserved_body), 1, "Should only preserve the one real hand-written line")
+        self.assertTrue(preserved_body[0].find("real_hand_written_code();") != -1)
+        # The '#include' line between the false-positive prose and the real marker must not have been
+        # swallowed into any preserved tag's body.
+        for body in jam.preserved_tags_per_file[filename].values():
+            self.assertFalse(any("#include" in line for line in body))
+
+    def test_RegenerationWithProseMentionDoesNotGrowUnbounded(self):
+        """Regenerating a file whose static template text mentions a tag in prose must not grow the
+        file on every round-trip."""
+        filename = os.path.join(self.TempFolder, "Prose.cpp")
+        static_lines = [
+            "// Scenario tests belong in {{{USER_TESTS}}}, written once.\n",
+            "#include <cstdint>\n",
+            "{{{USER_TESTS\n",
+            "{{{USER_TESTS\n",
+        ]
+        with open(filename, 'w+') as temp_file:
+            temp_file.writelines(static_lines)
+
+        for _ in range(5):
+            jam = Preservative(filename)
+            newFiles = OrderedDict()
+            newFiles[filename] = list(static_lines)
+            jam.Emplace(newFiles)
+            with open(filename, 'w') as temp_file:
+                temp_file.writelines(newFiles[filename])
+
+        with open(filename) as temp_file:
+            self.assertEqual(len(temp_file.readlines()), len(static_lines))
+
 if __name__ == "__main__":
     unittest.main()
