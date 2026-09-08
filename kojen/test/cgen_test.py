@@ -472,6 +472,70 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(res_a, 0, "Wrong default")
         self.assertEqual(res_b, 2, "Wrong default")
 
+    def test_createoutput_returns_names_without_lost_code(self):
+        generator = self.get_test_gen()
+        outputs = OrderedDict([("normal.cpp", ["generated_code();\n"])])
+
+        result = generator.createoutput(outputs)
+
+        self.assertEqual(result, ["normal.cpp"])
+        with open(os.path.join(self.workingfolder, "normal.cpp")) as generated_file:
+            self.assertEqual(generated_file.read(), "generated_code();\n")
+
+    def test_createoutput_writes_recovery_file_before_raising_lost_code_error(self):
+        original_filename = os.path.join(self.workingfolder, "lost.cpp")
+        with open(original_filename, "w") as original_file:
+            original_file.write("{{{USER_LOST\nhand_written_code();\n{{{USER_LOST\n")
+
+        preservative = Preservative(original_filename)
+        outputs = OrderedDict([("lost.cpp", ["generated_code();\n"])])
+        preservative.Emplace(outputs)
+        recovery_filename = original_filename + ".LostCode.txt"
+
+        with self.assertRaises(LostCodeError) as error_context:
+            self.get_test_gen().createoutput(outputs)
+
+        self.assertEqual(error_context.exception.recovery_files, (recovery_filename,))
+        self.assertIn(recovery_filename, str(error_context.exception))
+        with self.assertRaises(AttributeError):
+            error_context.exception.recovery_files = ()
+        with open(recovery_filename) as recovery_file:
+            self.assertIn("hand_written_code();", recovery_file.read())
+
+    def test_createoutput_does_not_raise_for_empty_lost_section(self):
+        original_filename = os.path.join(self.workingfolder, "empty.cpp")
+        with open(original_filename, "w") as original_file:
+            original_file.write("{{{USER_EMPTY\n{{{USER_EMPTY\n")
+
+        preservative = Preservative(original_filename)
+        outputs = OrderedDict([("empty.cpp", ["generated_code();\n"])])
+        preservative.Emplace(outputs)
+
+        self.assertEqual(self.get_test_gen().createoutput(outputs), ["empty.cpp"])
+        self.assertFalse(os.path.exists(original_filename + ".LostCode.txt"))
+
+    def test_createoutput_reports_all_written_recovery_files(self):
+        original_filenames = []
+        outputs = OrderedDict()
+        for filename in ("lost_one.cpp", "lost_two.cpp"):
+            original_filename = os.path.join(self.workingfolder, filename)
+            original_filenames.append(original_filename)
+            with open(original_filename, "w") as original_file:
+                original_file.write("{{{USER_LOST\nhand_written_code();\n{{{USER_LOST\n")
+            outputs[filename] = ["generated_code();\n"]
+
+        preservative = Preservative(self.workingfolder)
+        preservative.Emplace(outputs)
+        expected_recovery_filenames = tuple(
+            filename + ".LostCode.txt" for filename in original_filenames)
+
+        with self.assertRaises(LostCodeError) as error_context:
+            self.get_test_gen().createoutput(outputs)
+
+        self.assertEqual(set(error_context.exception.recovery_files), set(expected_recovery_filenames))
+        for recovery_filename in expected_recovery_filenames:
+            self.assertTrue(os.path.exists(recovery_filename))
+
 
     ''' TODO : Testing
         - template extending and excluding.

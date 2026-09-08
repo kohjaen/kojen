@@ -851,14 +851,20 @@ class CGenerator:
         return desired_text
 
     def createoutput(self, filenames_to_lines) -> list:
+        """Write generated output and raise `LostCodeError` after writing any recovery files."""
+        lost_code_filenames = []
         for f in filenames_to_lines:
             print("+++++++++ ", f)
             filename = os.path.join(self.output_gen_file_dir, f)
+            if f.endswith(".LostCode.txt"):
+                lost_code_filenames.append(filename)
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             with open(filename, 'w') as writer:
                 for line in filenames_to_lines[f]:
                     line = line.replace('\t',"    ") # Last filter! Convert tabs to 4 spaces...
                     writer.write(line)
+        if lost_code_filenames:
+            raise LostCodeError(lost_code_filenames)
         return list(filenames_to_lines.keys())
 
 

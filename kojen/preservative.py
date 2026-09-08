@@ -91,6 +91,21 @@ def IsMarkerLine(line, prefix):
     return stripped.startswith(prefix)
 
 
+class LostCodeError(RuntimeError):
+    """Raised after recovery files are written for USER code that could not be preserved."""
+
+    def __init__(self, recovery_files):
+        self._recovery_files = tuple(recovery_files)
+        super().__init__(
+            "Could not preserve USER code; recovery file(s) written: " +
+            ", ".join(self._recovery_files))
+
+    @property
+    def recovery_files(self):
+        """Tuple of written `.LostCode.txt` recovery paths."""
+        return self._recovery_files
+
+
 class Preservative:
 
     def __init__(self, outputfile_OR_dir):
@@ -165,6 +180,7 @@ class Preservative:
         - typically the tags in the 'output' have no code in them.
 
         If a tag is no longer in the 'output', a ".LostCode.txt" is created with the code that is no longer output.
+        The output writer raises `LostCodeError` after it has written this recovery file.
 
         If 'replace' is false, and tags within 'filenames_to_lines' have code in them, behaviour is undefined, as
         two sets of preservations are merged.
