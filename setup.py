@@ -5,7 +5,7 @@ with open("README.MD", "r") as fh:
 
 setuptools.setup(
     name="kojen",
-    version="2.5.78",
+    version="2.5.79",
     author="kohjaen",
     author_email="koh.jaen@yahoo.de",
     description="Code generation tools.",
