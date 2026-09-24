@@ -777,17 +777,14 @@ class CGenerator:
                     elif hasSpecificTag(line, __TAG_EXCLUDE__):
                         pass
                     elif hasSpecificTag(line,__TAG_ENUMERATIONS__):
-                        line_member = extractDefaultAndTagNamed(line, cleanTag(__TAG_ENUMERATIONS__))
-                        tag = line_member[0]
-                        enum_type = line_member[1]
                         enums = ""
                         for e in self.events_interface.Enums():
-                            if enum_type.strip() != '': # ensure defaults remain if they are required.
-                                enums += self.language.DeclareEnum(e, '\t', enum_type)
+                            if e.Base().strip() != '': # ensure defaults remain if they are required.
+                                enums += self.language.DeclareEnum(e, '\t', e.Base())
                             else:
                                 enums += self.language.DeclareEnum(e, '\t')
                         dict_enums = {}
-                        dict_enums[tag] = enums
+                        dict_enums[__TAG_ENUMERATIONS__] = enums
                         self.processLine(dict_enums, lines, line)
                     else:
                         # Replace the key:value pairs per line...

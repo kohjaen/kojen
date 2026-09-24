@@ -197,13 +197,20 @@ class Enum(OrderedDict, Documentation):
     Enumeration.
     """
 
-    def __init__(self, enumName):
+    def __init__(self, enumName, baseType=""):
         super(Enum, self).__init__()
         Documentation.__init__(self)
         self.Name = enumName
+        self.BaseType = baseType
 
     def Add(self, descriptionName, val):
         self[descriptionName] = val
+
+    def Base(self) -> any:
+        return self.BaseType
+
+    def ChangeBase(self, newBaseType):
+        self.BaseType = newBaseType
 
     def Decompose(self):
         result = []
