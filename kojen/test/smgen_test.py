@@ -6,7 +6,7 @@ from kojen.LanguagePython import LanguagePython
 from kojen.LanguageCPP import LanguageCPP
 from kojen.LanguageCsharp import LanguageCsharp
 from kojen.smgen import CStateMachineGenerator, CTransitionTableModel
-from kojen.kojentypes import Interface, Struct, Message
+from kojen.kojentypes import Interface, Struct, Message, Enum
 
 class TestFeatures(unittest.TestCase):
 
@@ -2260,6 +2260,44 @@ class TestFeatures(unittest.TestCase):
         self.assertEqual(len(output), 2)
         self.assertEqual(output[0], "Got 1\n")
         self.assertEqual(output[1], "Got 2\n")
+
+    def test_enums_with_no_base_type(self):
+        all_lines = []
+        all_lines.append("<<<ENUMS>>>")
+        i = Interface('')
+        e = Enum("someEnum")
+        e.Add("A", 1)
+        e.Add("B", 2)
+        i.AddEnum(e)
+        output = TestFeatures.do_magic(all_lines, i, [], LanguageCPP())
+        self.assertEqual(len(output), 8)
+        self.assertEqual(output[0], '\n')
+        self.assertEqual(output[1], 'enum class someEnum : uint8_t\n')
+        self.assertEqual(output[2], '{\n')
+        self.assertEqual(output[3], '    A = 1,\n')
+        self.assertEqual(output[4], '    B = 2\n')
+        self.assertEqual(output[5], '};\n')
+        self.assertEqual(output[6], 'constexpr uint8_t SOMEENUM_COUNT = 2;\n')
+        self.assertEqual(output[7], 'constexpr uint8_t SOMEENUM_MAX = 2;\n')
+
+    def test_enums_with_base_type(self):
+        all_lines = []
+        all_lines.append("<<<ENUMS=uint32_t>>>")
+        i = Interface('')
+        e = Enum("someEnum")
+        e.Add("A", 1)
+        e.Add("B", 2)
+        i.AddEnum(e)
+        output = TestFeatures.do_magic(all_lines, i, [], LanguageCPP())
+        self.assertEqual(len(output), 8)
+        self.assertEqual(output[0], '\n')
+        self.assertEqual(output[1], 'enum class someEnum : uint32_t\n')
+        self.assertEqual(output[2], '{\n')
+        self.assertEqual(output[3], '    A = 1,\n')
+        self.assertEqual(output[4], '    B = 2\n')
+        self.assertEqual(output[5], '};\n')
+        self.assertEqual(output[6], 'constexpr uint32_t SOMEENUM_COUNT = 2;\n')
+        self.assertEqual(output[7], 'constexpr uint32_t SOMEENUM_MAX = 2;\n')
 
 
     '''

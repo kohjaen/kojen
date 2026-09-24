@@ -72,6 +72,7 @@ __TAG_LAST__               = "<<<LAST>>>"
 __TAG_FOR_END__            = "<<<FOR_END>>>"
 __TAG_ABC__                = '<<<ALPH>>>'
 __TAG_123__                = '<<<NUM>>>'
+__TAG_ENUMERATIONS__       = '<<<ENUMS>>>'
 # User tag
 __TAG_IF__                 = '<<<IF>>>'
 __TAG_ELSEIF__             = '<<<ELSEIF>>>'
@@ -775,6 +776,19 @@ class CGenerator:
                                 self.processLine(dict_to_replace_filenames, extended_filenames, os.path.basename(ext_rel_filepath))
                     elif hasSpecificTag(line, __TAG_EXCLUDE__):
                         pass
+                    elif hasSpecificTag(line,__TAG_ENUMERATIONS__):
+                        line_member = extractDefaultAndTagNamed(line, cleanTag(__TAG_ENUMERATIONS__))
+                        tag = line_member[0]
+                        enum_type = line_member[1]
+                        enums = ""
+                        for e in self.events_interface.Enums():
+                            if enum_type.strip() != '': # ensure defaults remain if they are required.
+                                enums += self.language.DeclareEnum(e, '\t', enum_type)
+                            else:
+                                enums += self.language.DeclareEnum(e, '\t')
+                        dict_enums = {}
+                        dict_enums[tag] = enums
+                        self.processLine(dict_enums, lines, line)
                     else:
                         # Replace the key:value pairs per line...
                         self.processLine(dict_to_replace_lines, lines, line)

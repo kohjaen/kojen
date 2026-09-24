@@ -284,9 +284,9 @@ class LanguageCsharp(Language):
             return 'struct ' + declspec + ' ' + structname + '\n'
         return 'struct ' + structname + '\n'
 
-    def DeclareEnum(self, enum, whitespace) -> str:
+    def DeclareEnum(self, enum, whitespace, base='byte') -> str:
         result = self.FormatComment(enum.documentation) + "\n"
-        result += "public enum " + enum.Name + " : byte {\n"
+        result += "public enum " + enum.Name + " : " + base + " {\n"
         for descriptionName, val in enum.items():
             result += whitespace + str(descriptionName) + " = " + str(val) + ",\n"
         result = result[:len(result)-2] + "\n"  # items from the beginning through end-1 (i.e. remove last character which is a ','

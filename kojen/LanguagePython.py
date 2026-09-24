@@ -201,7 +201,7 @@ class LanguagePython(Language):
         result += '_fields_ = [\n'
         return result
 
-    def DeclareEnum(self, enum, whitespace) -> str:
+    def DeclareEnum(self, enum, whitespace, base='') -> str:
         result = self.FormatComment(enum.documentation) + "\n"
         result += whitespace + "@unique\n"
         result += whitespace + "class " + enum.Name + "(Enum):\n"
