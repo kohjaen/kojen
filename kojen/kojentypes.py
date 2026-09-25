@@ -197,17 +197,21 @@ class Enum(OrderedDict, Documentation):
     Enumeration.
     """
 
-    def __init__(self, enumName, baseType=""):
+    def __init__(self, enumName, baseType="", declareBounds=False):
         super(Enum, self).__init__()
         Documentation.__init__(self)
         self.Name = enumName
         self.BaseType = baseType
+        self.DeclareBounds = declareBounds
 
     def Add(self, descriptionName, val):
         self[descriptionName] = val
 
     def Base(self) -> any:
         return self.BaseType
+
+    def ShouldDeclareBounds(self) -> bool:
+        return self.DeclareBounds
 
     def ChangeBase(self, newBaseType):
         self.BaseType = newBaseType

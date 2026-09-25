@@ -313,10 +313,9 @@ class LanguageCPP(Language):
             return 'struct ' + declspec + ' ' + structname + '\n'
         return 'struct ' + structname + '\n'
 
-    def DeclareEnum(self, enum, whitespace, base='uint8_t') -> str:
-        #result = ""
-        #if hasattr(enum, 'documentation'):
-        #    result += self.FormatComment(enum.documentation)
+    def DeclareEnum(self, enum, whitespace, base='', declareBounds=False) -> str:
+        if base.strip() == '':
+            base = 'uint8_t'
         result = self.FormatComment(enum.documentation) + "\n"
         result += "enum class " + enum.Name + " : " + base + "\n"
         result += "{\n"
@@ -324,8 +323,9 @@ class LanguageCPP(Language):
             result += whitespace + str(descriptionName) + " = " + str(val) + ",\n"
         result = result[:len(result)-2] + "\n"  # items from the beginning through end-1 (i.e. remove last character which is a ','
         result += "};\n"
-        result += "constexpr " + base + " " + enum.Name.upper() + "_COUNT = " + str(len(enum.values())) + ";\n"
-        result += "constexpr " + base + " " + enum.Name.upper() + "_MAX = " + str(max(enum.values())) + ";\n"
+        if declareBounds:
+            result += "constexpr " + base + " " + enum.Name.upper() + "_COUNT = " + str(len(enum.values())) + ";\n"
+            result += "constexpr " + base + " " + enum.Name.upper() + "_MAX = " + str(max(enum.values())) + ";\n"
         return result
 
     def DeclareHashDefine(self, name, val):

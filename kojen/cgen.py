@@ -745,10 +745,7 @@ class CGenerator:
         enums = ""
         try:
             for e in self.events_interface.Enums():
-                if e.Base().strip() != '': # ensure defaults remain if they are required.
-                    enums += self.language.DeclareEnum(e, '\t', e.Base())
-                else:
-                    enums += self.language.DeclareEnum(e, '\t')
+                enums += self.language.DeclareEnum(e, '\t', e.Base(), e.ShouldDeclareBounds())
         except AttributeError as ex:
             warnings.warn("Failed to process enumerations: " + str(ex))
         dict_enums = {}
