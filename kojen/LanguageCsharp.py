@@ -284,13 +284,18 @@ class LanguageCsharp(Language):
             return 'struct ' + declspec + ' ' + structname + '\n'
         return 'struct ' + structname + '\n'
 
-    def DeclareEnum(self, enum, whitespace) -> str:
+    def DeclareEnum(self, enum, whitespace, base='', declareBounds=False) -> str:
+        if base.strip() == '':
+            base = 'byte'
         result = self.FormatComment(enum.documentation) + "\n"
-        result += "public enum " + enum.Name + " : byte {\n"
+        result += "public enum " + enum.Name + " : " + base + " {\n"
         for descriptionName, val in enum.items():
             result += whitespace + str(descriptionName) + " = " + str(val) + ",\n"
         result = result[:len(result)-2] + "\n"  # items from the beginning through end-1 (i.e. remove last character which is a ','
         result +=  "};\n"
+        if declareBounds:
+            result += "public const " + base + " " + enum.Name.upper() + "_COUNT = " + str(len(enum.values())) + ";\n"
+            result += "public const " + base + " " + enum.Name.upper() + "_MAX = " + str(max(enum.values())) + ";\n"
         return result
 
     def DeclareHashDefine(self, name, val):
