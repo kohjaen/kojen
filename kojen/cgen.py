@@ -9,6 +9,7 @@ import sys
 import time
 from pathlib import Path
 from typing import List
+import warnings
 
 try:
     from .kojentypes import Interface
@@ -72,6 +73,7 @@ __TAG_LAST__               = "<<<LAST>>>"
 __TAG_FOR_END__            = "<<<FOR_END>>>"
 __TAG_ABC__                = '<<<ALPH>>>'
 __TAG_123__                = '<<<NUM>>>'
+__TAG_ENUMERATIONS__       = '<<<ENUMS>>>'
 # User tag
 __TAG_IF__                 = '<<<IF>>>'
 __TAG_ELSEIF__             = '<<<ELSEIF>>>'
@@ -739,6 +741,17 @@ class CGenerator:
         else:
             lines.append(line)
 
+    def processEnumLine(self, lines, line):
+        enums = ""
+        try:
+            for e in self.events_interface.Enums():
+                enums += self.language.DeclareEnum(e, '\t', e.Base(), e.ShouldDeclareBounds())
+        except AttributeError as ex:
+            warnings.warn("Failed to process enumerations: " + str(ex))
+        dict_enums = {}
+        dict_enums[__TAG_ENUMERATIONS__] = enums
+        self.processLine(dict_enums, lines, line)
+
     def loadtemplates_firstfiltering_FILE(self, filepath, dict_to_replace_lines, dict_to_replace_filenames, filter_files_containing_in_name = "") -> CCodeModel:
         result = CCodeModel()
         if os.path.exists(filepath):
@@ -768,13 +781,18 @@ class CGenerator:
                         if ext_rel_filepath:
                             extension = self.processExtends(os.path.dirname(filepath), ext_rel_filepath, ignore_lines_with, ignore_lines_between)
                             for ex_l in extension:
-                                # Replace the key:value pairs per line...
-                                self.processLine(dict_to_replace_lines, lines, ex_l)
+                                if hasSpecificTag(ex_l,__TAG_ENUMERATIONS__):
+                                    self.processEnumLine(lines, ex_l)
+                                else:
+                                    # Replace the key:value pairs per line...
+                                    self.processLine(dict_to_replace_lines, lines, ex_l)
                             if extension:
                                 # Replace the key:value pairs per filename...
                                 self.processLine(dict_to_replace_filenames, extended_filenames, os.path.basename(ext_rel_filepath))
                     elif hasSpecificTag(line, __TAG_EXCLUDE__):
                         pass
+                    elif hasSpecificTag(line,__TAG_ENUMERATIONS__):
+                        self.processEnumLine(lines, line)
                     else:
                         # Replace the key:value pairs per line...
                         self.processLine(dict_to_replace_lines, lines, line)

@@ -201,12 +201,16 @@ class LanguagePython(Language):
         result += '_fields_ = [\n'
         return result
 
-    def DeclareEnum(self, enum, whitespace) -> str:
+    def DeclareEnum(self, enum, whitespace, base='', declareBounds=False) -> str:
         result = self.FormatComment(enum.documentation) + "\n"
         result += whitespace + "@unique\n"
         result += whitespace + "class " + enum.Name + "(Enum):\n"
         for descriptionName, val in enum.items():
             result += whitespace*2 + str(descriptionName) + " = " + str(val) + "\n"
+        if declareBounds:
+            result += whitespace + "# Count and Max values\n"
+            result += whitespace + enum.Name.upper() + "_COUNT = " + str(len(enum.values())) + "\n"
+            result += whitespace + enum.Name.upper() + "_MAX = " + str(max(enum.values())) + "\n"
         return result
 
     def DeclareNamespace(self, namespacename):

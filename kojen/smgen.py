@@ -463,13 +463,6 @@ class CStateMachineGenerator(CGenerator):
         dict_to_replace_lines[__TAG_BRIEF__] = self.brief
         dict_to_replace_lines[__TAG_DECLSPEC_DLL_EXPORT__] = smmodel.declspecdllexport
 
-        if self.language and self.events_interface:
-            enums = ""
-            for e in self.events_interface.Enums():
-                enums += self.language.DeclareEnum(e, '\t')
-            dict_to_replace_lines[__TAG_ENUMERATIONS__] = enums
-
-
         dict_to_replace_filenames = {}
         setFilenameReplace(dict_to_replace_filenames, smmodel.statemachinename)
 
